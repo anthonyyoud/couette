@@ -72,12 +72,7 @@ END FUNCTION itos
 SUBROUTINE open_files()
 use parameters
 implicit none
-!open (19, status = 'unknown', file = 'p.dat')
 open (20, status = 'unknown', file = 'u_growth.dat')
-!open (21, status = 'unknown', file = 'z.dat')
-!open (23, status = 'unknown', file = 'u.dat')
-!open (30, status = 'unknown', file = 'vr_field.dat')
-!open (31, status = 'unknown', file = 'vz_field.dat')
 open (32, status = 'unknown', file = 'torque.dat')
 open (50, file = 'ans.dat')
 if (diag) then
@@ -94,12 +89,7 @@ END SUBROUTINE open_files
 SUBROUTINE close_files()
 use parameters
 implicit none
-!close (19)
 close (20)
-!close (21)
-!close (23)
-!close (30)
-!close (31)
 close (32)
 close (50)
 if (diag) then
@@ -269,102 +259,46 @@ double precision, intent(out) :: u(0:nx,0:nz), zn(0:nx,0:nz), &
 integer :: j, k
 
 open (50, file = 'u_end.dat')
-!open (60, file = 'u_start.dat')
 open (51, file = 'z_end.dat')
-!open (61, file = 'z_start.dat')
 open (52, file = 'p_end.dat')
-!open (62, file = 'p_start.dat')
 
 
 do j = 0, nx
       read(50, *) (u(j,k), k = 0, nz)
-!      write(60, '(21e19.7)') (u(j,k), k = 0, nz)
       read(51, *) (zn(j,k), k = 0, nz)
-!      write(61, '(21e19.7)') (zn(j,k), k = 0, nz)
       read(52, *) (pn(j,k), k = 0, nz)
 end do
 
 close (50)
-!close (60)
 close (51)
-!close (61)
 close (52)
-!close (62)
 
 return
 END SUBROUTINE state_restart
 
-SUBROUTINE thomas (lb, m, u, r)
+SUBROUTINE thomas (lb, m, up, di, lo, r)
 implicit none
 integer :: j
 integer, intent(in) :: m, lb
-type (mat_comp), intent(in) :: u
+double precision, intent(in) :: up(lb:m-1), di(lb:m), lo(lb+1:m)
 double precision, intent(inout) :: r(lb:m)
 double precision :: dnew(lb:m), aa = 0d0
 
-dnew = u%di
+dnew = di
 do j = lb+1, m
-   aa = -u%lo(j) / dnew(j-1)
-   dnew(j) = dnew(j) + aa * u%up(j-1)
+   aa = -lo(j) / dnew(j-1)
+   dnew(j) = dnew(j) + aa * up(j-1)
    r(j) = r(j) + aa * r(j-1)
 end do
 
 r(m) = r(m) / dnew(m)
 
 do j = m-1, lb, -1
-   r(j) = (r(j) - u%up(j) * r(j+1)) / dnew(j)
+   r(j) = (r(j) - up(j) * r(j+1)) / dnew(j)
 end do
 
 return
 END SUBROUTINE thomas
-
-SUBROUTINE uz_thomas (lb, m, u, r)
-implicit none
-integer :: j
-integer, intent(in) :: m, lb
-type (uz_mat_comp), intent(in) :: u
-double precision, intent(inout) :: r(lb:m)
-double precision :: dnew(lb:m), aa = 0d0
-
-dnew = u%di
-do j = lb+1, m
-   aa = -u%lo(j) / dnew(j-1)
-   dnew(j) = dnew(j) + aa * u%up(j-1)
-   r(j) = r(j) + aa * r(j-1)
-end do
-
-r(m) = r(m) / dnew(m)
-
-do j = m-1, lb, -1
-   r(j) = (r(j) - u%up(j) * r(j+1)) / dnew(j)
-end do
-
-return
-END SUBROUTINE uz_thomas
-
-SUBROUTINE zz_thomas (lb, m, u, r)
-implicit none
-integer :: j
-integer, intent(in) :: m, lb
-type (zz_mat_comp), intent(in) :: u
-double precision, intent(inout) :: r(lb:m)
-double precision :: dnew(lb:m), aa = 0d0
-
-dnew = u%di
-do j = lb+1, m
-   aa = -u%lo(j) / dnew(j-1)
-   dnew(j) = dnew(j) + aa * u%up(j-1)
-   r(j) = r(j) + aa * r(j-1)
-end do
-
-r(m) = r(m) / dnew(m)
-
-do j = m-1, lb, -1
-   r(j) = (r(j) - u%up(j) * r(j+1)) / dnew(j)
-end do
-
-return
-END SUBROUTINE zz_thomas
 
 SUBROUTINE get_timestep()
 use parameters

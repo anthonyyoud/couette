@@ -75,11 +75,11 @@ do k = 1, nz-1
 end do
 
 if (present(f0z)) then
-   f0z(1:nx-1,0) = 0d0
+   f0z(1:nx-1,0) = -f(1:nx1,2) + 4d0 * f(1:nx1,1) - 3d0 * f(1:nx1,0)
 end if
 
 if (present(f1z)) then
-   f1z(1:nx-1,nz) = 0d0
+   f1z(1:nx-1,nz) = f(1:nx1,nz-2) - 4d0 * f(1:nx1,nz1) + 3d0 * f(1:nx1,nz)
 end if
 
 return
@@ -99,11 +99,13 @@ do k = 1, nz-1
 end do
 
 if (present(f0zz)) then
-   f0zz(1:nx-1,0) = 2d0 * f(1:nx-1,1) - 2d0 * f(1:nx-1,0)
+   f0zz(1:nx-1,0) = -f(1:nx1,3) + 4d0 * f(1:nx1,2) - &
+                     5d0 * f(1:nx1,1) + 2d0 * f(1:nx1,0)
 end if
 
 if (present(f1zz)) then
-   f1zz(1:nx-1,nz) = -2d0 * f(1:nx-1,nz) + 2d0 * f(1:nx-1,nz-1)
+   f1zz(1:nx-1,nz) = -f(1:nx1,nz-3) + 4d0 * f(1:nx1,nz-2) - &
+                      5d0 * f(1:nx1,nz1) + 2d0 * f(1:nx1,nz)
 end if
 
 return

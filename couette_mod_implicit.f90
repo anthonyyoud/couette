@@ -304,13 +304,8 @@ call deriv_z(uo, uo_z)
 call deriv_z(uo2, uo2_z)
 call deriv_x(po, po_x)
 call deriv_x(po2, po2_x)
-call deriv_z(po, po_z)
-call deriv_z(po2, po2_z)
-
-po_0z(1:nx1,0) = 4d0 * po(1:nx1,1) - po(1:nx1,2)
-po_1z(1:nx1,nz) = po(1:nx1,nz-2) - 4d0 * po(1:nx1,nz1)
-po2_0z(1:nx1,0) = 4d0 * po2(1:nx1,1) - po2(1:nx1,2)
-po2_1z(1:nx1,nz) = po2(1:nx1,nz-2) - 4d0 * po2(1:nx1,nz1)
+call deriv_z(po, po_z, po_0z, po_1z)
+call deriv_z(po2, po2_z, po2_0z, po2_1z)
 
 do j = 1, nx1
    u_nl_n(j,1:nz1) = 1d0*( (-rx / (8d0 * s(j) * delz)) * &
@@ -438,7 +433,7 @@ do k = 0, nz
    ux_rhs(nx1) = ux_rhs(nx1) + (0.5d0 * rxx * uo(nx,k)) + &
                (((1d0 - eta) * rx) / (4d0 * s(nx1))) * uo(nx,k)
 
-   call thomas(xlb, nx1, ux, ux_rhs)
+   call thomas(xlb, nx1, ux%up, ux%di, ux%lo, ux_rhs)
 
    uo(1:nx1,k) = ux_rhs(:)
 end do
@@ -468,7 +463,7 @@ do k = 1, nz1
    zx_rhs(nx1) = zx_rhs(nx1) + (0.5d0 * rxx * zo(nx,k)) + &
                ((3d0 * (1d0 - eta) * rx) / (4d0 * s(nx1))) * zo(nx,k)
 
-   call thomas(xlb, nx1, zx, zx_rhs)
+   call thomas(xlb, nx1, zx%up, zx%di, zx%lo, zx_rhs)
 
    zo(1:nx1,k) = zx_rhs(:)
 end do
@@ -490,7 +485,7 @@ integer :: j, k
 do j = 1, nx1
    uz_rhs(:) = uo(j,:)
    
-   call uz_thomas(zlb, nz, uz, uz_rhs)
+   call thomas(zlb, nz, uz%up, uz%di, uz%lo, uz_rhs)
 
    u(j,:) = uz_rhs(:)
 end do
@@ -517,7 +512,7 @@ do j = 1, nx1
    Zz_rhs(1) = Zz_rhs(1) + 0.5d0 * rzz * zn(j,0)
    Zz_rhs(nz1) = Zz_rhs(nz1) + 0.5d0 * rzz * zn(j,nz)
 
-   call zz_thomas(zlb+1, nz1, zz, Zz_rhs)
+   call thomas(zlb+1, nz1, zz%up, zz%di, zz%lo, Zz_rhs)
 
    zn(j,1:nz1) = Zz_rhs(:)
 end do

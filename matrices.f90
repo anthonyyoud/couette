@@ -34,69 +34,6 @@ zz%up(:) = -0.5d0 * rzz
 return
 END SUBROUTINE matrix_setup
 
-!SUBROUTINE A_mat_setup(A, s)
-!use parameters
-!implicit none
-
-!double precision, intent(in) :: s(0:nx)
-!!double precision, intent(out) :: AB(2*nx1+nx1+1,nx1*nz1)
-!double precision, intent(out) :: A(nx1*nz1,nx1*nz1) != 0d0
-!double precision :: alp(0:nx), gam(0:nx)
-!double precision :: beta, delta
-!integer :: j, k
-
-!!open (60, file = 'A_mat.dat')
-
-!alp(:) = dz2 + 0.5d0 * delx * dz2 * (1d0 - eta) / s(:)
-!gam(:) = dz2 - 0.5d0 * delx * dz2 * (1d0 - eta) / s(:)
-!beta = -2d0 * (dz2 + dx2)
-!delta = dx2
-
-!do j = 1, nx1*nz1
-!   A(j,j) = beta
-!end do
-
-!do j = 1, nx1*nz1-1
-!   A(j,j+1) = gam(mod(j, nx1))
-!end do
-
-!do j = nx1, nx1*nz1-nx1, nx1
-!!do j = nx1, nx*nx1, nx1
-!   A(j,j+1) = 0d0
-!end do
-
-!do j = 2, nx1*nz1
-!   A(j,j-1) = alp(mod(j-1, nx1) + 1)
-!end do
-
-!do j = nx, nx1*nz1-nx1+1, nx1
-!!do j = nx, nx*nx1+1, nx1
-!   A(j,j-1) = 0d0
-!end do
-
-!do j = 1, nx1*nz1-nx1
-!!do j = 1, nx*nx1
-!   A(j,j+nx1) = delta
-!end do
-
-!do j = nx, nx1*nz1
-!   A(j,j-nx1) = delta
-!end do
-
-!!write(60, '(21e17.9)') ((A(j,k), k = 1, nx1*nz1), j = 1, nx1*nz1)
-
-!!call AB_mat_setup(AB, A)
-
-!!do k = 1, nx1*nz1
-!!   do j = max(1, k-nx1), min(nx1*nz1, k+nx1)
-!!      AB(2*nx1+1+j-k,k) = A(j,k)
-!!   end do
-!!end do
-
-!!close (60)
-
-!END SUBROUTINE A_mat_setup
-
 SUBROUTINE ABC_mat_setup(AB, IPIV, s)
 use parameters
 implicit none
@@ -115,37 +52,30 @@ delta = dx2
 
 do j = 1, nx1*nz1
    AB(2*nx1+1,j) = beta
-   !A(j,j) = beta
 end do
 
 do j = 1, nx1*nz1-1
    AB(2*nx1,j+1) = gam(mod(j, nx1))
-   !A(j,j+1) = gam(mod(j, nx1))
 end do
 
 do j = nx1, nx1*nz1-nx1, nx1
    AB(2*nx1,j+1) = 0d0
-   !A(j,j+1) = 0d0
 end do
 
 do j = 2, nx1*nz1
    AB(2*nx1+2,j-1) = alp(mod(j-1, nx1) + 1)
-   !A(j,j-1) = alp(mod(j-1, nx1) + 1)
 end do
 
 do j = nx, nx1*nz1-nx1+1, nx1
    AB(2*nx1+2,j-1) = 0d0
-   !A(j,j-1) = 0d0
 end do
 
 do j = 1, nx1*nz1-nx1
    AB(2*nx1+1-nx1,j+nx1) = delta
-   !A(j,j+nx1) = delta
 end do
 
 do j = nx, nx1*nz1
    AB(2*nx1+1+nx1,j-nx1) = delta
-   !A(j,j-nx1) = delta
 end do
 
 call DGBTRF(nx1*nz1, nx1*nz1, nx1, nx1, AB, 2*nx1+nx1+1, IPIV, info)
@@ -156,26 +86,5 @@ call DGBTRF(nx1*nz1, nx1*nz1, nx1, nx1, AB, 2*nx1+nx1+1, IPIV, info)
 
 return
 END SUBROUTINE ABC_mat_setup
-
-!SUBROUTINE AB_mat_setup(A, AB)
-!use parameters
-!implicit none
-
-!double precision, intent(in) :: A(nx1*nz1,nx1*nz1)
-!double precision, intent(out) :: AB(2*nx1+nx1+1,nx1*nz1)
-!integer :: j, k
-
-!do k = 1, nx1*nz1
-!   do j = max(1, k-nx1), min(nx1*nz1, k+nx1)
-!      AB(2*nx1+1+j-k,k) = A(j,k)
-!   end do
-!end do
-
-!open (60, file = 'AB_mat.dat')
-!write(60, '(741e17.9)') ((AB(j,k), k = 1, nx1*nz1), j = 1, 2*nx1+nx1+1)
-!close (60)
-
-!return
-!END SUBROUTINE AB_mat_setup
 
 END MODULE matrices
