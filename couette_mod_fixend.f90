@@ -168,7 +168,9 @@ pold = pnew
 if (mod(p, save_rate) == 0) then
    call r_vel(pold, s, vr, vz)
    call save_torque(t, uold)
-   call save_growth(t, vr, vr2, vz, pold, uold, zold)
+   if (p /= save_rate) then
+      call save_growth(t, vr, vr2, vz, pold, uold, zold)
+   end if
 end if
 
 vr2 = vr

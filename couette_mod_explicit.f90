@@ -110,7 +110,9 @@ end if
 if (mod(p, save_rate) == 0) then
    call r_vel(pnew, s, vr, vz)
    call save_torque(t, unew)
-   call save_growth(t, vr, vr2, vz, pnew, unew, znew)
+   if (p /= save_rate) then
+      call save_growth(t, vr, vr2, vz, pnew, unew, znew)
+   end if
 end if
 
 vr2 = vr

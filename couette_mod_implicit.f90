@@ -20,7 +20,7 @@ unew(0:nx,0:nz), uold(0:nx,0:nz), uold2(0:nx,0:nz), u_int(0:nx,0:nz), &
 znew(0:nx,0:nz), zold(0:nx,0:nz), zold2(0:nx,0:nz), z_int(0:nx,0:nz), &
 pnew(0:nx,0:nz), pold(0:nx,0:nz), pold2(0:nx,0:nz), &
 vr(0:nx,0:nz), vz(0:nx,0:nz), &
-vc(0:nx), vc_(0:nx), vr2(0:nx,0:nz) = 0d0, &
+vc(0:nx), vc_(0:nx), vr2(0:nx,0:nz) = 1d0, &
 AB(2*nx1+nx1+1,nx1*nz1), F(0:nx) !, A_mat(nx1*nz1,nx1*nz1)
 integer :: pivot(nx1*nz1)
 
@@ -168,7 +168,9 @@ pold = pnew
 if (mod(p, save_rate) == 0) then
    call r_vel(pold, s, vr, vz)
    call save_torque(t, uold)
-   call save_growth(t, vr, vr2, vz, pold, uold, zold)
+   if (p /= save_rate) then
+      call save_growth(t, vr, vr2, vz, pold, uold, zold)
+   end if
 end if
 
 vr2 = vr
