@@ -2,7 +2,10 @@ MODULE ic_bc
 use parameters
 implicit none
 
-double precision :: x(0:nx), x_(0:nx), th(0:nt), z(0:nz), s(0:nx) 
+private
+public :: get_xzs, ICS, u_BCS, z_BCS, p_BCS, b_BCS, j_BCS
+
+double precision, public :: x(0:nx), x_(0:nx), th(0:nt), z(0:nz), s(0:nx) 
                                                 !finite-difference mesh
                                                 !s=eta+(1-eta)*x
 contains

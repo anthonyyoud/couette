@@ -3,12 +3,15 @@ MODULE stream
 !for the current in current.f90
 implicit none
 
+private
+public :: p_poisson
+
 contains
 
 SUBROUTINE p_poisson(Z_mat, psi, p_mat, desc_p, af)
 !Solve Poisson equation for the stream-function, psi for all tau
 use parameters
-use ic_bc
+use ic_bc, only : p_BCS, s
 implicit none
 
 integer :: desc_z(7)

@@ -3,12 +3,15 @@ MODULE magnetic
 !for the current in current.f90
 implicit none
 
+private
+public :: b_poisson, fin_b_poisson
+
 contains
 
 SUBROUTINE b_poisson(u_mat, bn, b_mat, desc_b, af)
 !Solve Poisson equation for azimuthal magnetic field when tau=0
 use parameters
-use ic_bc
+use ic_bc, only : b_BCS
 implicit none
 
 integer :: desc_u(7)
@@ -77,8 +80,7 @@ END SUBROUTINE b_poisson
 SUBROUTINE fin_b_poisson(u_mat, bn, b_mat, desc_b, af)
 !Solve Poisson equation for azimuthal magnetic field when tau/=0
 use parameters
-use ic_bc
-use derivs
+use derivs, only : deriv_z
 implicit none
 
 integer :: desc_u(7)

@@ -1,6 +1,9 @@
 MODULE derivs
 implicit none
 
+private
+public :: deriv_x, deriv_z, deriv_xx, deriv_zz
+
 contains
 
 SUBROUTINE deriv_x(f, fx)

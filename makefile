@@ -2,14 +2,23 @@ OUTDIR		= ./
 OBJECTS		= parameters.o ic_bc.o variables.o derivs.o stream.o \
                   variables.o magnetic.o current.o matrices.o io.o linear.o \
                   nonlinear.o solve.o couette_mod.o
-COMPFLAGS	= -O3 -w95 -tpp7 -xW -unroll #-parallel
-#COMPFLAGS	= -d0 -CA -CB -CS -CU -CV
-LINKFLAGS	= #-static
+FFLAGS	        = -pthread -O3 -w95 -tpp7 -xW -unroll -vec_report0 #-parallel
+#FFLAGS	        = -d0 -CA -CB -CS -CU -CV
+LINKFLAGS	= -static
 TYPE            = implicit
-LIBS            = -L $(HOME)/lib -lscalapack_ref -lblacsF77init_MPI-LINUX-0 \
-                  -lblacs_MPI-LINUX-0 -lblacsCinit_MPI-LINUX-0 -lblas_ref
-COMPILER	= mpif77
+#COMPILER	= mpif77
+COMPILER	= ifort
+MPIHOME         = $(HOME)/LAM
+INCMPI          = -I$(MPIHOME)/include 
 
+LDMPI           = -L$(MPIHOME)/lib -llammpio -llamf77mpi -lmpi -llam -lutil
+LDBLAS          = -lblas_ref_ifc8 
+LDSCALA         = -lscalapack_ref
+LDBLACS         = -lblacsF77init_MPI-LINUX-0 -lblacs_MPI-LINUX-0 \
+                  -lblacsCinit_MPI-LINUX-0
+
+LIBS            = -L$(HOME)/lib/tmp $(LDSCALA) $(LDBLACS) $(LDBLAS) $(LDMPI)
+COMPFLAGS       = $(INCMPI) $(FFLAGS) 
 #-----------------------------------------------------------------------
 all:	$(OBJECTS)
 	$(COMPILER) $(COMPFLAGS) $(LINKFLAGS) -o\

@@ -8,10 +8,10 @@ integer, parameter :: npcol = 1
 
 double precision, parameter :: pi 	   = 3.14159265358979d0
 double precision, parameter :: alpha 	   = 0d0 !3.13d0
-double precision, parameter :: gamma 	   = 0.97d0 !(2d0 * pi) / alpha
+double precision, parameter :: gamma 	   = 1d0 !(2d0 * pi) / alpha
 double precision, parameter :: eta 	   = 0.5d0
-double precision, parameter :: Q	   = 0d0
-double precision, parameter :: Re1 	   = 770d0
+double precision, parameter :: Q	   = 10d0
+double precision, parameter :: Re1 	   = 650d0
 double precision, parameter :: Re2 	   = 0d0 !-1d0*(1d0/eta)*Re1
 double precision, parameter :: Re1_mod 	   = 0d0
 double precision, parameter :: Re2_mod 	   = 0d0

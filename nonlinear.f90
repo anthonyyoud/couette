@@ -1,6 +1,9 @@
 MODULE nonlinear
 implicit none
 
+private
+public :: get_nlin_ux, get_nlin_Zx
+
 contains
 
 SUBROUTINE get_nlin_ux(uo, uo2, po, po2, bo, bo2, u_nl_n)
@@ -8,7 +11,7 @@ SUBROUTINE get_nlin_ux(uo, uo2, po, po2, bo, bo2, u_nl_n)
 use parameters
 use variables
 use derivs
-use ic_bc 
+use ic_bc, only : s 
 implicit none
 double precision, intent(in) :: uo(0:nx,0:nz), uo2(0:nx,0:nz), &
                                 po(0:nx,0:nz), po2(0:nx,0:nz), &
@@ -70,7 +73,7 @@ SUBROUTINE get_nlin_Zx(t, uo, uo2, po, po2, zo, zo2, jo, jo2, z_nl_n)
 use parameters
 use variables
 use derivs
-use ic_bc
+use ic_bc, only : s
 implicit none
 double precision, intent(in) :: t, uo(0:nx,0:nz), uo2(0:nx,0:nz), &
                                 po(0:nx,0:nz), po2(0:nx,0:nz), &

@@ -1,13 +1,16 @@
 MODULE solve
 implicit none
 
+private
+public :: solve_ux, solve_uz, solve_Zx, solve_Zz
+
 contains
 
 SUBROUTINE solve_ux(uo, u, u_nl, t, ux)
 !Solve for the azimuthal velocity field in the x-direction
 use parameters
 use variables
-use ic_bc
+use ic_bc, only : u_BCS, s
 implicit none
 double precision, intent(in) :: t
 double precision, intent(in) :: u(0:nx,0:nz), u_nl(0:nx,0:nz)
@@ -53,7 +56,7 @@ SUBROUTINE solve_Zx(zo, zn, z_nl, po, t, zx)
 !Solve for the azimuthal vorticity in the x-direction
 use parameters
 use variables
-use ic_bc
+use ic_bc, only : z_BCS, s
 implicit none
 double precision, intent(in) :: t
 double precision, intent(in) :: zn(0:nx,0:nz), po(0:nx,0:nz), &
@@ -85,7 +88,7 @@ SUBROUTINE solve_uz(uo, u, t, uz)
 !Solve for azimuthal velocity in z-direction to give full solution
 use parameters
 use variables
-use ic_bc
+use ic_bc, only : u_BCS, s
 implicit none
 double precision, intent(in) :: t
 double precision, intent(in) :: uo(0:nx,0:nz)
@@ -129,7 +132,7 @@ SUBROUTINE solve_Zz(zo, po, zn, t, zz)
 !Solve for azimuthal vorticity in z-direction to give full solution
 use parameters
 use variables
-use ic_bc
+use ic_bc, only : z_BCS, s
 implicit none
 double precision, intent(in) :: t
 double precision, intent(in) :: zo(0:nx,0:nz), po(0:nx,0:nz)

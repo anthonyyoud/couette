@@ -1,6 +1,11 @@
 MODULE io
 implicit none
 
+private
+public :: open_files, close_files, save_xsect, save_3d, &
+          save_surface, write_data, terminate, save_run, &
+          end_state
+
 contains
 
 FUNCTION itos(n)
@@ -140,7 +145,7 @@ END SUBROUTINE save_torque
 SUBROUTINE save_xsect(ur, uz, pn, ut, zt, bt, jt, t, p)
 !Save cross-sections of fields for use in IDL
 use parameters
-use ic_bc
+use ic_bc, only : x, z
 implicit none
 
 integer, intent(in) :: p
@@ -167,12 +172,12 @@ write (32, '(e17.9)') (z(k), k = 0, nz)
 close (32)
 
 return
-END SUBROUTINE
+END SUBROUTINE save_xsect
 
 SUBROUTINE save_3d(u_r, u_t, u_z, pn, p)
 !Save 3D isosurface for use in OpenDX
 use parameters
-use ic_bc
+use ic_bc, only : x_, th, z
 implicit none
 
 integer, intent(in) :: p
@@ -217,8 +222,8 @@ END SUBROUTINE save_3d
 SUBROUTINE helicity(u_r, u_t, u_z, hel)
 !Calculate helicity u.(curl u)
 use parameters
-use ic_bc
-use derivs
+use ic_bc, only : s
+use derivs, only : deriv_x, deriv_z
 implicit none
 
 double precision, intent(in) :: u_r(0:nx,0:nz), u_t(0:nx,0:nz), u_z(0:nx,0:nz)
@@ -246,7 +251,7 @@ END SUBROUTINE helicity
 SUBROUTINE save_surface(pn, v, zn, ur, uz, bn, jn, p, t)
 !Save surfaces of fields for use in gnuplot
 use parameters
-use ic_bc
+use ic_bc, only : x, z
 implicit none
 
 integer, intent(in) :: p

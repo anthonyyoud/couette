@@ -1,6 +1,10 @@
 MODULE matrices
 implicit none
 
+private
+public :: matrix_setup, psi_mat_setup, b_mat_setup, fin_b_mat_setup, &
+          j_mat_setup, fin_j_mat_setup
+
 contains
 
 SUBROUTINE matrix_setup(ux, uz, zx, zz)
@@ -8,7 +12,7 @@ SUBROUTINE matrix_setup(ux, uz, zx, zz)
 !for the solution of the azimuthal velocity and vorticity equations
 use parameters
 use variables
-use ic_bc
+use ic_bc, only : s
 implicit none
 
 type (mat_comp), intent(out) :: ux, zx
@@ -44,7 +48,7 @@ END SUBROUTINE matrix_setup
 SUBROUTINE psi_mat_setup(p_mat, desc_p, af)
 !Setup of LHS matrix in solution of stream-function Poisson equation
 use parameters
-use ic_bc
+use ic_bc, only : s
 implicit none
 
 double precision :: alp(0:nx), gam(0:nx)
@@ -112,7 +116,7 @@ SUBROUTINE b_mat_setup(b_mat, desc_b, af)
 !Setup of LHS matrix in solution of magnetic Poisson equation.
 !Algorithm as for stream-function above.
 use parameters
-use ic_bc
+use ic_bc, only : s
 implicit none
 
 double precision :: alp(0:nx), beta(0:nx), gam(0:nx), delta
@@ -190,7 +194,7 @@ END SUBROUTINE b_mat_setup
 
 SUBROUTINE fin_b_mat_setup(b_mat, desc_b, af)
 use parameters
-use ic_bc
+use ic_bc, only : s
 implicit none
 
 double precision :: alp(0:nx), beta(0:nx), gam(0:nx), delta
@@ -319,7 +323,7 @@ END SUBROUTINE fin_b_mat_setup
 
 SUBROUTINE j_mat_setup(j_mat, desc_j, af)
 use parameters
-use ic_bc
+use ic_bc, only : s
 implicit none
 
 double precision :: alp(0:nx), beta(0:nx), gam(0:nx), delta
@@ -395,7 +399,7 @@ END SUBROUTINE j_mat_setup
 
 SUBROUTINE fin_j_mat_setup(j_mat, desc_j, af)
 use parameters
-use ic_bc
+use ic_bc, only : s
 implicit none
 
 double precision :: alp(0:nx), beta(0:nx), gam(0:nx), delta

@@ -1,6 +1,9 @@
 MODULE linear
 implicit none
 
+private
+public :: get_rhs_ux, get_rhs_Zx
+
 contains
 
 SUBROUTINE get_rhs_ux(uo, u)
@@ -8,7 +11,7 @@ SUBROUTINE get_rhs_ux(uo, u)
 use parameters
 use variables
 use derivs
-use ic_bc
+use ic_bc, only : s
 implicit none
 
 double precision, intent(in) :: uo(0:nx,0:nz)
@@ -47,7 +50,7 @@ SUBROUTINE get_rhs_Zx(zo, zn)
 use parameters
 use variables
 use derivs
-use ic_bc
+use ic_bc, only : s
 implicit none
 double precision, intent(in) :: zo(0:nx,0:nz)
 double precision, intent(out) :: zn(0:nx,0:nz)

@@ -1,13 +1,16 @@
 MODULE current 
 implicit none
 
+private
+public :: j_poisson, fin_j_poisson
+
 contains
 
 SUBROUTINE j_poisson(p_mat, jn, j_mat, desc_j, af)
 !Solve Poisson equation for the azimuthal current when tau/=1
 use parameters
 use variables
-use ic_bc
+use ic_bc, only : j_BCS, s
 use derivs
 implicit none
 
@@ -102,7 +105,7 @@ SUBROUTINE fin_j_poisson(p_mat, jn, j_mat, desc_j, af)
 !Algorithm as above but indices change to reflect different dimensions.
 use parameters
 use variables
-use ic_bc
+use ic_bc, only : j_BCS, s
 use derivs
 implicit none
 
