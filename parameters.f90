@@ -3,18 +3,18 @@ implicit none
 save
 
 double precision, parameter :: pi = 3.14159265358979d0
-double precision, parameter :: alpha = 3.90d0
+double precision, parameter :: alpha = 3.163d0
 double precision, parameter :: gamma = (2d0 * pi) / alpha
 double precision, parameter :: eta = 0.5d0
-double precision, parameter :: Re1 = 0d0
+double precision, parameter :: Re1 = 150d0
 double precision, parameter :: Re2 = 0d0
-double precision, parameter :: Re1_mod = 119d0
+double precision, parameter :: Re1_mod = 0d0
 double precision, parameter :: Re2_mod = 0d0
-double precision, parameter :: om1 = 4d0
+double precision, parameter :: om1 = 0d0
 double precision, parameter :: om2 = 0d0
 double precision, parameter :: dt = 0.0001d0
-double precision, parameter :: seed = 1d-8
-integer, parameter :: Ntot = 50000
+double precision, parameter :: seed = 1d-1
+integer, parameter :: Ntot = 100000
 integer, parameter :: Nlim = 100000
 integer, parameter :: save_rate = 100
 integer, parameter :: save_rate_2 = 200

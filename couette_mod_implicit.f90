@@ -217,8 +217,8 @@ if (restart) then
 
 else
    u(:,:nz/2) = seed
-   u(:,nz/2+1:nz) = -seed
-   pn(:,:nz/2) = -seed
+   u(:,nz/2+1:nz) = seed
+   pn(:,:nz/2) = -seed 
    pn(:,nz/2+1:nz) = seed
 end if
 
@@ -246,8 +246,6 @@ double precision, intent(in) :: t, pn(0:nx,0:nz)
 
 zn(0,:) = -(8d0 * pn(1,:) - pn(2,:)) / (2d0 * (eta**2) * dx2)
 zn(nx,:) = -(8d0 * pn(nx1,:) - pn(nx-2,:)) / (2d0 * dx2)
-!zn(0,:) = -(2d0 * pn(1,:)) / ((eta**2) * dx2)
-!zn(nx,:) = -(2d0 * pn(nx1,:)) / dx2
 
 zn(:,0) = 0d0 
 zn(:,nz) = 0d0 
