@@ -244,8 +244,10 @@ implicit none
 double precision, intent(out) :: zn(0:nx,0:nz)
 double precision, intent(in) :: t, pn(0:nx,0:nz)
 
-zn(0,:) = -(2d0 * pn(1,:)) / ((eta**2) * dx2)
-zn(nx,:) = -(2d0 * pn(nx1,:)) / dx2
+zn(0,:) = -(8d0 * pn(1,:) - pn(2,:)) / (2d0 * (eta**2) * dx2)
+zn(nx,:) = -(8d0 * pn(nx1,:) - pn(nx-2,:)) / (2d0 * dx2)
+!zn(0,:) = -(2d0 * pn(1,:)) / ((eta**2) * dx2)
+!zn(nx,:) = -(2d0 * pn(nx1,:)) / dx2
 
 zn(:,0) = 0d0 
 zn(:,nz) = 0d0 
