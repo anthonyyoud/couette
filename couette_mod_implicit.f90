@@ -24,8 +24,8 @@ double precision :: growth_rate, t = 0d0, &
                     vz(0:nx,0:nz), vzold(0:nx,0:nz) = 0d0, &
                     p_mat(2*nx1+nx1+1,nx1*nz1), & 
                     b_mat(2*nxp1+nxp1+1,0:nxp1*nz1-1), & 
-                    j_mat(2*nx1+nx1+1,nx1*nz1) 
-integer :: p_pivot(nx1*nz1), b_pivot(nxp1*nz1), j_pivot(nx1*nz1), &
+                    j_mat(2*nx1+nx1+1,nx1*nzp1) 
+integer :: p_pivot(nx1*nz1), b_pivot(nxp1*nz1), j_pivot(nx1*nzp1), &
            j, k, p = 0, p_start = 0
 logical :: run_exist, state_exist, save_exist
 
@@ -308,8 +308,8 @@ do j = 1, nx1
                  ((1d0 - eta) * rz / (4d0 * s(j)**2)) * &
                  (3d0 * uo(j,1:nz1) * dp%z(j,1:nz1) - &
                  uo2(j,1:nz1) * dp2%z(j,1:nz1)) + &
-                 0.25d0 * Q * (3d0 * db%z(j,1:nz1) - &
-                 db2%z(j,1:nz1)) / delz
+                 0.25d0 * rz * Q * (3d0 * db%z(j,1:nz1) - &
+                 db2%z(j,1:nz1))
 end do
 
 if (tau /= 1) then
@@ -320,7 +320,7 @@ if (tau /= 1) then
                  ((1d0 - eta) * rz / (4d0 * s(j)**2)) * &
                  (3d0 * uo(j,0) * dp%z(j,0) - &
                  uo2(j,0) * dp2%z(j,0)) + &
-                 0.25d0 * Q * (3d0 * db%z(j,0) - db2%z(j,0)) / delz
+                 0.25d0 * rz * Q * (3d0 * db%z(j,0) - db2%z(j,0))
 
    u_nl_n(j,nz) = (-rx / (8d0 * s(j) * delz)) * &
                   (-3d0 * dp%z(j,nz) * du%x(j,nz) + &
@@ -328,7 +328,7 @@ if (tau /= 1) then
                   ((1d0 - eta) * rz / (4d0 * s(j)**2)) * &
                   (3d0 * uo(j,nz) * dp%z(j,nz) - &
                   uo2(j,nz) * dp2%z(j,nz)) + &
-                  0.25d0 * Q * (3d0 * db%z(j,nz) - db2%z(j,nz)) / delz
+                  0.25d0 * rz * Q * (3d0 * db%z(j,nz) - db2%z(j,nz))
    end do
 end if
 
@@ -399,8 +399,8 @@ do j = 1, nx1
                  dp%z(j,1:nz1) * dz%x(j,1:nz1))) - &
                  (dp2%x(j,1:nz1) * dz_2%z(j,1:nz1) - &
                  dp2%z(j,1:nz1) * dz_2%x(j,1:nz1))) + &
-                 0.25d0 * Q * (3d0 * dj%z(j,1:nz1) - &
-                 dj2%z(j,1:nz1)) / delz
+                 0.25d0 * rz * Q * (3d0 * dj%z(j,1:nz1) - &
+                 dj2%z(j,1:nz1))
 end do
 
 return

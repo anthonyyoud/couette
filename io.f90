@@ -115,7 +115,7 @@ zpos = nz/2
 write(20, '(11e17.9)') t, ur(nx/2,nz/2), ur(nx/2,0), growth, &
                       uz(xpos,zpos), &
                       pn(nx/4,3*nz/4), v(nx/2,nz/2), &
-                      zn(nx/2,nz/4), bn(nx/2,nz/2), jn(nx/2,nz/2), &
+                      zn(nx/2,nz/4), bn(nx/2,nz/4), jn(nx/2,nz/2), &
                       Re1 + Re1_mod * dcos(om1 * t)
 
 if (maxval(ur) > max_ur) then
