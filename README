@@ -96,7 +96,7 @@ npcol		- As above but for the number of process columns.  This can
                   guarantee a faster version of the code than the standard
                   serial version.  The matrix orders must be large before
                   any speedup (over a parallel 1-CPU run) is observed in a 
-                  multi-CPU run.  See important note below.
+                  multi-CPU run.
 
 nb		- The 'blocking factor' to use when distributing the matrices
                   over the process grid.  See the ScaLAPACK documentation for
@@ -140,11 +140,10 @@ tau_step	- For steady case, how much tau should be increased
 
 tau_end		- For steady case, the final value of tau desired.
 
-nx		- Number of radial grid points.  20 seems adequate for 
-		  most runs.
+nx		- Number of radial grid points.
 
 nz		- Number of axial grid points.  For infinite 2*nx is 
-		  good.  For finite gamma*nx is usually required for 
+		  sufficient.  For finite gamma*nx is usually required for 
 		  full resolution.
 
 save_rate	- After how many time-steps should velocities be saved?
@@ -179,10 +178,6 @@ x_par_pos	- Initial radial position of a particle in the fluid as
 
 z_par_pos	- Initial axial position of a particle in the fluid as a 
 		  fraction of gamma (finite) or alpha (infinite).
-
-NOTE
-----
-As all of the parallelism goes into solving the Poisson equations (which is what I set out to parallelise), the azimuthal velocity and vorticity are solved on one process only.  Unfortunately, it is only the left hand side matrices that are distributed over all processses.  The fields themselves are not distributed over all processes.  Since some of these fields are required as the right hand sides of the Poisson equations, all processes must have access to them.  Consequently, they must be copied to all processes using auxilliary BLACS routines.  A similar situation arises once the distributed system has been solved, where the right hand sides must then be collected onto one process only; this involves a call to a 'sum' routine.  The upshot of this is that the overhead involved in these calls completely outweighs the parallelism, and the scalability is atrocious.  This will not be resolved until the whole of the program is parallel, which requires a huge amount of work, as every vector and matrix will have to be distributed over all processes.  Because of this, npcol should be set to 1, which while defeating the purpose of a parallel code, at least gives a marked speedup over a serial code.
 
 RUN_SCRIPT.sh
 -------------
@@ -279,6 +274,14 @@ The file 'nodes.dat' in the run directory will tell you on which nodes the job i
 
 'qstat' will tell you on which node the job was submitted and subsequently distributed, and also the job ID.  All files are copied back to the directory <submit-directory>/$JOB-ID when the job is finished.
 
+If the file 'SAVE' is present in the run directory, the program will note this and output data files for contours and surfaces at that time.  Once the data files are output 'SAVE' is removed.  This can be done at any time and as many times as desired during the run.
+
+Any run should be cleanly stopped by removing the empty file 'RUNNING' which is
+present in the run directory once the job has started.  This avoids having to
+use Ctrl-C to interrupt the program.  Using this procedure will ensure that all
+run-time files are cleaned up and unneeded directories removed.  It also
+ensures that the lam-mpi daemon is halted.
+
 OUTPUT FILES
 ------------
 end_state.dat	- Saves time index, p, time-step, dt, and fields u, Z, 
@@ -342,4 +345,4 @@ run******.log	- Info file; showing the number of processes which the job
                   statement is repeated for all processes).  Any error
                   messages will also be shown here.  Finally, the total time
                   for the job to complete is shown.
-12/07/2004
+16/11/2004

@@ -48,6 +48,8 @@ else
    lamhalt
 fi
 rm $EXE
+bzip2 -9 `find $RUN_DIR/ -type f ! -iname "end_state.dat" \
+                                 ! -iname "parameters.f90"`
 cp -r $RUN_DIR/* $DATA_DIR/$JOB_ID/
 mv $DATA_DIR/run$JOB_ID.log $DATA_DIR/$JOB_ID/
 if [ $SERIAL == 0 ]; then

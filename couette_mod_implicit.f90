@@ -44,6 +44,8 @@ if (mycol == 0) then
    print*, 'Setting up ICS...'
 end if
 
+!call BLACS_BARRIER(ictxt, 'A')  !wait until all processes get here
+
 call get_xzs()   !get finite-difference mesh
 
 if (mycol == 0) then                                            !initial
@@ -63,6 +65,8 @@ if (mycol == 0) then                                            !initial
    end if
    print*, 'Allocating matrix dimensions'
 end if
+
+!call BLACS_BARRIER(ictxt, 'A')  !wait until all processes get here
 
 call SLTIMER(1)
 if (tau == 0d0) then
@@ -131,6 +135,7 @@ if (mycol == 0) then
 end if
 
 do p = p_start, Ntot        !start main time loop
+!   call BLACS_BARRIER(ictxt, 'A')  !wait until all processes get here
    call terminate(p, t)     !loop terminates if file 'RUNNING'
                             !does not exist in run directory
    if (mycol == 0) then
@@ -206,14 +211,20 @@ do p = p_start, Ntot        !start main time loop
       call b_BCS(bt%new)   !update boundary conditions
       call j_BCS(jt%new)
    end if
+   
+   call BLACS_BARRIER(ictxt, 'A')  !wait until all processes get here
 
    call SLTIMER(4)
 !broadcast u and Z to other processes for use as RHS in Poisson equations
    if (npcol > 1) then
+!print*,mycol,'start'
       call DGEBR2D(ictxt, 'A', ' ', nxp1, nzp1, zt%new, nxp1, 0, 0)
       call DGEBR2D(ictxt, 'A', ' ', nxp1, nzp1, ut%new, nxp1, 0, 0)
+!print*,mycol,'end'
    end if
    call SLTIMER(4)
+
+   call BLACS_BARRIER(ictxt, 'A')  !wait until all processes get here
 
    call SLTIMER(5)
 !solve Poisson equations depending on tau
@@ -243,22 +254,20 @@ do p = p_start, Ntot        !start main time loop
    end if
 end do   !end time loop
 
-if (mycol == 0) then
-  deallocate(p_mat, b_mat, j_mat)   !deallocate allocated arrays
-end if
+deallocate(p_mat, b_mat, j_mat)   !deallocate allocated arrays
 
 if (mycol == 0) then
    call close_files()   !close runtime files
 end if
 
 if (mycol == 0) then
-   write(6,*) 'proc setup end_proc matrices solve p_sum j_sum j_copy b_sum'
+   write(6,*) 'proc setup end_proc broadcast solve p_sum j_sum b_sum j_copy'
 end if
-write(6,'(i3,8f9.4)') mycol, SLINQUIRE('W', 2), &
+write(6,'(i2,8f9.2)') mycol, SLINQUIRE('W', 2), &
                       SLINQUIRE('W', 3), SLINQUIRE('W', 4), &
                       SLINQUIRE('W', 5), SLINQUIRE('W', 6), &
-                      SLINQUIRE('W', 7), SLINQUIRE('W', 9), &
-                      SLINQUIRE('W', 8)
+                      SLINQUIRE('W', 7), SLINQUIRE('W', 8), &
+                      SLINQUIRE('W', 9)
 
 call BLACS_BARRIER(ictxt, 'A')  !wait until all processes get here
 call BLACS_GRIDEXIT(ictxt)   !release current process grid

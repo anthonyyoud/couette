@@ -77,7 +77,7 @@ growth_vz = log(abs(uz(nx/2,nz/2)/uz_prev(nx/2,nz/2))) / (dt * save_rate)
 xpos = nx/2
 zpos = nz/2   !position at which to save fields
 
-write(20, '(12e17.9)') t, ur(nx/2,nz/2), ur(nx/2,0), growth, growth_vz, &
+write(20, '(12e17.9)') t, ur(nx/2,nz/2), ur(nx/2,nz*2/gamma), growth, growth_vz, &
                       uz(xpos,zpos), &
                       pn(nx/4,3*nz/4), v(nx/2,nz/2), &
                       zn(nx/2,nz/4), bn(nx/2,nz/4), jn(nx/2,nz/2), &
