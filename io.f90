@@ -109,7 +109,10 @@ double precision, intent(in) :: t, ur(0:nx,0:nz), uz(0:nx,0:nz), &
                                 z(0:nx,0:nz), ur_prev(0:nx,0:nz)
 double precision :: growth = 0d0
 
-growth = log(ur(nx/2,nz/2)/ur_prev(nx/2,nz/2)) / (dt * save_rate)
+if ((Re1_mod == 0d0) .and. (Re2_mod == 0d0) .and. &
+    (om1 == 0d0) .and. (om2 == 0d0)) then
+   growth = log(ur(nx/2,nz/2)/ur_prev(nx/2,nz/2)) / (dt * save_rate)
+end if
 
 write(20, '(7e19.7)') t, ur(nx/2,nz/2), growth, uz(nx/4,nz/4), &
                       pn(nx/2,3*nz/4), v(nx/2,nz/2), &

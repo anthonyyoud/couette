@@ -32,6 +32,8 @@ if (tau == 0) then
    write(6, '(A7, f4.2, A21)') 'tau = ', tau, '- Infinite cylinder'
 else if (tau == 1) then
    write(6, '(A7, f4.2, A22)') 'tau = ', tau, '- Finite aspect ratio'
+else
+   write(6, '(A7, f4.2)') 'tau = ', tau
 end if   
 
 call open_files()
