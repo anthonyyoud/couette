@@ -1,7 +1,7 @@
 OUTDIR		= ./
 OBJECTS		= parameters.o pressure.o matrices.o \
                   derivs.o ccf.o io.o couette_mod.o
-COMPFLAGS	= -pg -O3 -c -w95 -tpp7 -xW #-parallel
+COMPFLAGS	= -O3 -c -w95 -tpp7 -xW #-parallel
 #COMPFLAGS	= -c -g -d0 -CA -CB #-CS -CU -CV
 TYPE            = implicit
 LIBS            = -L/home/pg/n8049290/Utilities/LAPACK \
@@ -10,7 +10,7 @@ COMPILER	= ifc
 
 #-----------------------------------------------------------------------
 all:	$(OBJECTS)
-	$(COMPILER) -pg -i_dynamic -O3 -w95 -tpp7 -xW -o\
+	$(COMPILER) -i_dynamic -O3 -w95 -tpp7 -xW -o\
         $(OUTDIR)couette_mod.out \
         $(OBJECTS) $(LIBS)
 

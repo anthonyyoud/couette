@@ -86,7 +86,7 @@ do p = p_start, Ntot
          call save_growth(t, vr, vrold, vz, pold, unew, znew, growth_rate)
          if ((Re1_mod == 0d0) .and. (Re2_mod == 0d0)) then
             if ((dabs(growth_rate) < 1d-8) .and. &
-                (dabs(vr(nx/2, nz/2)) > 1d+4)) then
+                (dabs(vr(nx/2, nz/2)) > 1d-3)) then
                 if ((.not. auto_tau) .or. (tau == tau_end)) then
                    call save_time_tau(tau, t)
                    call end_state(uold, zold, pold, p)
@@ -237,8 +237,8 @@ else
       !zn(:,:) = seed
    else
       do k = 0, nz
-         u(:,k) = seed * dsin(pi*x(:)) * dcos(alpha*z(k))
-         pn(:,k) = seed * dsin(pi*x(:)) * dsin(alpha*z(k))
+         u(:,k) = seed * dsin(pi*x(:)) * dcos(2d0*pi*z(k)/gamma)
+         pn(:,k) = seed * dsin(pi*x(:)) * dsin(2d0*pi**z(k)/gamma)
       end do
      
       do k = 1, nz1
@@ -250,7 +250,7 @@ else
                       (pn(j,k+1) - 2d0 * pn(j,k) + pn(j,k-1)) / &
                       (s(j)**2 * dz2)
         end do  
-     end do
+      end do
 
    end if
 end if

@@ -80,11 +80,11 @@ do p = p_start, Ntot
       if ((Re1 /= 0d0) .or. (Re2 /= 0d0)) then
          call save_torque(t, unew)
       end if
-      if (p /= p_start) then
+      if ((p /= p_start) .and. ((p - p_start) > save_rate)) then
          call save_growth(t, vr, vrold, vz, pold, unew, znew, growth_rate)
          if ((Re1_mod == 0d0) .and. (Re2_mod == 0d0)) then
             if ((dabs(growth_rate) < 1d-8) .and. &
-                (dabs(vr(nx/2, nz/2)) > 1d+4)) then
+                (dabs(vr(nx/2, nz/2)) > 1d-3)) then
                 if ((.not. auto_tau) .or. (tau == tau_end)) then
                    call save_time_tau(tau, t)
                    call end_state(uold, zold, pold, p)
@@ -243,7 +243,7 @@ else
                       (pn(j,k+1) - 2d0 * pn(j,k) + pn(j,k-1)) / &
                       (s(j)**2 * dz2)
         end do  
-     end do
+      end do
 
    end if
 end if
