@@ -27,9 +27,9 @@ if (tau /= 1) then
    uz%up(0) = -rzz
 end if
 
-zx%di(:) = 1d0 + rxx
-zx%lo(:) = -0.5d0 * rxx + (3d0 * (1d0 - eta) * rx) / (4d0 * s(2:nx-1))
-zx%up(:) = -0.5d0 * rxx - (3d0 * (1d0 - eta) * rx) / (4d0 * s(1:nx-2))
+zx%di(:) = 1d0 + rxx + (((1d0 - eta)**2) * dt) / (2d0 * s(1:nx-1)**2)
+zx%lo(:) = -0.5d0 * rxx + ((1d0 - eta) * rx) / (4d0 * s(2:nx-1))
+zx%up(:) = -0.5d0 * rxx - ((1d0 - eta) * rx) / (4d0 * s(1:nx-2))
 
 zz%di(:) = 1d0 + rzz
 zz%lo(:) = -0.5d0 * rzz

@@ -44,4 +44,4 @@ couette_mod.o : couette_mod_$(TYPE).f90
                                     couette_mod_$(TYPE).f90
 #-----------------------------------------------------------------------
 clean :
-	rm *.o *.mod *.d *.out *.pc *.pcl
+	rm -f *.o *.mod *.d *.out *.pc *.pcl

@@ -21,7 +21,7 @@ double precision :: growth_rate, &
                     vrold(0:nx,0:nz) = 0d0, &
                     vzold(0:nx,0:nz) = 0d0, AB(2*nx1+nx1+1,nx1*nz1) 
 integer :: pivot(nx1*nz1), j, k, p = 0, p_start = 0
-logical :: file_exist
+logical :: run_exist, state_exist, save_exist
 
 print*
 if (tau == 0) then
@@ -39,6 +39,10 @@ call get_xzs()
 call ICS(unew, znew, pnew, p_start)
 
 if (.not. restart) then
+   inquire(file='end_state.dat', exist=state_exist)
+   if (state_exist) then
+      STOP 'restart=.false. but end_state.dat exists.'
+   end if
    print*, 'Setting up BCS...'
    call u_BCS(unew, 0d0)
    call p_BCS(pnew)
@@ -63,7 +67,7 @@ print*, 'Entering time loop'
 !call get_timestep()
 
 do p = p_start, Ntot
-   inquire(file='RUNNING', exist=file_exist)
+   inquire(file='RUNNING', exist=run_exist)
    if (.not. file_exist) then
       print*, 'Stop requested'
       print*, 'Saving end state'
@@ -71,6 +75,14 @@ do p = p_start, Ntot
       call save_xsect(vr, vz, pold, t, p)
       call save_surface(pold, uold, zold, vr, vz, p, t)
       exit
+   end if
+
+   inquire(file='SAVE', exist=save_exist)
+   if (save_exist) then
+      call save_xsect(vr, vz, pold, p, t)
+      call save_surface(pold, uold, zold, vr, vz, p, t)
+      open (98, file = 'SAVE')
+      close (98, status = 'delete')
    end if
 
    t = p * dt
@@ -309,8 +321,9 @@ call deriv_zz(zo, dz%zz)
 
 do j = 1, nx1
    zn(j,1:nz1) = zo(j,1:nz1) + (0.5d0 * rxx * dz%xx(j,1:nz1)) + &
-                  ((3d0 * (1d0 - eta) * rx) / (4d0 * s(j))) * &
-                  dz%x(j,1:nz1) + 0.5d0 * rzz * dz%zz(j,1:nz1)
+                  (((1d0 - eta) * rx) / (4d0 * s(j))) * dz%x(j,1:nz1) - &
+                  (((1d0 - eta)**2 * dt) / (2d0 * s(j)**2)) * &
+                  zo(j,1:nz1) + 0.5d0 * rzz * dz%zz(j,1:nz1)
 end do
 
 return
@@ -341,7 +354,7 @@ call deriv_z(zo, dz%z)
 call deriv_z(zo2, dz_2%z)
 
 do j = 1, nx1
-   z_nl_n(j,1:nz1) = (((1d0 - eta) * rz) / (2d0 * s(j)**2)) * &
+   z_nl_n(j,1:nz1) = (((1d0 - eta) * rz) / (2d0 * s(j))) * &
                  (3d0 * uo(j,1:nz1) * du%z(j,1:nz1) - &
                  uo2(j,1:nz1) * du2%z(j,1:nz1)) - &
                  (rx / (8d0 * s(j) * delz)) * &
@@ -418,9 +431,9 @@ do k = 1, nz1
    zx_rhs(:) = zn(1:nx1,k) + z_nl(1:nx1,k)
    
    zx_rhs(1) = zx_rhs(1) + (0.5d0 * rxx * zo(0,k)) - &
-               ((3d0 * (1d0 - eta) * rx) / (4d0 * s(1))) * zo(0,k)
+               (((1d0 - eta) * rx) / (4d0 * s(1))) * zo(0,k)
    zx_rhs(nx1) = zx_rhs(nx1) + (0.5d0 * rxx * zo(nx,k)) + &
-               ((3d0 * (1d0 - eta) * rx) / (4d0 * s(nx1))) * zo(nx,k)
+               (((1d0 - eta) * rx) / (4d0 * s(nx1))) * zo(nx,k)
 
    call thomas(xlb, nx1, zx%up, zx%di, zx%lo, zx_rhs)
 

@@ -23,7 +23,7 @@ end if
 
 do k = 1, nz1
    do j = 1, nx1
-      zvec(nx1*(k-1)+j) = -s(j)**2 * dx2 * dz2 * Z_mat(j,k)
+      zvec(nx1*(k-1)+j) = -s(j) * dx2 * dz2 * Z_mat(j,k)
 !      zvec(nx1*(k-1)+j) = -2d0 * pi**2 * dx2 * dz2 * &
 !                          sin(pi*x(j)) * sin(pi*z(k))
    end do

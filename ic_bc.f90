@@ -55,11 +55,11 @@ else
       do k = 1, nz1
         do j = 1, nx1
            zn(j,k) = -(pn(j+1,k) - 2d0 * pn(j,k) + pn(j-1,k)) / &
-                      (s(j)**2 * dx2) + &
+                      (s(j) * dx2) + &
                       0.5d0 * (1d0 - eta) * (pn(j+1,k) - pn(j-1,k)) / &
-                      (s(j)**3 * delx) - &
+                      (s(j)**2 * delx) - &
                       (pn(j,k+1) - 2d0 * pn(j,k) + pn(j,k-1)) / &
-                      (s(j)**2 * dz2)
+                      (s(j) * dz2)
         end do
       end do
 
@@ -103,7 +103,7 @@ double precision, intent(in) :: t
 integer :: k
 
 u(0,:) = Re1 + Re1_mod * dcos(om1 * t) + &
-         eps1 * dcos(freq1 * z(:)-pi)
+         eps1 * Re1 * (1d0 / eta - 1d0) * dcos(freq1 * z(:))
 u(nx,:) = Re2 + Re2_mod * dcos(om2 * t) - &
          eps2 * dcos(freq2 * z(:))
 
@@ -121,18 +121,18 @@ implicit none
 double precision, intent(out) :: zn(0:nx,0:nz)
 double precision, intent(in) :: t, pn(0:nx,0:nz)
 
-zn(0,:) = -(8d0 * pn(1,:) - pn(2,:)) / (2d0 * (eta**2) * dx2)
-zn(nx,:) = -(8d0 * pn(nx1,:) - pn(nx-2,:)) / (2d0 * dx2)
+zn(0,:) = -(8d0 * pn(1,:) - pn(2,:)) / (2d0 * s(0) * dx2)
+zn(nx,:) = -(8d0 * pn(nx1,:) - pn(nx-2,:)) / (2d0 * s(nx) * dx2)
 
 if (tau == 1) then
    zn(:,0) = -(8d0 * pn(:,1) - pn(:,2)) / &
-              (2d0 * (s(:)**2) * dz2)
+              (2d0 * (s(:)) * dz2)
    zn(:,nz) = -(8d0 * pn(:,nz1) - pn(:,nz-2)) / &
-               (2d0 * (s(:)**2) * dz2)
+               (2d0 * (s(:)) * dz2)
 else
-   zn(:,0) = (-tau / (s(:)**2 * (1d0 - tau))) * &
+   zn(:,0) = (-tau / (s(:) * (1d0 - tau))) * &
              (0.5d0 * (-pn(:,2) + 4d0 * pn(:,1)) / delz)
-   zn(:,nz) = (tau / (s(:)**2 * (1d0 - tau))) * &
+   zn(:,nz) = (tau / (s(:) * (1d0 - tau))) * &
              (0.5d0 * (pn(:,nz-2) - 4d0 * pn(:,nz1)) / delz)
 end if
 
@@ -160,7 +160,7 @@ implicit none
 integer, intent(in) :: index
 double precision :: f1
 
-f1 = eps1 + eps1 * dcos(freq1*z(index))
+f1 = eps1 * dcos(freq1*z(index))
 
 return
 END FUNCTION f1   
@@ -172,7 +172,7 @@ implicit none
 integer, intent(in) :: index
 double precision :: f2
 
-f2 = eps2 + eps2 * dcos(freq2*z(index))
+f2 = eps2 * dcos(freq2*z(index)-pi)
 
 return
 END FUNCTION f2 
