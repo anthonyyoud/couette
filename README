@@ -13,20 +13,20 @@ FILES
 -----
 ccf.f90				- Routines to do with Circular Couette 
 				  flow.
-couette_mod_implicit.f90	- Main program file.  Calculates 
-				  azimuthal velocity on top of CCF.
-couette_mod_perturb.f90		- As _implicit.f90 except azimuthal 
+couette_mod_implicit.f90	- Main program file.  Calculates entire 
+				  azimuthal velocity including CCF.
+couette_mod_perturb.f90		- OLD.  As _implicit.f90.  Azimuthal 
 				  velocity not calculated as a 
 				  perturbation on top of CCF.  Hence 
 				  does not use ccf.f90.  Faster, 
 				  especially for modulation.
-couette_mod_explicit.f90	- Explicit Euler time-stepping for the 
-				  infinite case only.  Used mainly for 
-				  debugging.
+couette_mod_explicit.f90	- OLD.  Explicit Euler time-stepping for 
+				  the infinite case only.  Used mainly 
+				  for debugging.
 derivs.f90			- Routines to calculate derivatives.
 ifc_makefile_couette		- Makefile for use with Intel Fortran 
 				  Compiler (ifc).
-io.f90				- In general routines to do with 
+io.f90				- In general, routines to do with 
 				  input/output.
 matrices.f90			- Routines to set up matrices involved 
 				  in time-stepping and solving Poisson 
@@ -52,7 +52,7 @@ OUTPUT FILES
 ------------
 end_state.dat	- Saves time index, p, time-step, dt, and fields u, Z, 
 		  and psi, for restart.
-max_psi.dat	- Saves maximum value of psi (and vr, vz over whole 
+max_psi.dat	- Saves maximum value of psi (and vr, vz) over whole 
 		  field.  Mainly for use with IDL plots.
 particle.dat	- Saves the radial and axial position of a particle at 
 		  each time.
@@ -126,4 +126,4 @@ x_par_pos	- Initial radial position of a particle in the fluid as
 z_par_pos	- Initial axial position of a particle in the fluid as a 
 		  fraction of gamma (finite) or alpha (infinite).
 
-03/12/2003
+20/01/2004
