@@ -108,13 +108,14 @@ double precision, intent(in) :: t, ur(0:nx,0:nz), uz(0:nx,0:nz), &
                                 pn(0:nx,0:nz), v(0:nx,0:nz), &
                                 z(0:nx,0:nz), ur_prev(0:nx,0:nz)
 double precision, intent(out) :: growth
-integer :: zpos
+integer :: zpos, xpos
 
 growth = log(abs(ur(nx/2,nz/2)/ur_prev(nx/2,nz/2))) / (dt * save_rate)
 
-zpos = nz - (nz / (2 * gamma)) !(nz * (gamma - 1)) / (2 * gamma)
+xpos = nx/2 !nx/10
+zpos = nz/2 !nz - (nz / (2 * gamma)) !(nz * (gamma - 1)) / (2 * gamma)
 
-write(20, '(8e17.9)') t, ur(nx/2,nz/2), growth, uz(nx/10,zpos), &
+write(20, '(8e17.9)') t, ur(nx/2,nz/2), growth, uz(xpos,zpos), &
                       pn(nx/2,3*nz/4), v(nx/2,nz/2), &
                       z(nx/2,nz/4), Re1 + Re1_mod * dcos(om1 * t)
 
@@ -147,13 +148,13 @@ write (33, '(3e17.9)') t, G1_, G2_ !G1(nz/4), G2(nz/4)
 return
 END SUBROUTINE save_torque
 
-SUBROUTINE save_xsect(ur, uz, x, z, p)
+SUBROUTINE save_xsect(ur, uz, pn, x, z, p)
 use parameters
 implicit none
 
 integer, intent(in) :: p
 double precision, intent(in) :: ur(0:nx,0:nz), uz(0:nx,0:nz), &
-                                x(0:nx), z(0:nz)
+                                pn(0:nx,0:nz), x(0:nx), z(0:nz)
 integer :: j, k
 
 open (32, status = 'unknown', file = 'xsect'//itos(p)//'.dat')
@@ -161,6 +162,7 @@ open (32, status = 'unknown', file = 'xsect'//itos(p)//'.dat')
 write (32, '(2i5)') nx, nz
 write (32, '(e17.9)') ((ur(j,k), j = 0, nx), k = 0, nz)
 write (32, '(e17.9)') ((uz(j,k), j = 0, nx), k = 0, nz)
+write (32, '(e17.9)') ((pn(j,k), j = 0, nx), k = 0, nz)
 write (32, '(e17.9)') (x(j), j = 0, nx)
 write (32, '(e17.9)') (z(k), k = 0, nz)
 

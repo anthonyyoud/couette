@@ -73,7 +73,7 @@ do p = p_start, Ntot
       print*, 'Stop requested'
       print*, 'Saving end state'
       call end_state(uold, zold, pold, p)
-      call save_xsect(vr, vz, x, z, p)
+      call save_xsect(vr, vz, pold, x, z, p)
       call save_surface(pold, uold, zold, vr, vz, x, z, p, t)
       exit
    end if
@@ -172,7 +172,7 @@ do p = p_start, Ntot
                    call save_time_tau(tau, t)
                    tau = tau + tau_step
                    print*, 'tau = ', tau
-                   call save_xsect(vr, vz, x, z, p)
+                   call save_xsect(vr, vz, pold, x, z, p)
                    call save_surface(pold, unew, znew, vr, vz, x, z, p, t)
                 end if
             end if
@@ -184,14 +184,14 @@ do p = p_start, Ntot
 
    if (xsect_save) then
       if (mod(p, save_rate_2) == 0) then
-         call save_xsect(vr, vz, x, z, p)
+         call save_xsect(vr, vz, pold, x, z, p)
          call save_surface(pold, unew, znew, vr, vz, x, z, p, t)
       end if
    end if
 
    if (p == Ntot) then
       call end_state(unew, znew, pold, p)
-      call save_xsect(vr, vz, x, z, p)
+      call save_xsect(vr, vz, pold, x, z, p)
       call save_surface(pold, unew, znew, vr, vz, x, z, p, t)
    end if
 
