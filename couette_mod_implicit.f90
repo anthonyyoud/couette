@@ -305,10 +305,10 @@ call deriv_x(uo, uo_x, uo_0x, uo_1x)
 call deriv_xx(uo, uo_xx, uo_0xx, uo_1xx)
 call deriv_zz(uo, uo_zz, uo_0zz, uo_1zz)
 
-uo_0zz(1:nx1,0) = 2d0 * (uo(1:nx1,1) - uo(1:nx1,0) - &
-                  (delz * tau * vc(1:nx1)) / (1d0 - tau))
-uo_1zz(1:nx1,nz) = 2d0 * (uo(1:nx1,nz1) - uo(1:nx1,nz) - &
-                  (delz * tau * vc(1:nx1)) / (1d0 - tau))
+!uo_0zz(1:nx1,0) = 2d0 * (uo(1:nx1,1) - uo(1:nx1,0) - &
+!                  (delz * tau * vc(1:nx1)) / (1d0 - tau))
+!uo_1zz(1:nx1,nz) = 2d0 * (uo(1:nx1,nz1) - uo(1:nx1,nz) - &
+!                  (delz * tau * vc(1:nx1)) / (1d0 - tau))
 
 do j = 1, nx1
    u(j,1:nz1) = uo(j,1:nz1) + (0.5d0 * rxx * uo_xx(j,1:nz1)) + &
@@ -365,17 +365,17 @@ call deriv_x(po2, po2_x)
 call deriv_z(po, po_z, po_0z, po_1z)
 call deriv_z(po2, po2_z, po2_0z, po2_1z)
 
-po_0z(1:nx1,0) = po(1:nx1,1) - ((tau * delz - (1d0 - tau)) / &
-                               ((1d0 - tau) + tau * delz)) * po(1:nx1,1)
-po_1z(1:nx1,nz) = ((tau * delz - (1d0 - tau)) / &
-                  ((1d0 - tau) + tau * delz)) * po(1:nx1,nz1) - &
-                  po(1:nx1,nz1)
+!po_0z(1:nx1,0) = po(1:nx1,1) - ((tau * delz - (1d0 - tau)) / &
+!                               ((1d0 - tau) + tau * delz)) * po(1:nx1,1)
+!po_1z(1:nx1,nz) = ((tau * delz - (1d0 - tau)) / &
+!                  ((1d0 - tau) + tau * delz)) * po(1:nx1,nz1) - &
+!                  po(1:nx1,nz1)
 
-po2_0z(1:nx1,0) = po2(1:nx1,1) - ((tau * delz - (1d0 - tau)) / &
-                               ((1d0 - tau) + tau * delz)) * po2(1:nx1,1)
-po2_1z(1:nx1,nz) = ((tau * delz - (1d0 - tau)) / &
-                  ((1d0 - tau) + tau * delz)) * po2(1:nx1,nz1) - &
-                  po2(1:nx1,nz1)
+!po2_0z(1:nx1,0) = po2(1:nx1,1) - ((tau * delz - (1d0 - tau)) / &
+!                               ((1d0 - tau) + tau * delz)) * po2(1:nx1,1)
+!po2_1z(1:nx1,nz) = ((tau * delz - (1d0 - tau)) / &
+!                  ((1d0 - tau) + tau * delz)) * po2(1:nx1,nz1) - &
+!                  po2(1:nx1,nz1)
 
 do j = 1, nx1
    u_nl_n(j,1:nz1) = 1d0*( (-rx / (8d0 * s(j) * delz)) * &

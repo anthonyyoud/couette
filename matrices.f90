@@ -22,6 +22,8 @@ uz%lo(:) = -0.5d0 * rzz
 uz%up(:) = -0.5d0 * rzz
 
 if (tau /= 1) then
+   uz%di(0) = 1d0 + rzz + (rz * tau / (1d0 - tau))
+   uz%di(nz) = 1d0 + rzz + (rz * tau / (1d0 - tau))
    uz%lo(nz) = -rzz
    uz%up(0) = -rzz
 end if
