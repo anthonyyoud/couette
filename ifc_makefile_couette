@@ -1,8 +1,8 @@
 OUTDIR		= ./
-OBJECTS		= parameters.o pressure.o matrices.o \
-                  derivs.o ccf.o io.o couette_mod.o
+OBJECTS		= parameters.o ic_bc.o pressure.o matrices.o \
+                  derivs.o io.o couette_mod.o
 COMPFLAGS	= -O3 -c -w95 -tpp7 -xW #-parallel
-#COMPFLAGS	= -c -g -d0 -CA -CB #-CS -CU -CV
+#COMPFLAGS	= -c -g -d0 -CA -CB -CS -CU -CV
 TYPE            = implicit
 LIBS            = -L/home/pg/n8049290/Utilities/LAPACK \
                   -llapack_LINUX -lblas_LINUX #-lpthread
@@ -17,6 +17,10 @@ all:	$(OBJECTS)
 #-----------------------------------------------------------------------
 parameters.o : parameters.f90
 	$(COMPILER) $(COMPFLAGS) parameters.f90
+
+#-----------------------------------------------------------------------
+ic_bc.o : ic_bc.f90
+	$(COMPILER) $(COMPFLAGS) ic_bc.f90
 
 #-----------------------------------------------------------------------
 io.o : io.f90
@@ -35,13 +39,9 @@ derivs.o : derivs.f90
 	$(COMPILER) $(COMPFLAGS) derivs.f90
 
 #-----------------------------------------------------------------------
-ccf.o : ccf.f90
-	$(COMPILER) $(COMPFLAGS) ccf.f90
-
-#-----------------------------------------------------------------------
 couette_mod.o : couette_mod_$(TYPE).f90
 	$(COMPILER) $(COMPFLAGS) -o couette_mod.o \
                                     couette_mod_$(TYPE).f90
 #-----------------------------------------------------------------------
 clean :
-	rm *.o *.mod *.d *.out
+	rm *.o *.mod *.d *.out *.pc *.pcl

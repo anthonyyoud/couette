@@ -1,5 +1,4 @@
 MODULE derivs
-!use parameters
 implicit none
 
 contains

@@ -1,14 +1,13 @@
 MODULE matrices
-!use parameters
 implicit none
 
 contains
 
-SUBROUTINE matrix_setup(ux, uz, zx, zz, s)
+SUBROUTINE matrix_setup(ux, uz, zx, zz)
 use parameters
 use io
+use ic_bc
 implicit none
-double precision, intent(in) :: s(0:nx)
 type (mat_comp), intent(out) :: ux, zx
 type (uz_mat_comp), intent(out) :: uz
 type (zz_mat_comp), intent(out) :: zz
@@ -39,11 +38,11 @@ zz%up(:) = -0.5d0 * rzz
 return
 END SUBROUTINE matrix_setup
 
-SUBROUTINE ABC_mat_setup(AB, IPIV, s)
+SUBROUTINE ABC_mat_setup(AB, IPIV)
 use parameters
+use ic_bc
 implicit none
 
-double precision, intent(in) :: s(0:nx)
 double precision :: alp(0:nx), gam(0:nx)
 double precision :: beta, delta
 double precision, intent(out) :: AB(2*nx1+nx1+1,nx1*nz1)

@@ -2,18 +2,6 @@ MODULE io
 use parameters
 implicit none
 
-type grid
-   double precision :: x(0:nx)
-   double precision :: z(0:nz)
-end type grid
-
-type var
-   double precision :: new(0:nx,0:nz)
-   double precision :: old(0:nx,0:nz)
-   double precision :: old2(0:nx,0:nz)
-   double precision :: int(0:nx,0:nz)
-end type var
-
 type mat_comp
    double precision :: lo(2:nx1)
    double precision :: di(nx1)
@@ -33,22 +21,6 @@ type zz_mat_comp
 end type zz_mat_comp
 
 contains
-
-!SUBROUTINE grid(x, z, s)
-!use parameters
-!implicit none
-!integer :: j, k
-!double precision, save :: x(0:nx), z(0:nz), s(0:nx)
-
-!do j = 0, nx
-!   x(j) = dble(j) * delx
-!   s(j) = eta + ((1d0 - eta) * x(j))
-!   do k = 0, nz
-!      z(k) = dble(k) * delz
-!   end do
-!end do
-
-!END SUBROUTINE grid
 
 FUNCTION itos(n)
 implicit none
@@ -105,12 +77,12 @@ end if
 return
 END SUBROUTINE close_files
 
-SUBROUTINE save_growth(t, ur, ur_prev, uz, pn, v, z, growth)
+SUBROUTINE save_growth(t, ur, ur_prev, uz, pn, v, zn, growth)
 use parameters
 implicit none
 double precision, intent(in) :: t, ur(0:nx,0:nz), uz(0:nx,0:nz), &
                                 pn(0:nx,0:nz), v(0:nx,0:nz), &
-                                z(0:nx,0:nz), ur_prev(0:nx,0:nz)
+                                zn(0:nx,0:nz), ur_prev(0:nx,0:nz)
 double precision, intent(out) :: growth
 double precision, save :: min_p, max_p, min_ur, max_ur, min_uz, max_uz
 integer :: zpos, xpos
@@ -123,7 +95,7 @@ zpos = nz/2
 write(20, '(9e17.9)') t, ur(nx/2,nz/2), ur(nx/2,0), growth, &
                       uz(xpos,zpos), &
                       pn(nx/4,3*nz/4), v(nx/2,nz/2), &
-                      z(nx/2,nz/4), Re1 + Re1_mod * dcos(om1 * t)
+                      zn(nx/2,nz/4), Re1 + Re1_mod * dcos(om1 * t)
 
 if (maxval(ur) > max_ur) then
    max_ur = maxval(ur)
@@ -177,13 +149,14 @@ write (33, '(3e17.9)') t, G1_, G2_ !G1(nz/4), G2(nz/4)
 return
 END SUBROUTINE save_torque
 
-SUBROUTINE save_xsect(ur, uz, pn, x, z, p)
+SUBROUTINE save_xsect(ur, uz, pn, p)
 use parameters
+use ic_bc
 implicit none
 
 integer, intent(in) :: p
 double precision, intent(in) :: ur(0:nx,0:nz), uz(0:nx,0:nz), &
-                                pn(0:nx,0:nz), x(0:nx), z(0:nz)
+                                pn(0:nx,0:nz)
 integer :: j, k
 
 open (32, status = 'unknown', file = 'xsect'//itos(p)//'.dat')
@@ -200,13 +173,14 @@ close (32)
 return
 END SUBROUTINE
 
-SUBROUTINE save_surface(pn, v, zn, ur, uz, x, z, p, t)
+SUBROUTINE save_surface(pn, v, zn, ur, uz, p, t)
 use parameters
+use ic_bc
 implicit none
 integer, intent(in) :: p
 double precision, intent(in) :: t, pn(0:nx,0:nz), v(0:nx,0:nz), &
                                 zn(0:nx,0:nz), ur(0:nx,0:nz), &
-                                uz(0:nx,0:nz), x(0:nx), z(0:nz)
+                                uz(0:nx,0:nz)
 integer :: j, k
 
 open (19, status = 'unknown', file = 'p'//itos(p)//'.dat')
@@ -271,32 +245,6 @@ close (99, status = 'delete')
 
 return
 END SUBROUTINE end_state
-
-SUBROUTINE state_restart(u, zn, pn, p)
-use parameters
-implicit none
-double precision, intent(out) :: u(0:nx,0:nz), zn(0:nx,0:nz), &
-                                 pn(0:nx,0:nz)
-double precision :: dt_prev
-integer, intent(out) :: p
-integer :: j, k
-
-open (50, file = 'end_state.dat')
-
-read(50, *) p
-read(50, *) dt_prev
-read(50, *) ((u(j,k), k = 0, nz), j = 0, nx)
-read(50, *) ((zn(j,k), k = 0, nz), j = 0, nx)
-read(50, *) ((pn(j,k), k = 0, nz), j = 0, nx)
-
-close (50)
-
-if (dt_prev /= dt) then
-   p = p * dt_prev / dt
-end if
-
-return
-END SUBROUTINE state_restart
 
 SUBROUTINE save_time_tau (tau, t)
 implicit none
