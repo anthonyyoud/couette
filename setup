@@ -15,6 +15,7 @@ mkdir $1
 #				Setup dir
 mv couette_mod.out $1
 cp parameters.f90 $1
+cp transfer.sh $1
 
 #				Script
 cd $1

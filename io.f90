@@ -314,9 +314,12 @@ implicit none
 double precision, intent(in) :: vr(0:nx, 0:nz), vz(0:nx, 0:nz), &
                                 vrold(0:nx, 0:nz), vzold(0:nx, 0:nz)
 double precision, intent(inout) :: xold, zold
-integer :: xmin, xplu, zmin, zplu
-double precision :: c1, c2, rvel, zvel, xnew, znew
+integer :: xmin, xplu, zmin, zplu, j
+double precision :: c1, c2, rvel, zvel, xnew, znew, del_t
 
+del_t = dt / 1d0
+
+do j = 1, 1
 xmin = int(xold)
 xplu = int(xold + 1d0)
 zmin = int(zold)
@@ -335,12 +338,13 @@ zvel = (1d0 - c1) * (1d0 - c2) * vzold(xmin, zmin) + &
         c1 * c2 * vzold(xplu, zplu) + &
         (1d0 - c1) * c2 * vzold(xmin, zplu)
 
-xnew = xold + dt * rvel
-znew = zold + dt * zvel
+xnew = xold + del_t * rvel
+znew = zold + del_t * zvel
 xold = xnew
 zold = znew
+end do
 
-write (24, '(2e17.9)') xnew, znew
+write (24, '(2e17.9)') xnew / nx, znew * gamma / nz
 
 return
 END SUBROUTINE particle

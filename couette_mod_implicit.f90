@@ -162,7 +162,7 @@ do p = p_start, Ntot
          call save_growth(t, vr, vrold, vz, pold, unew, znew, growth_rate)
          if ((Re1_mod == 0d0) .and. (Re2_mod == 0d0)) then
             if ((dabs(growth_rate) < 1d-8) .and. &
-                (dabs(vr(nx/2, nz/2)) > 1d-3)) then
+                (dabs(vr(nx/2, nz/2)) > 1d+4)) then
                 if ((.not. auto_tau) .or. (tau == tau_end)) then
                    call save_time_tau(tau, t)
                    call end_state(uold, zold, pold, p)
