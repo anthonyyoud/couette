@@ -20,8 +20,8 @@ unew(0:nx,0:nz), uold(0:nx,0:nz), uold2(0:nx,0:nz), u_int(0:nx,0:nz), &
 znew(0:nx,0:nz), zold(0:nx,0:nz), zold2(0:nx,0:nz), z_int(0:nx,0:nz), &
 pnew(0:nx,0:nz), pold(0:nx,0:nz), pold2(0:nx,0:nz), &
 vr(0:nx,0:nz), vz(0:nx,0:nz), &
-vc(0:nx), vc_(0:nx), vr2(0:nx,0:nz) = 1d0, &
-AB(2*nx1+nx1+1,nx1*nz1), F(0:nx) !, A_mat(nx1*nz1,nx1*nz1)
+vc(0:nx), vc_(0:nx), vr2(0:nx,0:nz) = 0d0, &
+AB(2*nx1+nx1+1,nx1*nz1), F(0:nx)
 integer :: pivot(nx1*nz1)
 
 logical, parameter :: write_ofile = .true.
@@ -41,7 +41,6 @@ end if
 
 print*, 'Setting up matrices...'
 call matrix_setup(Ux, Uz, Zx, Zz, s)
-!call A_mat_setup(A_mat, s)
 call ABC_mat_setup(AB, pivot, s)
 
 uold = unew
@@ -59,29 +58,29 @@ if (restart) then
    call get_p(p_start)
 end if
 
-call get_timestep()
+!call get_timestep()
 
 do p = p_start, Ntot
-inquire(file='RUNNING', exist=file_exist)
-file_exist2 = .not. file_exist
-if (file_exist2) then
-   print*, 'Stop requested'
-   print*, 'Saving end state'
-   call end_state(uold, zold, pold, p)
-   call save_xsect(vr, vz, x, z, p)
-   call save_surface(pold, uold, zold, vr, vz, x, z, p, t)
-   exit
-end if
+   inquire(file='RUNNING', exist=file_exist)
+   file_exist2 = .not. file_exist
+   if (file_exist2) then
+      print*, 'Stop requested'
+      print*, 'Saving end state'
+      call end_state(uold, zold, pold, p)
+      call save_xsect(vr, vz, x, z, p)
+      call save_surface(pold, uold, zold, vr, vz, x, z, p, t)
+      exit
+   end if
 
    t = p * dt
 
-call get_A(t, A, A_)
-call get_B(t, B, B_)
-call get_vc(A, A_, B_, B_, vc, vc_, s)
-call get_F(t, s, F)
+   call get_A(t, A, A_)
+   call get_B(t, B, B_)
+   call get_vc(A, A_, B_, B_, vc, vc_, s)
+   call get_F(t, s, F)
 
-uold = unew
-zold = znew
+   uold = unew
+   zold = znew
 
 !*** Get RHS for v in x-direction ************
 
@@ -121,20 +120,8 @@ zold = znew
 
 !*********************************************
 
-uold2 = u_int
-zold2 = z_int
-
-!*** Get RHS for v in z-direction ************
-
-!   call get_rhs_uz(uold, unew)
-
-!*********************************************
-
-!*** Get RHS for Z in z-direction ************
-
-!   call get_rhs_Zz(zold, znew)
-
-!*********************************************
+   uold2 = u_int
+   zold2 = z_int
 
 !*** Solve for v in z-direction **************
 
@@ -148,44 +135,41 @@ zold2 = z_int
 
 !*********************************************
 
-!unew = uold
-!znew = zold
-u_int = unew
-z_int = znew
-pold2 = pold
-!AB = 0d0
-!call ABC_mat_setup(AB, pivot, s)
-!call AB_mat_setup(A_mat, AB)
-call poisson(znew, pnew, AB, pivot, s)
+   u_int = unew
+   z_int = znew
+   pold2 = pold
+   call poisson(znew, pnew, AB, pivot, s)
 
-if (diag) then
-   call calc_rhs_u(unew, uold2, pold, s, t, A, p)
-   call calc_rhs_Z(znew, zold2, uold2, pold, s, t, A, vc, p)
-   call calc_rhs_psi(pnew, znew, s, t, p)
-end if
-
-pold = pnew
-
-if (mod(p, save_rate) == 0) then
-   call r_vel(pold, s, vr, vz)
-   call save_torque(t, unew)
-   if (p /= save_rate) then
-      call save_growth(t, vr, vr2, vz, pold, unew, znew)
+   if (diag) then
+      call calc_rhs_u(unew, uold2, pold, s, t, A, p)
+      call calc_rhs_Z(znew, zold2, uold2, pold, s, t, A, vc, p)
+      call calc_rhs_psi(pnew, znew, s, t, p)
    end if
-end if
 
-vr2 = vr
+   pold = pnew
 
-if (xsect_save) then
-   if (mod(p, save_rate_2) == 0) then
+   if (mod(p, save_rate) == 0) then
+      call r_vel(pold, s, vr, vz)
+      call save_torque(t, unew)
+      if (p /= save_rate) then
+         call save_growth(t, vr, vr2, vz, pold, unew, znew)
+      end if
+   end if
+
+   vr2 = vr
+
+   if (xsect_save) then
+      if (mod(p, save_rate_2) == 0) then
+         call save_xsect(vr, vz, x, z, p)
+         call save_surface(pold, unew, znew, vr, vz, x, z, p, t)
+      end if
+   end if
+
+   if (p == Ntot) then
+      call end_state(unew, znew, pold, p)
       call save_xsect(vr, vz, x, z, p)
       call save_surface(pold, unew, znew, vr, vz, x, z, p, t)
    end if
-end if
-
-if (p == Ntot) then
-   call end_state(unew, znew, pold, p)
-end if
 
 end do
 !*** END TIME LOOP***
@@ -494,41 +478,6 @@ end do
 
 return
 END SUBROUTINE solve_Zx
-
-SUBROUTINE get_rhs_uz(uo, u)
-use parameters
-use derivs
-implicit none
-double precision, intent(in) :: uo(0:nx,0:nz)
-double precision, intent(out) :: u(0:nx,0:nz)
-double precision :: uo_zz(0:nx,0:nz), uo_0zz(0:nx,0:nz), &
-                    uo_1zz(0:nx,0:nz)
-integer :: j, k
-
-call deriv_zz(uo, uo_zz, uo_0zz, uo_1zz)
-
-u(1:nx1,1:nz1) = uo(1:nx1,1:nz1) + 0.5d0 * rzz * uo_zz(1:nx1,1:nz1)
-u(1:nx1,0) = uo(1:nx1,0) + 0.5d0 * rzz * uo_0zz(1:nx1,0)
-u(1:nx1,nz) = uo(1:nx1,nz) + 0.5d0 * rzz * uo_1zz(1:nx1,nz)
-
-return
-END SUBROUTINE get_rhs_uz
-
-SUBROUTINE get_rhs_Zz(zo, zn)
-use parameters
-use derivs
-implicit none
-double precision, intent(in) :: zo(0:nx,0:nz)
-double precision, intent(out) :: zn(0:nx,0:nz)
-double precision :: zo_zz(0:nx,0:nz)
-integer :: j, k
-
-call deriv_zz(zo, zo_zz)
-
-zn(1:nx1,1:nz1) = zo(1:nx1,1:nz1) + 0.5d0 * rzz * zo_zz(1:nx1,1:nz1)
-
-return
-END SUBROUTINE get_rhs_Zz
 
 SUBROUTINE solve_uz(uo, u, t, uz)
 use parameters
