@@ -80,6 +80,9 @@ call get_B(t, B, B_)
 call get_vc(A, A_, B_, B_, vc, vc_, s)
 call get_F(t, s, F)
 
+uold = unew
+zold = znew
+
 !*** Get RHS for v in x-direction ************
 
    call get_rhs_ux(uold, unew, s)
@@ -123,13 +126,13 @@ zold2 = z_int
 
 !*** Get RHS for v in z-direction ************
 
-   call get_rhs_uz(uold, unew)
+!   call get_rhs_uz(uold, unew)
 
 !*********************************************
 
 !*** Get RHS for Z in z-direction ************
 
-   call get_rhs_Zz(zold, znew)
+!   call get_rhs_Zz(zold, znew)
 
 !*********************************************
 
@@ -147,27 +150,27 @@ zold2 = z_int
 
 !unew = uold
 !znew = zold
-u_int = uold
-z_int = zold
+u_int = unew
+z_int = znew
 pold2 = pold
 !AB = 0d0
 !call ABC_mat_setup(AB, pivot, s)
 !call AB_mat_setup(A_mat, AB)
-call poisson(zold, pnew, AB, pivot, s)
+call poisson(znew, pnew, AB, pivot, s)
 
 if (diag) then
-   call calc_rhs_u(uold, uold2, pold, s, t, A, p)
-   call calc_rhs_Z(zold, zold2, uold2, pold, s, t, A, vc, p)
-   call calc_rhs_psi(pnew, zold, s, t, p)
+   call calc_rhs_u(unew, uold2, pold, s, t, A, p)
+   call calc_rhs_Z(znew, zold2, uold2, pold, s, t, A, vc, p)
+   call calc_rhs_psi(pnew, znew, s, t, p)
 end if
 
 pold = pnew
 
 if (mod(p, save_rate) == 0) then
    call r_vel(pold, s, vr, vz)
-   call save_torque(t, uold)
+   call save_torque(t, unew)
    if (p /= save_rate) then
-      call save_growth(t, vr, vr2, vz, pold, uold, zold)
+      call save_growth(t, vr, vr2, vz, pold, unew, znew)
    end if
 end if
 
@@ -176,12 +179,12 @@ vr2 = vr
 if (xsect_save) then
    if (mod(p, save_rate_2) == 0) then
       call save_xsect(vr, vz, x, z, p)
-      call save_surface(pold, uold, zold, vr, vz, x, z, p, t)
+      call save_surface(pold, unew, znew, vr, vz, x, z, p, t)
    end if
 end if
 
 if (p == Ntot) then
-   call end_state(uold, zold, pold, p)
+   call end_state(unew, znew, pold, p)
 end if
 
 end do
@@ -260,27 +263,30 @@ double precision, intent(in) :: s(0:nx), uo(0:nx,0:nz)
 double precision, intent(out) :: u(0:nx,0:nz)
 double precision :: uo_x(0:nx,0:nz), uo_0x(0:nx,0:nz), &
                     uo_1x(0:nx,0:nz),  uo_xx(0:nx,0:nz), &
-                    uo_0xx(0:nx,0:nz),  uo_1xx(0:nx,0:nz)
+                    uo_0xx(0:nx,0:nz),  uo_1xx(0:nx,0:nz), &
+                    uo_zz(0:nx,0:nz), uo_0zz(0:nx,0:nz), &
+                    uo_1zz(0:nx,0:nz)
 integer :: j, k
 
 call deriv_x(uo, uo_x, uo_0x, uo_1x)
 call deriv_xx(uo, uo_xx, uo_0xx, uo_1xx)
+call deriv_zz(uo, uo_zz, uo_0zz, uo_1zz)
 
 do j = 1, nx1
    u(j,1:nz1) = uo(j,1:nz1) + (0.5d0 * rxx * uo_xx(j,1:nz1)) + &
             (((1d0 - eta) * rx) / (4d0 * s(j))) * uo_x(j,1:nz1) - &
             (((1d0 - eta)**2 * dt) / (2d0 * s(j)**2)) * &
-            uo(j,1:nz1)
+            uo(j,1:nz1) + 0.5d0 * rzz * uo_zz(j,1:nz1)
 
    u(j,0) = uo(j,0) + (0.5d0 * rxx * uo_0xx(j,0)) + &
             (((1d0 - eta) * rx) / (4d0 * s(j))) * uo_0x(j,0) - &
             (((1d0 - eta)**2 * dt) / (2d0 * s(j)**2)) * &
-            uo(j,0)
+            uo(j,0) + 0.5d0 * rzz * uo_0zz(j,0)
 
    u(j,nz) = uo(j,nz) + (0.5d0 * rxx * uo_1xx(j,nz)) + &
             (((1d0 - eta) * rx) / (4d0 * s(j))) * uo_1x(j,nz) - &
             (((1d0 - eta)**2 * dt) / (2d0 * s(j)**2)) * &
-            uo(j,nz)
+            uo(j,nz) + 0.5d0 * rzz * uo_1zz(j,nz)
 end do
 
 return
@@ -368,16 +374,17 @@ use derivs
 implicit none
 double precision, intent(in) :: s(0:nx), zo(0:nx,0:nz)
 double precision, intent(out) :: zn(0:nx,0:nz)
-double precision :: zo_x(0:nx,0:nz), zo_xx(0:nx,0:nz)
+double precision :: zo_x(0:nx,0:nz), zo_xx(0:nx,0:nz), zo_zz(0:nx,0:nz)
 integer :: j, k
 
 call deriv_x(zo, zo_x)
 call deriv_xx(zo, zo_xx)
+call deriv_zz(zo, zo_zz)
 
 do j = 1, nx1
    zn(j,1:nz1) = zo(j,1:nz1) + (0.5d0 * rxx * zo_xx(j,1:nz1)) + &
                   ((3d0 * (1d0 - eta) * rx) / (4d0 * s(j))) * &
-                  zo_x(j,1:nz1)
+                  zo_x(j,1:nz1) + 0.5d0 * rzz * zo_zz(j,1:nz1)
 end do
 
 return
@@ -528,18 +535,18 @@ use parameters
 use io
 implicit none
 double precision, intent(in) :: t
-double precision, intent(in) :: u(0:nx,0:nz)
+double precision, intent(in) :: uo(0:nx,0:nz)
 type (uz_mat_comp), intent(in) :: uz
-double precision, intent(inout) :: uo(0:nx,0:nz)
+double precision, intent(inout) :: u(0:nx,0:nz)
 double precision :: uz_rhs(0:nz)
 integer :: j, k
 
 do j = 1, nx1
-   uz_rhs(:) = u(j,:)
+   uz_rhs(:) = uo(j,:)
    
    call uz_thomas(zlb, nz, uz, uz_rhs)
 
-   uo(j,:) = uz_rhs(:)
+   u(j,:) = uz_rhs(:)
 end do
 
 return
@@ -550,23 +557,23 @@ use parameters
 use io
 implicit none
 double precision, intent(in) :: t
-double precision, intent(in) :: zn(0:nx,0:nz), po(0:nx,0:nz)
+double precision, intent(in) :: zo(0:nx,0:nz), po(0:nx,0:nz)
 type (zz_mat_comp), intent(in) :: zz
-double precision, intent(inout) :: zo(0:nx,0:nz)
+double precision, intent(inout) :: zn(0:nx,0:nz)
 double precision :: Zz_rhs(nz1)
 integer :: j, k
 
-call z_BCS(zo, po, t)
+call z_BCS(zn, po, t)
 
 do j = 1, nx1
-   Zz_rhs(:) = zn(j,1:nz1)
+   Zz_rhs(:) = zo(j,1:nz1)
    
-   Zz_rhs(1) = Zz_rhs(1) + 0.5d0 * rzz * zo(j,0)
-   Zz_rhs(nz1) = Zz_rhs(nz1) + 0.5d0 * rzz * zo(j,nz)
+   Zz_rhs(1) = Zz_rhs(1) + 0.5d0 * rzz * zn(j,0)
+   Zz_rhs(nz1) = Zz_rhs(nz1) + 0.5d0 * rzz * zn(j,nz)
 
    call zz_thomas(zlb+1, nz1, zz, Zz_rhs)
 
-   zo(j,1:nz1) = Zz_rhs(:)
+   zn(j,1:nz1) = Zz_rhs(:)
 end do
 
 return
