@@ -26,7 +26,7 @@ MODULE parameters
   REAL    (r2), PARAMETER :: gamma       = (2.0_r2 * pi) / alpha
   REAL    (r2), PARAMETER :: eta         = 0.765_r2
   REAL    (r2), PARAMETER :: Q           = 0.0_r2
-  REAL    (r2), PARAMETER :: Re1         = 132.0_r2
+  REAL    (r2), PARAMETER :: Re1         = 50.0_r2
   REAL    (r2), PARAMETER :: Re2         = 0.0_r2 !-1.0_r2*(1.0_r2/eta)*Re1
   REAL    (r2), PARAMETER :: Re1_mod     = 0.0_r2
   REAL    (r2), PARAMETER :: Re2_mod     = 0.0_r2

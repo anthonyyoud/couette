@@ -529,7 +529,7 @@ MODULE io
     USE parameters
     IMPLICIT NONE
 
-    REAL (r2), INTENT(IN)  :: ur(0:nx,0:nz), uz(0:nx,0:nz)
+    REAL (r2), INTENT(IN)  :: ur(0:nx,0:nz), ut(0:nx,0:nz), uz(0:nx,0:nz)
     REAL (r2), INTENT(OUT) :: E
     REAL (r2)              :: u2(0:nx,0:nz)
 
