@@ -1,5 +1,5 @@
 # Compile and setup ready to run in a separate directory
-# useage:  source setup <directory name> [compile params]
+# usage:  source setup <directory name> [compile params]
 
 mkdir $1
 

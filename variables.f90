@@ -1,105 +1,105 @@
 MODULE variables
-use parameters
-implicit none
+USE parameters
+IMPLICIT NONE
 
-private
-public :: copy_var, vr_vz
+PRIVATE
+PUBLIC :: copy_var, vr_vz
 
-type, public :: var
+TYPE, PUBLIC :: VAR
 !variables
-   real (r2) :: new(0:nx,0:nz)
-   real (r2) :: old(0:nx,0:nz)
-   real (r2) :: old2(0:nx,0:nz)
-   real (r2) :: inter(0:nx,0:nz)
-   real (r2) :: nlin_new(0:nx,0:nz)
-   real (r2) :: nlin_old(0:nx,0:nz)
-end type var
+   REAL (r2) :: new(0:nx,0:nz)
+   REAL (r2) :: old(0:nx,0:nz)
+   REAL (r2) :: old2(0:nx,0:nz)
+   REAL (r2) :: inter(0:nx,0:nz)
+   REAL (r2) :: nlin_new(0:nx,0:nz)
+   REAL (r2) :: nlin_old(0:nx,0:nz)
+END TYPE VAR
 
-type, public :: deriv
+TYPE, PUBLIC :: DERIV
 !derivatives
-   real (r2) :: x(0:nx,0:nz)
-   real (r2) :: xx(0:nx,0:nz)
-   real (r2) :: z(0:nx,0:nz)
-   real (r2) :: zz(0:nx,0:nz)
-   real (r2) :: zx(0:nx,0:nz)
-   real (r2) :: zxx(0:nx,0:nz)
-   real (r2) :: zzz(0:nx,0:nz)
-end type deriv
+   REAL (r2) :: x(0:nx,0:nz)
+   REAL (r2) :: xx(0:nx,0:nz)
+   REAL (r2) :: z(0:nx,0:nz)
+   REAL (r2) :: zz(0:nx,0:nz)
+   REAL (r2) :: zx(0:nx,0:nz)
+   REAL (r2) :: zxx(0:nx,0:nz)
+   REAL (r2) :: zzz(0:nx,0:nz)
+END TYPE DERIV
 
-type, public :: mat_comp
+TYPE, PUBLIC :: MAT_COMP
 !matrix components
-   real (r2) :: lo(2:nx1)
-   real (r2) :: di(nx1)
-   real (r2) :: up(nx-2)
-end type mat_comp
+   REAL (r2) :: lo(2:nx1)
+   REAL (r2) :: di(nx1)
+   REAL (r2) :: up(nx-2)
+END TYPE MAT_COMP
 
-type, public :: uz_mat_comp
+TYPE, PUBLIC :: UZ_MAT_COMP
 !matrix components for u in the z-direction
-   real (r2) :: lo(nz)
-   real (r2) :: di(0:nz)
-   real (r2) :: up(0:nz1)
-end type uz_mat_comp
+   REAL (r2) :: lo(nz)
+   REAL (r2) :: di(0:nz)
+   REAL (r2) :: up(0:nz1)
+END TYPE UZ_MAT_COMP
 
-type, public :: zz_mat_comp
+TYPE, PUBLIC :: ZZ_MAT_COMP
 !matrix components for Z in the z-direction
-   real (r2) :: lo(2:nz1)
-   real (r2) :: di(nz1)
-   real (r2) :: up(nz-2)
-end type zz_mat_comp
+   REAL (r2) :: lo(2:nz1)
+   REAL (r2) :: di(nz1)
+   REAL (r2) :: up(nz-2)
+END TYPE ZZ_MAT_COMP
 
-type (var), public, save :: ut, zt, psi, bt, jt
-real (r2),  public, save :: vr(0:nx,0:nz), vz(0:nx,0:nz), &
+TYPE (VAR), PUBLIC, SAVE :: ut, zt, psi, bt, jt
+REAL (r2),  PUBLIC, SAVE :: vr(0:nx,0:nz), vz(0:nx,0:nz), &
                             vrold(0:nx,0:nz) = 0.0_r2, vzold(0:nx,0:nz) = 0.0_r2
 
 contains
 
 SUBROUTINE copy_var(var_out, var_in)
 !Copy a variable
-use parameters
-implicit none
+USE parameters
+IMPLICIT NONE
 
-real (r2), intent(in)  :: var_in(0:nx,0:nz)
-real (r2), intent(out) :: var_out(0:nx,0:nz)
+REAL (r2), INTENT(IN)  :: var_in(0:nx,0:nz)
+REAL (r2), INTENT(OUT) :: var_out(0:nx,0:nz)
 
 var_out = var_in
 
-return
+RETURN
 END SUBROUTINE copy_var
 
 SUBROUTINE vr_vz(p, vr, vz)
 !Calculate radial and axial velocity components from the stream-function
-use parameters
-use ic_bc, only : s
-implicit none
+USE parameters
+USE ic_bc, ONLY : s
+IMPLICIT NONE
 
-real (r2), intent(in)  :: p(0:nx,0:nz)
-real (r2), intent(out) :: vr(0:nx,0:nz), vz(0:nx,0:nz)
-integer (i1)           :: j, k
+REAL (r2), INTENT(IN)  :: p(0:nx,0:nz)
+REAL (r2), INTENT(OUT) :: vr(0:nx,0:nz), vz(0:nx,0:nz)
+INTEGER (i1)           :: j, k
 
-do k = 1, nz1
+DO k = 1, nz1
    vr(:,k) = (-1.0_r2 / (2.0_r2 * s(:) * delz)) * (p(:,k+1) - p(:,k-1))
-end do
+END DO
 
-if (tau /= 1) then
+IF (tau /= 1) THEN
    vr(:,0) = (-1.0_r2 / (2.0_r2 * s(:) * delz)) * &
              (-3.0_r2 * p(:,0) + 4.0_r2 * p(:,1) - p(:,2))
    vr(:,nz) = (-1.0_r2 / (2.0_r2 * s(:) * delz)) * &
               (3.0_r2 * p(:,nz) - 4.0_r2 * p(:,nz1) + p(:,nz-2))
-else
+ELSE
    vr(:,0) = 0.0_r2
    vr(:,nz) = 0.0_r2
-end if
+END IF
 
-do j = 1, nx1
+DO j = 1, nx1
    vz(j,:) = (1.0_r2 / (2.0_r2 * s(j) * delx)) * (p(j+1,:) - p(j-1,:))
-end do
+END DO
 
 vz(0,:) = 0.0_r2 !(1.0_r2 / (2.0_r2 * s(0) * delx)) * &
               !(-3.0_r2 * p(0,k) + 4.0_r2 * p(1,k) - p(2,k))
 vz(nx,:) = 0.0_r2 !(1.0_r2 / (2.0_r2 * s(nx) * delx)) * &
               !(3.0_r2 * p(nx,k) - 4.0_r2 * p(nx1,k) + p(nx-2,k))
 
-return
+RETURN
 END SUBROUTINE vr_vz
 
 END MODULE variables

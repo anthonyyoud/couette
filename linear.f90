@@ -1,36 +1,36 @@
 MODULE linear
-implicit none
+IMPLICIT NONE
 
-private
-public :: get_rhs_ux, get_rhs_Zx
+PRIVATE
+PUBLIC :: get_rhs_ux, get_rhs_Zx
 
 contains
 
 SUBROUTINE get_rhs_ux(uo, u)
 !Get the linear part for the right-hand side of the tridiagonal system for u
-use parameters
-use variables
-use derivs
-use ic_bc, only : s
-implicit none
+USE parameters
+USE variables
+USE derivs
+USE ic_bc, ONLY : s
+IMPLICIT NONE
 
-real (r2), intent(in)  :: uo(0:nx,0:nz)
-real (r2), intent(out) :: u(0:nx,0:nz)
-type (deriv)           :: du
-integer (i1)           :: j, k
+REAL (r2), INTENT(IN)  :: uo(0:nx,0:nz)
+REAL (r2), INTENT(OUT) :: u(0:nx,0:nz)
+TYPE (DERIV)           :: du
+INTEGER (i1)           :: j, k
 
-call deriv_x(uo, du%x)
-call deriv_xx(uo, du%xx)   !get derivatives
-call deriv_zz(uo, du%zz)
+CALL deriv_x(uo, du%x)
+CALL deriv_xx(uo, du%xx)   !get derivatives
+CALL deriv_zz(uo, du%zz)
 
-do k = 1, nz1
+DO k = 1, nz1
    u(1:nx1,k) = uo(1:nx1,k) + (0.5_r2 * rxx * du%xx(1:nx1,k)) + &
             (((1.0_r2 - eta) * rx) / (4.0_r2 * s(1:nx1))) * du%x(1:nx1,k) - &
             (((1.0_r2 - eta)**2 * dt) / (2.0_r2 * s(1:nx1)**2)) * &
             uo(1:nx1,k) + 0.5_r2 * rzz * du%zz(1:nx1,k)
-end do
+END DO
 
-if (tau /= 1) then
+IF (tau /= 1) THEN
    u(1:nx1,0) = uo(1:nx1,0) + (0.5_r2 * rxx * du%xx(1:nx1,0)) + &
                 (((1.0_r2 - eta) * rx) / (4.0_r2 * s(1:nx1))) * du%x(1:nx1,0) - &
                 (((1.0_r2 - eta)**2 * dt) / (2.0_r2 * s(1:nx1)**2)) * &
@@ -40,36 +40,36 @@ if (tau /= 1) then
                  (((1.0_r2 - eta) * rx) / (4.0_r2 * s(1:nx1))) * du%x(1:nx1,nz) - &
                  (((1.0_r2 - eta)**2 * dt) / (2.0_r2 * s(1:nx1)**2)) * &
                  uo(1:nx1,nz) + 0.5_r2 * rzz * du%zz(1:nx1,nz)
-end if
+END IF
 
-return
+RETURN
 END SUBROUTINE get_rhs_ux
 
 SUBROUTINE get_rhs_Zx(zo, zn)
 !Get linear part for the right-hand side of the tridiagonal system for Z
-use parameters
-use variables
-use derivs
-use ic_bc, only : s
-implicit none
+USE parameters
+USE variables
+USE derivs
+USE ic_bc, ONLY : s
+IMPLICIT NONE
 
-real (r2), intent(in)  :: zo(0:nx,0:nz)
-real (r2), intent(out) :: zn(0:nx,0:nz)
-type (deriv)           :: dz
-integer (i1)           :: j, k
+REAL (r2), INTENT(IN)  :: zo(0:nx,0:nz)
+REAL (r2), INTENT(OUT) :: zn(0:nx,0:nz)
+TYPE (DERIV)           :: dz
+INTEGER (i1)           :: j, k
 
-call deriv_x(zo, dz%x)
-call deriv_xx(zo, dz%xx)   !get derivatives
-call deriv_zz(zo, dz%zz)
+CALL deriv_x(zo, dz%x)
+CALL deriv_xx(zo, dz%xx)   !get derivatives
+CALL deriv_zz(zo, dz%zz)
 
-do k = 1, nz1
+DO k = 1, nz1
    zn(1:nx1,k) = zo(1:nx1,k) + (0.5_r2 * rxx * dz%xx(1:nx1,k)) + &
                  (((1.0_r2 - eta) * rx) / (4.0_r2 * s(1:nx1))) * dz%x(1:nx1,k) - &
                  (((1.0_r2 - eta)**2 * dt) / (2.0_r2 * s(1:nx1)**2)) * &
                  zo(1:nx1,k) + 0.5_r2 * rzz * dz%zz(1:nx1,k)
-end do
+END DO
 
-return
+RETURN
 END SUBROUTINE get_rhs_Zx
 
 END MODULE linear

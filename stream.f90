@@ -1,24 +1,24 @@
 MODULE stream
 !Algorithms for the solution of the stream-function Poisson equation are as
 !for the current in current.f90
-implicit none
+IMPLICIT NONE
 
-private
-public :: p_poisson
+PRIVATE
+PUBLIC :: p_poisson
 
 contains
 
 SUBROUTINE p_poisson(Z_mat, psi, p_mat, desc_p, af)
 !Solve Poisson equation for the stream-function, psi for all tau
-use parameters
-use ic_bc, only : p_BCS, s
-implicit none
+USE parameters
+USE ic_bc, ONLY : p_BCS, s
+IMPLICIT NONE
 
-integer (i1), intent(in)  :: desc_p(7)
-real (r2),    intent(in)  :: af(laf), Z_mat(0:nx,0:nz), p_mat(p_M,p_N)
-real (r2),    intent(out) :: psi(0:nx,0:nz)
-real (r2)                 :: zvec(nb), work(lwork_sol)
-integer (i1)              :: i, j, k, info, cpcol, desc_z(7)
+INTEGER (i1), INTENT(IN)  :: desc_p(7)
+REAL (r2),    INTENT(IN)  :: af(laf), Z_mat(0:nx,0:nz), p_mat(p_M,p_N)
+REAL (r2),    INTENT(OUT) :: psi(0:nx,0:nz)
+REAL (r2)                 :: zvec(nb), work(lwork_sol)
+INTEGER (i1)              :: i, j, k, info, cpcol, desc_z(7)
 
 desc_z(1) = 502
 desc_z(2) = ictxt
@@ -29,47 +29,47 @@ desc_z(6) = nb
 
 cpcol = 0
 
-do j = 1, nx1*nz1, nb
-   if (mycol == cpcol) then
-      do k = 1, min(nb, nx1*nz1-j+1)
+DO j = 1, nx1*nz1, nb
+   IF (mycol == cpcol) THEN
+      DO k = 1, MIN(nb, nx1*nz1-j+1)
          i = k + j - 1
-         zvec(k) = -s(modulo(i-1, nx1) + 1) * dx2 * dz2 * &
-                    Z_mat(modulo(i-1, nx1) + 1, (i-1)/nx1 + 1)
-      end do
-   end if
-   if (cpcol == npcol) exit
+         zvec(k) = -s(MODULO(i-1, nx1) + 1) * dx2 * dz2 * &
+                    Z_mat(MODULO(i-1, nx1) + 1, (i-1)/nx1 + 1)
+      END DO
+   END IF
+   IF (cpcol == npcol) EXIT
    cpcol = cpcol + 1
-end do
+END DO
 
-call PDDBTRS('N', nx1*nz1, nx1, nx1, 1, p_mat, 1, desc_p, zvec, 1, &
+CALL PDDBTRS('N', nx1*nz1, nx1, nx1, 1, p_mat, 1, desc_p, zvec, 1, &
               desc_z, af, laf, work, lwork_sol, info)
-if (info /= 0) print*, 'psi_PDDBTRS ', info
+IF (info /= 0) PRINT*, 'psi_PDDBTRS ', info
 
 cpcol = 0
 
 psi = 0.0_r2
-do j = 1, nx1*nz1, nb
-   if (mycol == cpcol) then
-      do k = 1, min(nb, nx1*nz1-j+1)
+DO j = 1, nx1*nz1, nb
+   IF (mycol == cpcol) THEN
+      DO k = 1, MIN(nb, nx1*nz1-j+1)
          i = k + j - 1
-         psi(modulo(i-1, nx1) + 1, (i-1)/nx1 + 1) = zvec(k)
-      end do
-   end if
-   if (cpcol == npcol) exit
+         psi(MODULO(i-1, nx1) + 1, (i-1)/nx1 + 1) = zvec(k)
+      END DO
+   END IF
+   IF (cpcol == npcol) EXIT
    cpcol = cpcol + 1
-end do
+END DO
 
-call SLTIMER(6)
-if (npcol > 1) then
-   call DGSUM2D(ictxt, 'A', ' ', nxp1, nzp1, psi, nxp1, 0, 0)
-end if
-call SLTIMER(6)
+CALL SLTIMER(6)
+IF (npcol > 1) THEN
+   CALL DGSUM2D(ictxt, 'A', ' ', nxp1, nzp1, psi, nxp1, 0, 0)
+END IF
+CALL SLTIMER(6)
 
-if (mycol == 0) then
-   call p_BCS(psi)
-end if
+IF (mycol == 0) THEN
+   CALL p_BCS(psi)
+END IF
 
-return
+RETURN
 END SUBROUTINE p_poisson
 
 END MODULE stream
