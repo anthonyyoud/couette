@@ -101,13 +101,13 @@ end if
 return
 END SUBROUTINE close_files
 
-SUBROUTINE save_growth(t, ur, ur_prev, uz, pn, v, z)
+SUBROUTINE save_growth(t, ur, ur_prev, uz, pn, v, z, growth)
 use parameters
 implicit none
 double precision, intent(in) :: t, ur(0:nx,0:nz), uz(0:nx,0:nz), &
                                 pn(0:nx,0:nz), v(0:nx,0:nz), &
                                 z(0:nx,0:nz), ur_prev(0:nx,0:nz)
-double precision :: growth = 0d0
+double precision, intent(out) :: growth
 integer :: zpos
 
 if ((Re1_mod == 0d0) .and. (Re2_mod == 0d0) .and. &

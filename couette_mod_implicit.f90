@@ -11,6 +11,7 @@ type (mat_comp) :: Ux, Zx
 type (uz_mat_comp) :: Uz
 type (zz_mat_comp) :: Zz
 !type (grid_setup) :: grid
+double precision :: growth_rate
 double precision :: x(0:nx), z(0:nz), s(0:nx), &
 !double precision :: s(0:nx), &
                     t = 0d0, A = 0d0, A_ = 0d0, B = 0d0, B_ = 0d0, &
@@ -160,7 +161,13 @@ do p = p_start, Ntot
          call save_torque(t, unew)
       end if
       if (p /= save_rate) then
-         call save_growth(t, vr, vr2, vz, pold, unew, znew)
+         call save_growth(t, vr, vr2, vz, pold, unew, znew, growth_rate)
+         if ((Re1_mod == 0d0) .and. (Re2_mod == 0d0)) then
+            if ((dabs(growth_rate) < 1d-8) .and. &
+                (dabs(vr(nx/2, nz/2)) > 1d-3)) then
+                call end_state(uold, zold, pold, p)
+            end if
+         end if
       end if
    end if
 
