@@ -20,8 +20,11 @@ ux%up(:) = -0.5d0 * rxx - ((1d0 - eta) * rx) / (4d0 * s(1:nx-2))
 uz%di(:) = 1d0 + rzz
 uz%lo(:) = -0.5d0 * rzz
 uz%up(:) = -0.5d0 * rzz
-uz%lo(nz) = -rzz
-uz%up(0) = -rzz
+
+if (tau /= 1) then
+   uz%lo(nz) = -rzz
+   uz%up(0) = -rzz
+end if
 
 zx%di(:) = 1d0 + rxx
 zx%lo(:) = -0.5d0 * rxx + (3d0 * (1d0 - eta) * rx) / (4d0 * s(2:nx-1))
