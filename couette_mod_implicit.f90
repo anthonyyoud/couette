@@ -21,9 +21,10 @@ unew(0:nx,0:nz), uold(0:nx,0:nz), uold2(0:nx,0:nz), u_int(0:nx,0:nz), &
 znew(0:nx,0:nz), zold(0:nx,0:nz), zold2(0:nx,0:nz), z_int(0:nx,0:nz), &
 pnew(0:nx,0:nz), pold(0:nx,0:nz), pold2(0:nx,0:nz), &
 vr(0:nx,0:nz), vz(0:nx,0:nz), &
-vc(0:nx), vc_(0:nx), vr2(0:nx,0:nz) = 0d0, &
+vc(0:nx), vc_(0:nx), vrold(0:nx,0:nz) = 0d0, vzold(0:nx,0:nz) = 0d0, &
 AB(2*nx1+nx1+1,nx1*nz1), F(0:nx)
 integer :: pivot(nx1*nz1)
+double precision :: xposold = 0.25d0 * nx, zposold = 0.75d0 * nz
 
 logical, parameter :: write_ofile = .true.
 integer :: j, k, p = 0, p_start = 1
@@ -158,14 +159,15 @@ do p = p_start, Ntot
 
    if (mod(p, save_rate) == 0) then
       call r_vel(pold, s, vr, vz)
+      call particle(vr, vrold, vz, vzold, xposold, zposold)
       if ((Re1 /= 0d0) .or. (Re2 /= 0d0)) then
          call save_torque(t, unew)
       end if
       if ((p /= save_rate) .and. ((p - p_start) > save_rate)) then
-         call save_growth(t, vr, vr2, vz, pold, unew, znew, growth_rate)
+         call save_growth(t, vr, vrold, vz, pold, unew, znew, growth_rate)
          if ((Re1_mod == 0d0) .and. (Re2_mod == 0d0)) then
             if ((dabs(growth_rate) < 1d-8) .and. &
-                (dabs(vr(nx/2, nz/2)) > 1d-3)) then
+                (dabs(vr(nx/2, nz/2)) > 1d+4)) then
                 if ((.not. auto_tau) .or. (tau == tau_end)) then
                    call save_time_tau(tau, t)
                    call end_state(uold, zold, pold, p)
@@ -182,7 +184,8 @@ do p = p_start, Ntot
       end if
    end if
 
-   vr2 = vr
+   vrold = vr
+   vzold = vz
 
    if (xsect_save) then
       if (mod(p, save_rate_2) == 0) then

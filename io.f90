@@ -74,6 +74,7 @@ use parameters
 implicit none
 open (20, status = 'unknown', file = 'u_growth.dat')
 open (22, status = 'unknown', file = 'max_psi.dat')
+open (24, status = 'unknown', file = 'particle.dat')
 open (33, status = 'unknown', file = 'torque.dat')
 open (51, file = 'time_tau.dat')
 if (diag) then
@@ -92,6 +93,7 @@ use parameters
 implicit none
 close (20)
 close (22)
+close (24)
 close (33)
 close (51)
 if (diag) then
@@ -304,6 +306,44 @@ end do
 
 return
 END SUBROUTINE thomas
+
+SUBROUTINE particle (vr, vrold, vz, vzold, xold, zold)
+use parameters
+implicit none
+
+double precision, intent(in) :: vr(0:nx, 0:nz), vz(0:nx, 0:nz), &
+                                vrold(0:nx, 0:nz), vzold(0:nx, 0:nz)
+double precision, intent(inout) :: xold, zold
+integer :: xmin, xplu, zmin, zplu
+double precision :: c1, c2, rvel, zvel, xnew, znew
+
+xmin = int(xold)
+xplu = int(xold + 1)
+zmin = int(zold)
+zplu = int(zold + 1)
+
+c1 = (xold - xmin) / (xplu - xmin)
+c2 = (zold - zmin) / (zplu - zmin)
+
+rvel = (1d0 - c1) * (1d0 - c2) * vrold(xmin, zmin) + &
+        c1 * (1d0 - c2) * vrold(xplu, zmin) + &
+        c1 * c2 * vrold(xplu, zplu) + &
+        (1d0 - c1) * c2 * vrold(xmin, zplu)
+
+zvel = (1d0 - c1) * (1d0 - c2) * vzold(xmin, zmin) + &
+        c1 * (1d0 - c2) * vzold(xplu, zmin) + &
+        c1 * c2 * vzold(xplu, zplu) + &
+        (1d0 - c1) * c2 * vzold(xmin, zplu)
+
+xnew = xold + dt * rvel
+znew = zold + dt * zvel
+xold = xnew
+zold = znew
+
+write (24, '(2e17.9)') xnew, znew
+
+return
+END SUBROUTINE particle
 
 SUBROUTINE get_timestep()
 use parameters
