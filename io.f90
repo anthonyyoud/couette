@@ -115,9 +115,9 @@ if ((Re1_mod == 0d0) .and. (Re2_mod == 0d0) .and. &
    growth = log(ur(nx/2,nz/2)/ur_prev(nx/2,nz/2)) / (dt * save_rate)
 end if
 
-zpos = (nz * (gamma - 1)) / (2 * gamma)
+zpos = nz/2 !(nz * (gamma - 1)) / (2 * gamma)
 
-write(20, '(8e19.7)') t, ur(nx/2,nz/2), growth, uz(nx/4,zpos), &
+write(20, '(8e19.7)') t, ur(nx/2,nz/2), growth, uz(nx/2,zpos), &
                       pn(nx/2,3*nz/4), v(nx/2,nz/2), &
                       z(nx/2,nz/4), Re1 + Re1_mod * dcos(om1 * t)
 

@@ -266,9 +266,9 @@ if (tau == 1) then
                (2d0 * (s(:)**2) * dz2)
 else
    zn(:,0) = (-tau / (s(:)**2 * (1d0 - tau))) * &
-             (0.5d0 * (-pn(:,2) + 4d0 * pn(:,1)) / delx)
+             (0.5d0 * (-pn(:,2) + 4d0 * pn(:,1)) / delz)
    zn(:,nz) = (tau / (s(:)**2 * (1d0 - tau))) * &
-             (0.5d0 * (pn(:,nz-2) - 4d0 * pn(:,nz1)) / delx)
+             (0.5d0 * (pn(:,nz-2) - 4d0 * pn(:,nz1)) / delz)
 end if
 
 return
