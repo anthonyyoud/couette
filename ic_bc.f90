@@ -8,7 +8,7 @@ PUBLIC :: get_xzs, ICS, u_BCS, z_BCS, p_BCS, b_BCS, j_BCS
 REAL (r2), PUBLIC :: x(0:nx), x_(0:nx), th(0:nt), z(0:nz), s(0:nx) 
                                                 !finite-difference mesh
                                                 !s=eta+(1-eta)*x
-contains
+CONTAINS
 
 SUBROUTINE get_xzs()
 !Finite-difference mesh

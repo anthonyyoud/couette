@@ -51,7 +51,7 @@ TYPE (VAR), PUBLIC, SAVE :: ut, zt, psi, bt, jt
 REAL (r2),  PUBLIC, SAVE :: vr(0:nx,0:nz), vz(0:nx,0:nz), &
                             vrold(0:nx,0:nz) = 0.0_r2, vzold(0:nx,0:nz) = 0.0_r2
 
-contains
+CONTAINS
 
 SUBROUTINE copy_var(var_out, var_in)
 !Copy a variable

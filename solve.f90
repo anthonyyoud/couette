@@ -4,7 +4,7 @@ IMPLICIT NONE
 PRIVATE
 PUBLIC :: solve_ux, solve_uz, solve_Zx, solve_Zz
 
-contains
+CONTAINS
 
 SUBROUTINE solve_ux(uo, u, u_nl, t, ux)
 !Solve for the azimuthal velocity field in the x-direction

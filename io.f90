@@ -6,7 +6,7 @@ PUBLIC :: open_files, close_files, save_xsect, save_3d, &
           save_surface, write_data, terminate, save_run, &
           end_state
 
-contains
+CONTAINS
 
 FUNCTION itos(n)
 !Function to convert an integer into a string of length 7

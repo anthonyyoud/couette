@@ -4,7 +4,7 @@ IMPLICIT NONE
 PRIVATE
 PUBLIC :: deriv_x, deriv_z, deriv_xx, deriv_zz
 
-contains
+CONTAINS
 
 SUBROUTINE deriv_x(f, fx)
 !First x derivative

@@ -4,7 +4,7 @@ IMPLICIT NONE
 PRIVATE
 PUBLIC :: j_poisson, fin_j_poisson
 
-contains
+CONTAINS
 
 SUBROUTINE j_poisson(p_mat, jn, j_mat, desc_j, af)
 !Solve Poisson equation for the azimuthal current when tau/=1

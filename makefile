@@ -4,11 +4,12 @@ OBJECTS		= parameters.o ic_bc.o variables.o derivs.o stream.o \
                   nonlinear.o solve.o couette_mod.o
 FFLAGS	        = -O2 -w95 -tpp7 -xW -unroll -vec_report0 #-parallel
 #FFLAGS	        = -d0 -CA -CB -CS -CU -CV
-LINKFLAGS	= -static
+LINKFLAGS	= #-i_dynamic
 COMPILER	= mpif77
+#COMPILER	= ifort
 LDBLAS          = -L$(BLASHOME)/lib -lblas 
 LDSCALA         = -L$(SCALAPACKHOME)/lib -lscalapack
-LDBLACS         = -L$(BLACSHOME)/lib -lblacsF77init -lblacs -lblacsCinit
+LDBLACS         = -L$(BLACSHOME)/lib -lblacsF77_MPI -lblacs_MPI -lblacsC_MPI
 
 LIBS            = $(LDSCALA) $(LDBLACS) $(LDBLAS)
 COMPFLAGS       = $(FFLAGS) 
@@ -68,7 +69,8 @@ solve.o : solve.f90
 
 #-----------------------------------------------------------------------
 couette_mod.o : couette_mod.f90
-	$(COMPILER) $(COMPFLAGS) -c -o couette_mod.o couette_mod.f90
+	$(COMPILER) $(COMPFLAGS) -c -o couette_mod.o \
+                                    couette_mod.f90
 #-----------------------------------------------------------------------
 clean :
 	rm -f *.o *.mod *.d *.out *.pc *.pcl *.il

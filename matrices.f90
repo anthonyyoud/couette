@@ -5,7 +5,7 @@ PRIVATE
 PUBLIC :: matrix_setup, psi_mat_setup, b_mat_setup, fin_b_mat_setup, &
           j_mat_setup, fin_j_mat_setup
 
-contains
+CONTAINS
 
 SUBROUTINE matrix_setup(ux, uz, zx, zz)
 !Set up the upper, lower and diagonal parts of the tridiagonal matrices

@@ -4,7 +4,7 @@ IMPLICIT NONE
 PRIVATE
 PUBLIC :: get_rhs_ux, get_rhs_Zx
 
-contains
+CONTAINS
 
 SUBROUTINE get_rhs_ux(uo, u)
 !Get the linear part for the right-hand side of the tridiagonal system for u

@@ -4,7 +4,7 @@ IMPLICIT NONE
 PRIVATE
 PUBLIC :: get_nlin_ux, get_nlin_Zx
 
-contains
+CONTAINS
 
 SUBROUTINE get_nlin_ux(uo, uo2, po, po2, bo, bo2, u_nl_n)
 !Get the nonlinear part for the right-hand side of the tridiagonal system for u

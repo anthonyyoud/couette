@@ -6,7 +6,7 @@ IMPLICIT NONE
 PRIVATE
 PUBLIC :: p_poisson
 
-contains
+CONTAINS
 
 SUBROUTINE p_poisson(Z_mat, psi, p_mat, desc_p, af)
 !Solve Poisson equation for the stream-function, psi for all tau

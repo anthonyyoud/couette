@@ -6,7 +6,7 @@ IMPLICIT NONE
 PRIVATE
 PUBLIC :: b_poisson, fin_b_poisson
 
-contains
+CONTAINS
 
 SUBROUTINE b_poisson(u_mat, bn, b_mat, desc_b, af)
 !Solve Poisson equation for azimuthal magnetic field when tau=0
