@@ -1,48 +1,11 @@
 MODULE io
-use parameters
 implicit none
-
-type var
-   double precision :: new(0:nx, 0:nz)
-   double precision :: old(0:nx, 0:nz)
-   double precision :: old2(0:nx, 0:nz)
-   double precision :: int(0:nx, 0:nz)
-   double precision :: nlin_new(0:nx, 0:nz)
-   double precision :: nlin_old(0:nx, 0:nz)
-end type var
-
-type deriv
-   double precision :: x(0:nx, 0:nz)
-   double precision :: xx(0:nx, 0:nz)
-   double precision :: z(0:nx, 0:nz)
-   double precision :: zz(0:nx, 0:nz)
-   double precision :: zx(0:nx, 0:nz)
-   double precision :: zxx(0:nx, 0:nz)
-   double precision :: zzz(0:nx, 0:nz)
-end type deriv
-
-type mat_comp
-   double precision :: lo(2:nx1)
-   double precision :: di(nx1)
-   double precision :: up(nx-2)
-end type mat_comp
-
-type uz_mat_comp
-   double precision :: lo(nz)
-   double precision :: di(0:nz)
-   double precision :: up(0:nz1)
-end type uz_mat_comp   
-
-type zz_mat_comp
-   double precision :: lo(2:nz1)
-   double precision :: di(nz1)
-   double precision :: up(nz-2)
-end type zz_mat_comp
 
 contains
 
 FUNCTION itos(n)
 implicit none
+
 character(7) :: itos
 integer, intent(in) :: n
 integer   :: i, n_, d(7)
@@ -139,7 +102,7 @@ if (minval(pn) < min_p) then
    min_p = minval(pn)
 end if
 
-!write (22, '(7e17.9)') t, max_p, min_p, max_ur, min_ur, max_uz, min_uz
+write (22, '(7e17.9)') t, max_p, min_p, max_ur, min_ur, max_uz, min_uz
 
 return
 END SUBROUTINE save_growth
@@ -256,8 +219,97 @@ close (35)
 return
 END SUBROUTINE save_surface
 
+SUBROUTINE write_data(p, p_start, t)
+use parameters
+use variables
+implicit none
+
+integer, intent(in) :: p, p_start
+double precision, intent(in) :: t
+double precision :: growth_rate
+
+call vr_vz(psi%old, vr, vz)
+if (save_part) call particle(vr, vrold, vz, vzold, x_pos, z_pos)
+!if ((Re1 /= 0d0) .or. (Re2 /= 0d0)) then
+!   call save_torque(t, unew)
+!end if
+if ((p /= p_start) .and. ((p - p_start) > save_rate)) then
+   call save_growth(t, vr, vrold, vz, psi%old, ut%new, zt%new, &
+                    bt%old, jt%old, growth_rate)
+   if ((om1 == 0d0) .and. (om2 == 0d0)) then
+      if ((dabs(growth_rate) < 1d-8) .and. &
+          (dabs(vr(nx/2, nz/2)) > 1d-3)) then
+         if ((.not. auto_tau) .or. (tau == tau_end)) then
+            call save_time_tau(tau, t)
+            call end_state(ut%old, zt%old, psi%old, bt%old, jt%old, p)
+         else if (tau < 1d0) then
+            call save_time_tau(tau, t)
+            tau = tau + tau_step
+            print*, 'tau = ', tau
+            call save_xsect(vr, vz, psi%old, t, p)
+            call save_surface(psi%old, ut%new, zt%new, vr, vz, &
+                              bt%old, jt%old, p, t)
+         end if
+      end if
+   end if
+end if
+
+return
+END SUBROUTINE write_data
+
+SUBROUTINE terminate(p, t)
+use parameters
+use variables
+implicit none
+
+integer, intent(in) :: p
+double precision, intent(in) :: t
+logical :: run_exist
+
+if (mycol == 0) then
+   inquire(file='RUNNING', exist=run_exist)
+   if (.not. run_exist) then
+      print*, 'Stop requested.  Ending process ', mycol
+      print*, 'Saving end state'
+      call end_state(ut%old, zt%old, psi%old, bt%old, jt%old, p)
+      call save_xsect(vr, vz, psi%old, t, p)
+      call save_surface(psi%old, ut%old, zt%old, &
+                        vr, vz, bt%old, jt%old, p, t)
+      end_proc = 1
+   end if
+end if
+
+call SLTIMER(3)
+call IGEBR2D(ictxt, 'A', ' ', 1, 1, end_proc, 1, 0, 0)
+call SLTIMER(3)
+
+return
+END SUBROUTINE terminate
+
+SUBROUTINE save_run(p, t)
+use parameters
+use variables
+implicit none
+
+integer, intent(in) :: p
+double precision, intent(in) :: t
+logical :: save_exist
+
+inquire(file='SAVE', exist=save_exist)
+if (save_exist) then
+   call save_xsect(vr, vz, psi%old, t, p)
+   call save_surface(psi%old, ut%old, zt%old, &
+                     vr, vz, bt%old, jt%old, p, t)
+   open (98, file = 'SAVE')
+   close (98, status = 'delete')
+end if
+
+return
+END SUBROUTINE save_run
+
 SUBROUTINE end_state(u, zn, pn, bn, jn, p)
 use parameters
+
 implicit none
 double precision, intent(in) :: u(0:nx,0:nz), zn(0:nx,0:nz), &
                                 pn(0:nx,0:nz), bn(0:nx,0:nz), &
@@ -289,30 +341,6 @@ double precision, intent(in) :: tau, t
 write(51, '(2e17.9)') t, tau
 
 END SUBROUTINE save_time_tau
-
-SUBROUTINE thomas (lb, m, up, di, lo, r)
-implicit none
-integer :: j
-integer, intent(in) :: m, lb
-double precision, intent(in) :: up(lb:m-1), di(lb:m), lo(lb+1:m)
-double precision, intent(inout) :: r(lb:m)
-double precision :: dnew(lb:m), aa = 0d0
-
-dnew = di
-do j = lb+1, m
-   aa = -lo(j) / dnew(j-1)
-   dnew(j) = dnew(j) + aa * up(j-1)
-   r(j) = r(j) + aa * r(j-1)
-end do
-
-r(m) = r(m) / dnew(m)
-
-do j = m-1, lb, -1
-   r(j) = (r(j) - up(j) * r(j+1)) / dnew(j)
-end do
-
-return
-END SUBROUTINE thomas
 
 SUBROUTINE particle (vr, vrold, vz, vzold, xold, zold)
 use parameters

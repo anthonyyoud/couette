@@ -5,7 +5,7 @@ contains
 
 SUBROUTINE matrix_setup(ux, uz, zx, zz)
 use parameters
-use io
+use variables
 use ic_bc
 implicit none
 type (mat_comp), intent(out) :: ux, zx

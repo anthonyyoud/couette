@@ -1,6 +1,6 @@
 DESCRIPTION
 -----------
-Axisymmetric, hydromagnetic, modulated Couette flow in an infinite or finite cylinder with the small Prandtl number limit using 2nd order implicit Crank-Nicolson for linear terms and 2nd order explicit Adams-Bashforth for non-linear terms with operator factorisation.  2nd order centred finite differences.  Includes homotopy parameter, tau, to continuously deform the boundaries from infinite case (tau=0) to finite case (tau=1).  Also includes particle path subroutine to track the trajectory of a particle.  Also allows for axial oscillation of the inner and/or outer Reynolds numbers to mimic a wavy cylinder boundary.
+Axisymmetric, hydromagnetic, modulated Couette flow between infinite or finite cylinders in the small Prandtl number limit using 2nd order implicit Crank-Nicolson for linear terms and 2nd order explicit Adams-Bashforth for non-linear terms with operator factorisation.  2nd order centred finite differences.  Includes homotopy parameter, tau, to continuously deform the boundaries from infinite case (tau=0) to finite case (tau=1).  Also includes particle path subroutine to track the trajectory of a particle.  Also allows for axial oscillation of the inner and/or outer Reynolds numbers to mimic a wavy cylinder boundary.
 
 Uses linear algebra package ScaLAPACK to enable parallelism in solving the Poisson equations associated with stream-function, current and magnetic field.
 

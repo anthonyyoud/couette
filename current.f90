@@ -5,7 +5,7 @@ contains
 
 SUBROUTINE j_poisson(p_mat, jn, j_mat, desc_j, af)
 use parameters
-use io
+use variables
 use ic_bc
 use derivs
 implicit none
@@ -92,7 +92,7 @@ END SUBROUTINE j_poisson
 
 SUBROUTINE fin_j_poisson(p_mat, jn, j_mat, desc_j, af)
 use parameters
-use io
+use variables
 use ic_bc
 use derivs
 implicit none

@@ -4,31 +4,24 @@ use pressure
 use matrices
 use io
 use ic_bc
+use variables
+use linear
+use nonlinear
+use solve
 use magnetic
 use current
 implicit none
 type (mat_comp) :: Ux, Zx
 type (uz_mat_comp) :: Uz
 type (zz_mat_comp) :: Zz
-double precision :: growth_rate, t = 0d0, &
-                    u_nlin_new(0:nx,0:nz), u_nlin_old(0:nx,0:nz), &
-                    z_nlin_new(0:nx,0:nz), z_nlin_old(0:nx,0:nz), &
-                    unew(0:nx,0:nz), uold(0:nx,0:nz), uold2(0:nx,0:nz), &
-                    u_int(0:nx,0:nz), &
-                    znew(0:nx,0:nz), zold(0:nx,0:nz), zold2(0:nx,0:nz), &
-                    z_int(0:nx,0:nz), &
-                    pnew(0:nx,0:nz), pold(0:nx,0:nz), pold2(0:nx,0:nz), &
-                    bnew(0:nx,0:nz), bold(0:nx,0:nz), bold2(0:nx,0:nz), &
-                    jnew(0:nx,0:nz), jold(0:nx,0:nz), jold2(0:nx,0:nz), &
-                    vr(0:nx,0:nz), vrold(0:nx,0:nz) = 0d0, &
-                    vz(0:nx,0:nz), vzold(0:nx,0:nz) = 0d0
+double precision :: t = 0d0, p_fill(laf), b_fill(b_laf), j_fill(laf), &
+                    wtime(10)
 double precision, allocatable :: p_mat(:,:), b_mat(:,:), j_mat(:,:)
-double precision :: p_fill(laf), b_fill(b_laf), j_fill(laf), wtime(10)
 double precision, external :: SLINQUIRE
-integer :: j, k, p = 0, p_start = 0, end_proc = 0, &
-           desc_p(7), desc_b(7), desc_j(7)
 integer, external :: NUMROC
-logical :: run_exist, state_exist, save_exist
+integer :: j, k, p = 0, p_start = 0, &
+           desc_p(7), desc_b(7), desc_j(7)
+logical :: state_exist
 
 call SLBOOT()
 call SL_INIT(ictxt, nprow, npcol)
@@ -53,7 +46,7 @@ end if
 call get_xzs()
 
 if (mycol == 0) then
-   call ICS(unew, znew, pnew, bnew, jnew, p_start)
+   call ICS(ut%new, zt%new, psi%new, bt%new, jt%new, p_start)
 
    if (.not. restart) then
       inquire(file='end_state.dat', exist=state_exist)
@@ -61,11 +54,11 @@ if (mycol == 0) then
          STOP 'restart=.false. but end_state.dat exists.'
       end if
       print*, 'Setting up BCS...'
-      call u_BCS(unew, 0d0)
-      call p_BCS(pnew)
-      call z_BCS(znew, pnew, 0d0)
-      call b_BCS(bnew)
-      call j_BCS(jnew)
+      call u_BCS(ut%new, 0d0)
+      call p_BCS(psi%new)
+      call z_BCS(zt%new, psi%new, 0d0)
+      call b_BCS(bt%new)
+      call j_BCS(jt%new)
    end if
    print*, 'Allocating matrix dimensions'
 end if
@@ -120,38 +113,24 @@ end if
 call SLTIMER(2)
 
 if (mycol == 0) then
-   uold = unew
-   uold2 = unew
-   u_int = unew
-   zold = znew
-   zold2 = znew
-   z_int = znew
-   pold = pnew
-   pold2 = pnew
-   bold = bnew
-   bold2 = bnew
-   jold = jnew
-   jold2 = jnew
+   call copy_var(ut%old, ut%new)
+   call copy_var(ut%old2, ut%new)
+   call copy_var(ut%inter, ut%new)
+   call copy_var(zt%old, zt%new)
+   call copy_var(zt%old2, zt%new)
+   call copy_var(zt%inter, zt%new)
+   call copy_var(psi%old, psi%new)
+   call copy_var(psi%old2, psi%new)
+   call copy_var(bt%old, bt%new)
+   call copy_var(bt%old, bt%new)
+   call copy_var(jt%old, jt%new)
+   call copy_var(jt%old, jt%new)
 
    print*, 'Entering time loop'
 end if
 
 do p = p_start, Ntot
-   if (mycol == 0) then
-      inquire(file='RUNNING', exist=run_exist)
-      if (.not. run_exist) then
-         print*, 'Stop requested.  Ending process ', mycol
-         print*, 'Saving end state'
-         call end_state(uold, zold, pold, bold, jold, p)
-         call save_xsect(vr, vz, pold, t, p)
-         call save_surface(pold, uold, zold, vr, vz, bold, jold, p, t)
-         end_proc = 1
-      end if
-   end if
-
-   call SLTIMER(3)
-   call IGEBR2D(ictxt, 'A', ' ', 1, 1, end_proc, 1, 0, 0)
-   call SLTIMER(3)
+   call terminate(p, t)
 
    if (mycol == 0) then
       if (end_proc == 1) exit
@@ -165,163 +144,91 @@ do p = p_start, Ntot
    end if
 
    if (mycol == 0) then
-      inquire(file='SAVE', exist=save_exist)
-      if (save_exist) then
-         call save_xsect(vr, vz, pold, t, p)
-         call save_surface(pold, uold, zold, vr, vz, bold, jold, p, t)
-         open (98, file = 'SAVE')
-         close (98, status = 'delete')
-      end if
+      call save_run(p, t)
    end if
 
    t = p * dt
 
    if (mycol == 0) then
-      if (mod(p, save_rate) == 0) then
-         call r_vel(pold, vr, vz)
-         if (save_part) then
-            call particle(vr, vrold, vz, vzold, x_pos, z_pos)
-         end if
-         !if ((Re1 /= 0d0) .or. (Re2 /= 0d0)) then
-         !   call save_torque(t, unew)
-         !end if
-         if ((p /= p_start) .and. ((p - p_start) > save_rate)) then
-            call save_growth(t, vr, vrold, vz, pold, unew, znew, &
-                             bold, jold, growth_rate)
-            if ((Re1_mod == 0d0) .and. (Re2_mod == 0d0)) then
-               if ((dabs(growth_rate) < 1d-8) .and. &
-                  (dabs(vr(nx/2, nz/2)) > 1d-3)) then
-                  if ((.not. auto_tau) .or. (tau == tau_end)) then
-                     call save_time_tau(tau, t)
-                     call end_state(uold, zold, pold, bold, jold, p)
-                  else if (tau < 1d0) then
-                     call save_time_tau(tau, t)
-                     tau = tau + tau_step
-                     print*, 'tau = ', tau
-                     call save_xsect(vr, vz, pold, t, p)
-                     call save_surface(pold, unew, znew, vr, vz, &
-                                       bold, jold, p, t)
-                  end if
-               end if
-            end if
-         end if
-      end if
+      if (mod(p, save_rate) == 0) call write_data(p, p_start, t)
 
-      vrold = vr
-      vzold = vz
+      call copy_var(vrold, vr)
+      call copy_var(vzold, vz)
 
       if (xsect_save) then
          if (mod(p, save_rate_2) == 0) then
-            call save_xsect(vr, vz, pold, t, p)
-            !call save_surface(pold, unew, znew, vr, vz, bold, jold, p, t)
+            call save_xsect(vr, vz, psi%old, t, p)
+            !call save_surface(psi%old, ut%new, zt%new, vr, vz, &
+            !                  bt%old, jt%old, p, t)
          end if
       end if
 
-      uold = unew
-      zold = znew
+      call copy_var(ut%old, ut%new)
+      call copy_var(zt%old, zt%new)
 
-!*** Get RHS for v in x-direction ************
+      call get_rhs_ux(ut%old, ut%new)
+      call get_nlin_ux(ut%old, ut%old2, psi%old, psi%old2, &
+                       bt%old, bt%old2, ut%nlin_new)
+      call get_rhs_Zx(zt%old, zt%new)
+      call get_nlin_Zx(t, ut%old, ut%old2, psi%old, psi%old2, zt%old, &
+                    zt%old2, jt%old, jt%old2, zt%nlin_new)
+      call solve_ux(ut%old, ut%new, ut%nlin_new, t, Ux)
+      call solve_Zx(zt%old, zt%new, zt%nlin_new, psi%old, t, Zx)
 
-      call get_rhs_ux(uold, unew)
+      call copy_var(ut%old2, ut%inter)
+      call copy_var(zt%old2, zt%inter)
 
-!*********************************************
+      call solve_uz(ut%old, ut%new, t, Uz)
+      call solve_Zz(zt%old, psi%old, zt%new, t, Zz)
 
-!*** Get non-lin terms for v in x-direction **
+      call copy_var(ut%inter, ut%new)
+      call copy_var(zt%inter, zt%new)
+      call copy_var(psi%old2, psi%old)
+      call copy_var(bt%old2, bt%old)
+      call copy_var(jt%old2, jt%old)
 
-      call get_nlin_ux(uold, uold2, pold, pold2, bold, bold2, u_nlin_new)
-
-!*********************************************
-
-!*** Get RHS for Z in x-direction ************
-
-      call get_rhs_Zx(zold, znew)
-
-!*********************************************
-
-!*** Get non-lin terms for Z in x-direction **
-
-      call get_nlin_Zx(t, uold, uold2, pold, pold2, zold, &
-                    zold2, jold, jold2, z_nlin_new)
-
-!*********************************************
-
-!*** Solve for v in x-direction **************
-
-      call solve_ux(uold, unew, u_nlin_new, t, Ux)
-
-!*********************************************
-
-!*** Solve for Z in x-direction **************
-
-      call solve_Zx(zold, znew, z_nlin_new, pold, t, Zx)
-
-!*********************************************
-
-      uold2 = u_int
-      zold2 = z_int
-
-!*** Solve for v in z-direction **************
-
-      call solve_uz(uold, unew, t, Uz)
-
-!*********************************************
-
-!*** Solve for Z in z-direction **************
-
-      call solve_Zz(zold, pold, znew, t, Zz)
-
-!*********************************************
-
-      u_int = unew
-      z_int = znew
-      pold2 = pold
-      bold2 = bold
-      jold2 = jold
-!   call get_poisson_test_znew(znew)
-
-      call p_BCS(pnew)
-      call b_BCS(bnew)
-      call j_BCS(jnew)
+      call p_BCS(psi%new)
+      call b_BCS(bt%new)
+      call j_BCS(jt%new)
    end if
 
    call SLTIMER(4)
-   call DGEBR2D(ictxt, 'A', ' ', nxp1, nzp1, znew, nxp1, 0, 0)
-   call DGEBR2D(ictxt, 'A', ' ', nxp1, nzp1, unew, nxp1, 0, 0)
+   call DGEBR2D(ictxt, 'A', ' ', nxp1, nzp1, zt%new, nxp1, 0, 0)
+   call DGEBR2D(ictxt, 'A', ' ', nxp1, nzp1, ut%new, nxp1, 0, 0)
    call SLTIMER(4)
 
    call SLTIMER(5)
-   call p_poisson(znew, pnew, p_mat, desc_p, p_fill)
+   call p_poisson(zt%new, psi%new, p_mat, desc_p, p_fill)
    if (tau == 0d0) then
-      call b_poisson(unew, bnew, b_mat, desc_b, b_fill)
-      call j_poisson(pnew, jnew, j_mat, desc_j, j_fill)
+      call b_poisson(ut%new, bt%new, b_mat, desc_b, b_fill)
+      call j_poisson(psi%new, jt%new, j_mat, desc_j, j_fill)
    else if (tau == 1d0) then
-      call fin_b_poisson(unew, bnew, b_mat, desc_b, b_fill)
-      call fin_j_poisson(pnew, jnew, j_mat, desc_j, j_fill)
+      call fin_b_poisson(ut%new, bt%new, b_mat, desc_b, b_fill)
+      call fin_j_poisson(psi%new, jt%new, j_mat, desc_j, j_fill)
    else if ((tau /= 0d0) .and. (tau /= 1d0)) then
-      call fin_b_poisson(unew, bnew, b_mat, desc_b, b_fill)
-      call j_poisson(pnew, jnew, j_mat, desc_j, j_fill)
+      call fin_b_poisson(ut%new, bt%new, b_mat, desc_b, b_fill)
+      call j_poisson(psi%new, jt%new, j_mat, desc_j, j_fill)
    end if
    call SLTIMER(5)
 
    if (diag) then
-      call calc_rhs_u(unew, uold2, pold, t, p)
-      call calc_rhs_Z(znew, zold2, uold2, pold, t, p)
-      call calc_rhs_psi(pnew, znew, t, p)
+      call calc_rhs_u(ut%new, ut%old2, psi%old, t, p)
+      call calc_rhs_Z(zt%new, zt%old2, ut%old2, psi%old, t, p)
+      call calc_rhs_psi(psi%new, zt%new, t, p)
    end if
 
    if (mycol == 0) then
-      pold = pnew
-      bold = bnew
-      jold = jnew
+      call copy_var(psi%old, psi%new)
+      call copy_var(bt%old, bt%new)
+      call copy_var(jt%old, jt%new)
       if (p == Ntot) then
-         call end_state(unew, znew, pold, bold, jold, p)
-         call save_xsect(vr, vz, pold, t, p)
-         call save_surface(pold, unew, znew, vr, vz, bold, jold, p, t)
+         call end_state(ut%new, zt%new, psi%old, bt%old, jt%old, p)
+         call save_xsect(vr, vz, psi%old, t, p)
+         call save_surface(psi%old, ut%new, zt%new, &
+                           vr, vz, bt%old, jt%old, p, t)
       end if
    end if
-
 end do
-!*** END TIME LOOP***
 
 if (mycol == 0) then
    call close_files()
@@ -341,519 +248,3 @@ call BLACS_GRIDEXIT(ictxt)
 call BLACS_EXIT(0)
 
 END PROGRAM couette_mod
-
-SUBROUTINE get_rhs_ux(uo, u)
-use parameters
-use derivs
-use io
-use ic_bc
-implicit none
-
-double precision, intent(in) :: uo(0:nx,0:nz)
-double precision, intent(out) :: u(0:nx,0:nz)
-type (deriv) :: du
-integer :: j, k
-
-call deriv_x(uo, du%x)
-call deriv_xx(uo, du%xx)
-call deriv_zz(uo, du%zz)
-
-do k = 1, nz1
-   u(1:nx1,k) = uo(1:nx1,k) + (0.5d0 * rxx * du%xx(1:nx1,k)) + &
-            (((1d0 - eta) * rx) / (4d0 * s(1:nx1))) * du%x(1:nx1,k) - &
-            (((1d0 - eta)**2 * dt) / (2d0 * s(1:nx1)**2)) * &
-            uo(1:nx1,k) + 0.5d0 * rzz * du%zz(1:nx1,k)
-end do
-
-if (tau /= 1) then
-!   do j = 1, nx1
-      u(1:nx1,0) = uo(1:nx1,0) + (0.5d0 * rxx * du%xx(1:nx1,0)) + &
-               (((1d0 - eta) * rx) / (4d0 * s(1:nx1))) * du%x(1:nx1,0) - &
-               (((1d0 - eta)**2 * dt) / (2d0 * s(1:nx1)**2)) * &
-               uo(1:nx1,0) + 0.5d0 * rzz * du%zz(1:nx1,0)
-
-      u(1:nx1,nz) = uo(1:nx1,nz) + (0.5d0 * rxx * du%xx(1:nx1,nz)) + &
-               (((1d0 - eta) * rx) / (4d0 * s(1:nx1))) * du%x(1:nx1,nz) - &
-               (((1d0 - eta)**2 * dt) / (2d0 * s(1:nx1)**2)) * &
-               uo(1:nx1,nz) + 0.5d0 * rzz * du%zz(1:nx1,nz)
-!   end do
-end if
-
-return
-END SUBROUTINE get_rhs_ux
-
-SUBROUTINE get_nlin_ux(uo, uo2, po, po2, bo, bo2, u_nl_n)
-use parameters
-use derivs
-use io
-use ic_bc
-implicit none
-double precision, intent(in) :: uo(0:nx,0:nz), uo2(0:nx,0:nz), &
-                                po(0:nx,0:nz), po2(0:nx,0:nz), &
-                                bo(0:nx,0:nz), bo2(0:nx,0:nz)
-double precision, intent(out) :: u_nl_n(0:nx,0:nz)
-
-type (deriv) :: du, du2, dp, dp2, db, db2
-integer :: j, k
-
-call deriv_x(uo, du%x)
-call deriv_x(uo2, du2%x)
-call deriv_z(uo, du%z)
-call deriv_z(uo2, du2%z)
-call deriv_x(po, dp%x)
-call deriv_x(po2, dp2%x)
-call deriv_z(po, dp%z)
-call deriv_z(po2, dp2%z)
-call deriv_z(bo, db%z)
-call deriv_z(bo2, db2%z)
-
-do k = 1, nz1
-   u_nl_n(1:nx1,k) = (-rx / (8d0 * s(1:nx1) * delz)) * &
-                 (3d0 * (dp%x(1:nx1,k) * du%z(1:nx1,k) - &
-                 dp%z(1:nx1,k) * du%x(1:nx1,k)) - &
-                 (dp2%x(1:nx1,k) * du2%z(1:nx1,k) - &
-                 dp2%z(1:nx1,k) * du2%x(1:nx1,k))) + &
-                 ((1d0 - eta) * rz / (4d0 * s(1:nx1)**2)) * &
-                 (3d0 * uo(1:nx1,k) * dp%z(1:nx1,k) - &
-                 uo2(1:nx1,k) * dp2%z(1:nx1,k)) + &
-                 0.25d0 * rz * Q * (3d0 * db%z(1:nx1,k) - &
-                 db2%z(1:nx1,k))
-end do
-
-if (tau /= 1) then
-!   do j = 1, nx1
-   u_nl_n(1:nx1,0) = (-rx / (8d0 * s(1:nx1) * delz)) * &
-                 (-3d0 * dp%z(1:nx1,0) * du%x(1:nx1,0) + &
-                 dp2%z(1:nx1,0) * du2%x(1:nx1,0)) + &
-                 ((1d0 - eta) * rz / (4d0 * s(1:nx1)**2)) * &
-                 (3d0 * uo(1:nx1,0) * dp%z(1:nx1,0) - &
-                 uo2(1:nx1,0) * dp2%z(1:nx1,0)) + &
-                 0.25d0 * rz * Q * (3d0 * db%z(1:nx1,0) - db2%z(1:nx1,0))
-
-   u_nl_n(1:nx1,nz) = (-rx / (8d0 * s(1:nx1) * delz)) * &
-                  (-3d0 * dp%z(1:nx1,nz) * du%x(1:nx1,nz) + &
-                  dp2%z(1:nx1,nz) * du2%x(1:nx1,nz)) + &
-                  ((1d0 - eta) * rz / (4d0 * s(1:nx1)**2)) * &
-                  (3d0 * uo(1:nx1,nz) * dp%z(1:nx1,nz) - &
-                  uo2(1:nx1,nz) * dp2%z(1:nx1,nz)) + &
-                  0.25d0 * rz * Q * (3d0 * db%z(1:nx1,nz) - db2%z(1:nx1,nz))
-!   end do
-end if
-
-return
-END SUBROUTINE get_nlin_ux
-
-SUBROUTINE get_rhs_Zx(zo, zn)
-use parameters
-use derivs
-use io
-use ic_bc
-implicit none
-double precision, intent(in) :: zo(0:nx,0:nz)
-double precision, intent(out) :: zn(0:nx,0:nz)
-type (deriv) :: dz
-integer :: j, k
-
-call deriv_x(zo, dz%x)
-call deriv_xx(zo, dz%xx)
-call deriv_zz(zo, dz%zz)
-
-do k = 1, nz1
-   zn(1:nx1,k) = zo(1:nx1,k) + (0.5d0 * rxx * dz%xx(1:nx1,k)) + &
-                  (((1d0 - eta) * rx) / (4d0 * s(1:nx1))) * dz%x(1:nx1,k) - &
-                  (((1d0 - eta)**2 * dt) / (2d0 * s(1:nx1)**2)) * &
-                  zo(1:nx1,k) + 0.5d0 * rzz * dz%zz(1:nx1,k)
-end do
-
-return
-END SUBROUTINE get_rhs_Zx
-
-SUBROUTINE get_nlin_Zx(t, uo, uo2, po, po2, zo, zo2, jo, jo2, z_nl_n)
-use parameters
-use derivs
-use io
-use ic_bc
-implicit none
-double precision, intent(in) :: t, uo(0:nx,0:nz), uo2(0:nx,0:nz), &
-                                po(0:nx,0:nz), po2(0:nx,0:nz), &
-                                zo(0:nx,0:nz), zo2(0:nx,0:nz), &
-                                jo(0:nx,0:nz), jo2(0:nx,0:nz)
-double precision, intent(out) :: z_nl_n(0:nx,0:nz)
-type (deriv) :: du, du2, dp, dp2, dz, dz_2, dj, dj2
-integer :: j, k
-
-call deriv_z(uo, du%z)
-call deriv_z(uo2, du2%z)
-call deriv_x(po, dp%x)
-call deriv_x(po2, dp2%x)
-call deriv_z(po, dp%z)
-call deriv_z(po2, dp2%z)
-call deriv_x(zo, dz%x)
-call deriv_x(zo2, dz_2%x)
-call deriv_z(zo, dz%z)
-call deriv_z(zo2, dz_2%z)
-call deriv_z(jo, dj%z)
-call deriv_z(jo2, dj2%z)
-
-!do j = 1, nx1
-!   z_nl_n(j,1:nz1) = (((1d0 - eta) * rz) / (2d0 * s(j))) * &
-!                 (3d0 * uo(j,1:nz1) * du%z(j,1:nz1) - &
-!                 uo2(j,1:nz1) * du2%z(j,1:nz1)) - &
-!                 ((1d0 - eta) * rz / (4d0 * s(j)**2)) * &
-!                 (3d0 * zo(j,1:nz1) * dp%z(j,1:nz1) - &
-!                 zo2(j,1:nz1) * dp2%z(j,1:nz1)) - &
-!                 (rx / (8d0 * s(j) * delz)) * &
-!                 ((3d0 * (dp%x(j,1:nz1) * dz%z(j,1:nz1) - &
-!                 dp%z(j,1:nz1) * dz%x(j,1:nz1))) - &
-!                 (dp2%x(j,1:nz1) * dz_2%z(j,1:nz1) - &
-!                 dp2%z(j,1:nz1) * dz_2%x(j,1:nz1))) + &
-!                 0.25d0 * rz * Q * (3d0 * dj%z(j,1:nz1) - &
-!                 dj2%z(j,1:nz1))
-!end do
-
-do k = 1, nz1
-   z_nl_n(1:nx1,k) = (((1d0 - eta) * rz) / (2d0 * s(1:nx1))) * &
-                 (3d0 * uo(1:nx1,k) * du%z(1:nx1,k) - &
-                 uo2(1:nx1,k) * du2%z(1:nx1,k)) - &
-                 ((1d0 - eta) * rz / (4d0 * s(1:nx1)**2)) * &
-                 (3d0 * zo(1:nx1,k) * dp%z(1:nx1,k) - &
-                 zo2(1:nx1,k) * dp2%z(1:nx1,k)) - &
-                 (rx / (8d0 * s(1:nx1) * delz)) * &
-                 ((3d0 * (dp%x(1:nx1,k) * dz%z(1:nx1,k) - &
-                 dp%z(1:nx1,k) * dz%x(1:nx1,k))) - &
-                 (dp2%x(1:nx1,k) * dz_2%z(1:nx1,k) - &
-                 dp2%z(1:nx1,k) * dz_2%x(1:nx1,k))) + &
-                 0.25d0 * rz * Q * (3d0 * dj%z(1:nx1,k) - &
-                 dj2%z(1:nx1,k))
-end do
-
-return
-END SUBROUTINE get_nlin_Zx
-
-SUBROUTINE solve_ux(uo, u, u_nl, t, ux)
-use parameters
-use io
-use ic_bc
-implicit none
-double precision, intent(in) :: t
-double precision, intent(in) :: u(0:nx,0:nz), u_nl(0:nx,0:nz)
-type (mat_comp), intent(in) :: ux
-double precision, intent(inout) :: uo(0:nx,0:nz)
-double precision :: ux_rhs(nx1)
-integer :: j, k
-
-call u_BCS(uo, t)
-
-do k = 1, nz1
-   ux_rhs(:) = u(1:nx1,k) + u_nl(1:nx1,k)
-   
-   ux_rhs(1) = ux_rhs(1) + (0.5d0 * rxx * uo(0,k)) - &
-               (((1d0 - eta) * rx) / (4d0 * s(1))) * uo(0,k)
-   ux_rhs(nx1) = ux_rhs(nx1) + (0.5d0 * rxx * uo(nx,k)) + &
-               (((1d0 - eta) * rx) / (4d0 * s(nx1))) * uo(nx,k)
-
-   call thomas(xlb, nx1, ux%up, ux%di, ux%lo, ux_rhs)
-
-   uo(1:nx1,k) = ux_rhs(:)
-end do
-
-if (tau /= 1) then
-   do k = 0, nz, nz
-      ux_rhs(:) = u(1:nx1,k) + u_nl(1:nx1,k)
-                                
-      ux_rhs(1) = ux_rhs(1) + (0.5d0 * rxx * uo(0,k)) - &
-                  (((1d0 - eta) * rx) / (4d0 * s(1))) * uo(0,k)
-      ux_rhs(nx1) = ux_rhs(nx1) + (0.5d0 * rxx * uo(nx,k)) + &
-                  (((1d0 - eta) * rx) / (4d0 * s(nx1))) * uo(nx,k)
-
-      call thomas(xlb, nx1, ux%up, ux%di, ux%lo, ux_rhs)
-
-      uo(1:nx1,k) = ux_rhs(:)
-   end do
-end if
-
-return
-END SUBROUTINE solve_ux
-
-SUBROUTINE solve_Zx(zo, zn, z_nl, po, t, zx)
-use parameters
-use io
-use ic_bc
-implicit none
-double precision, intent(in) :: t
-double precision, intent(in) :: zn(0:nx,0:nz), po(0:nx,0:nz), &
-                                z_nl(0:nx,0:nz)
-type (mat_comp), intent(in) :: zx
-double precision, intent(inout) :: zo(0:nx,0:nz)
-double precision :: zx_rhs(nx1)
-integer :: j, k
-
-call z_BCS(zo, po, t)
-
-do k = 1, nz1
-   zx_rhs(:) = zn(1:nx1,k) + z_nl(1:nx1,k)
-   
-   zx_rhs(1) = zx_rhs(1) + (0.5d0 * rxx * zo(0,k)) - &
-               (((1d0 - eta) * rx) / (4d0 * s(1))) * zo(0,k)
-   zx_rhs(nx1) = zx_rhs(nx1) + (0.5d0 * rxx * zo(nx,k)) + &
-               (((1d0 - eta) * rx) / (4d0 * s(nx1))) * zo(nx,k)
-
-   call thomas(xlb, nx1, zx%up, zx%di, zx%lo, zx_rhs)
-
-   zo(1:nx1,k) = zx_rhs(:)
-end do
-
-return
-END SUBROUTINE solve_Zx
-
-SUBROUTINE solve_uz(uo, u, t, uz)
-use parameters
-use io
-use ic_bc
-implicit none
-double precision, intent(in) :: t
-double precision, intent(in) :: uo(0:nx,0:nz)
-type (uz_mat_comp), intent(in) :: uz
-double precision, intent(inout) :: u(0:nx,0:nz)
-double precision :: uz_rhs(0:nz), uz_rhs_t1(nz1), &
-                    up(nz-2), di(nz1), lo(2:nz1)
-integer :: j, k
-
-call u_BCS(u, t)
-
-if (tau == 1) then
-   up(:) = uz%up(1:nz-2)
-   di(:) = uz%di(1:nz1)
-   lo(:) = uz%lo(2:nz1)
-
-   do j = 1, nx1
-      uz_rhs_t1(:) = uo(j,1:nz1)
-
-      uz_rhs_t1(1) = uz_rhs_t1(1) + 0.5d0 * rzz * u(j,0)
-      uz_rhs_t1(nz1) = uz_rhs_t1(nz1) + 0.5d0 * rzz * u(j,nz)
-
-      call thomas(zlb+1, nz1, up, di, lo, uz_rhs_t1)
-
-      u(j,1:nz1) = uz_rhs_t1(:)
-   end do
-else
-   do j = 1, nx1
-      uz_rhs(:) = uo(j,:)
-
-      call thomas(zlb, nz, uz%up, uz%di, uz%lo, uz_rhs)
-
-      u(j,:) = uz_rhs(:)
-   end do
-end if
-
-return
-END SUBROUTINE solve_uz
-
-SUBROUTINE solve_Zz(zo, po, zn, t, zz)
-use parameters
-use io
-use ic_bc
-implicit none
-double precision, intent(in) :: t
-double precision, intent(in) :: zo(0:nx,0:nz), po(0:nx,0:nz)
-type (zz_mat_comp), intent(in) :: zz
-double precision, intent(inout) :: zn(0:nx,0:nz)
-double precision :: Zz_rhs(nz1)
-integer :: j, k
-
-call z_BCS(zn, po, t)
-
-do j = 1, nx1
-   Zz_rhs(:) = zo(j,1:nz1)
-   
-   Zz_rhs(1) = Zz_rhs(1) + 0.5d0 * rzz * zn(j,0)
-   Zz_rhs(nz1) = Zz_rhs(nz1) + 0.5d0 * rzz * zn(j,nz)
-
-   call thomas(zlb+1, nz1, zz%up, zz%di, zz%lo, Zz_rhs)
-
-   zn(j,1:nz1) = Zz_rhs(:)
-end do
-
-return
-END SUBROUTINE solve_Zz
-
-SUBROUTINE r_vel(p, vr, vz)
-use parameters
-use ic_bc
-implicit none
-double precision, intent(in) :: p(0:nx,0:nz)
-double precision, intent(out) :: vr(0:nx,0:nz), vz(0:nx,0:nz)
-integer :: j, k
-
-do k = 1, nz1
-   !do j = 0, nx
-      vr(:,k) = (-1d0 / (2d0 * s(:) * delz)) * (p(:,k+1) - p(:,k-1))
-   !end do
-end do
-
-!do j = 0, nx
-   vr(:,0) = (-1d0 / (2d0 * s(:) * delz)) * &
-              (-3d0 * p(:,0) + 4d0 * p(:,1) - p(:,2))
-   vr(:,nz) = (-1d0 / (2d0 * s(:) * delz)) * &
-              (3d0 * p(:,nz) - 4d0 * p(:,nz1) + p(:,nz-2))
-!end do
-
-do k = 0, nz
-   do j = 1, nx1
-      vz(j,k) = (1d0 / (2d0 * s(j) * delx)) * (p(j+1,k) - p(j-1,k))
-   end do
-end do
-
-do k = 0, nz
-   vz(0,k) = 0d0 !(1d0 / (2d0 * s(0) * delx)) * &
-              !(-3d0 * p(0,k) + 4d0 * p(1,k) - p(2,k))
-   vz(nx,k) = 0d0 !(1d0 / (2d0 * s(nx) * delx)) * &
-              !(3d0 * p(nx,k) - 4d0 * p(nx1,k) + p(nx-2,k))
-end do
-
-return
-END SUBROUTINE r_vel
-
-SUBROUTINE calc_rhs_u(up1, u, psi, t, p)
-use parameters
-use derivs
-use ic_bc
-implicit none
-integer, intent(in) :: p
-double precision, intent(in) :: t, up1(0:nx,0:nz), u(0:nx,0:nz), &
-                                psi(0:nx,0:nz)
-double precision :: u_x(0:nx,0:nz), u_xx(0:nx,0:nz), &
-                    u_z(0:nx,0:nz), u_zz(0:nx,0:nz), &
-                    psi_x(0:nx,0:nz), psi_z(0:nx,0:nz)
-double precision :: lhs_u(0:nx,0:nz)
-integer :: j, k
-
-call deriv_x(u, u_x)
-call deriv_xx(u, u_xx)
-call deriv_x(psi, psi_x)
-call deriv_z(u, u_z)
-call deriv_zz(u, u_z)
-call deriv_z(psi, psi_z)
-
-do j = 1, nx1
-   do k = 1, nz1
-      lhs_u(j,k) = (rxx * u_xx(j,k)) + &
-                 (((1d0 - eta) * rx) / (2d0 * s(j))) * &
-                 u_x(j,k) - &
-                 ((dt * (1d0 - eta)**2) / (s(j)**2)) * &
-                 u(j,k) + &
-                 (rzz * u_zz(j,k)) - &
-                 (rx / (4d0 * s(j) * delz)) * &
-                 ((psi_x(j,k) * u_z(j,k)) - &
-                 (psi_z(j,k) * u_x(j,k))) + &
-                 (((1d0 - eta) * rz) / (2d0 * s(j))) * &
-                 ((u(j,k) / s(j))) !- &
-!                 up1(j,k) + u(j,k)
-   end do
-end do
-
-if (mod(p, save_rate) == 0) then
-   write (90, '(2e17.9)') t, lhs_u(nx/2,nz/2)
-end if
-
-return
-END SUBROUTINE calc_rhs_u
-
-SUBROUTINE calc_rhs_Z(zp1, zn, u, psi, t, p)
-use parameters
-use derivs
-use ic_bc
-implicit none
-
-integer, intent(in) :: p
-double precision, intent(in) :: t, zp1(0:nx,0:nz), zn(0:nx,0:nz), &
-                                u(0:nx,0:nz), &
-                                psi(0:nx,0:nz)
-
-double precision :: u_z(0:nx,0:nz), &
-                    psi_x(0:nx,0:nz), psi_z(0:nx,0:nz), &
-                    z_x(0:nx,0:nz), &
-                    z_xx(0:nx,0:nz), z_z(0:nx,0:nz), &
-                    z_zz(0:nx,0:nz)
-double precision :: lhs_z(0:nx,0:nz)
-integer :: j, k
-
-call deriv_x(zn, z_x)
-call deriv_xx(zn, z_xx)
-call deriv_x(psi, psi_x)
-call deriv_z(zn, z_z)
-call deriv_zz(zn, z_zz)
-call deriv_z(u, u_z)
-call deriv_z(psi, psi_z)
-
-do j = 1, nx1
-   do k = 1, nz1
-      lhs_z(j,k) = rxx * (z_xx(j,k)) + &
-                   ((1.5d0 * rx * (1d0 - eta)) / s(j)) * &
-                   (z_x(j,k)) + &
-                   rzz * (z_zz(j,k)) + &
-                   (((1d0 - eta) * rz) / (s(j)**2)) * &
-                   ((u(j,k)) * u_z(j,k)) - &
-                   (rx / (4d0 * s(j) * delz)) * &
-                   ((psi_x(j,k) * z_z(j,k) - &
-                   psi_z(j,k) * z_x(j,k))) + &
-                   zn(j,k) - zp1(j,k)
-   end do
-end do
-
-if (mod(p, save_rate) == 0) then
-   write (91, '(2e17.9)') t, lhs_z(nx/2,nz/4)
-end if
-
-return
-END SUBROUTINE calc_rhs_Z
-
-SUBROUTINE calc_rhs_psi(psip1, zp1, t, p)
-use parameters
-use derivs
-use ic_bc
-implicit none
-
-integer, intent(in) :: p
-double precision, intent(in) :: t, psip1(0:nx,0:nz), zp1(0:nx,0:nz)
-double precision :: lhs_psi(0:nx,0:nz), psip1_x(0:nx,0:nz), &
-                    psip1_xx(0:nx,0:nz), psip1_zz(0:nx,0:nz)
-integer :: j, k
-
-call deriv_x(psip1, psip1_x)
-call deriv_xx(psip1, psip1_xx)
-call deriv_zz(psip1, psip1_zz)
-
-do j = 1, nx1
-   do k = 1, nz1
-      lhs_psi(j,k) = (-1d0 / dx2) * psip1_xx(j,k) + &
-                     (0.5d0 * (1d0 - eta) / (s(j) * delx)) * &
-                     psip1_x(j,k) - (1d0 / dz2) * &
-                     psip1_zz(j,k) - (s(j)**2) * zp1(j,k)
-   end do
-end do
-
-if (mod(p, save_rate) == 0) then
-   write (92, '(2e17.9)') t, lhs_psi(nx/2,3*nz/4)
-end if
-
-return
-END SUBROUTINE calc_rhs_psi
-
-SUBROUTINE get_poisson_test_znew(zn)
-use parameters
-use ic_bc
-implicit none
-
-integer :: j
-double precision, intent(out) :: zn(0:nx,0:nz)
-
-do j = 0, nx
-   zn(j,:) = -((pi**2 + alpha**2) / s(j)**2) * &
-             dsin(pi*x(j)) * dsin(alpha*z(:)) - &
-             (((1d0 - eta) * pi) / s(j)**3) * &
-             dcos(pi*x(j)) * dsin(alpha*z(:))
-end do
-
-return
-END SUBROUTINE get_poisson_test_znew
