@@ -3,11 +3,11 @@ implicit none
 save
 
 double precision, parameter :: pi 	   = 3.14159265358979d0
-double precision, parameter :: alpha 	   = 3.30d0
+double precision, parameter :: alpha 	   = 4.60d0
 double precision, parameter :: gamma 	   = (2d0 * pi) / alpha
-double precision, parameter :: eta 	   = 0.95d0
-double precision, parameter :: Q	   = 100d0
-double precision, parameter :: Re1 	   = 560d0
+double precision, parameter :: eta 	   = 0.25d0
+double precision, parameter :: Q	   = 300d0
+double precision, parameter :: Re1 	   = 455d0
 double precision, parameter :: Re2 	   = 0d0
 double precision, parameter :: Re1_mod 	   = 0d0
 double precision, parameter :: Re2_mod 	   = 0d0

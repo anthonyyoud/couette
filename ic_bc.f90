@@ -50,6 +50,8 @@ else
       do k = 0, nz
          u(:,k) = seed * dsin(pi*x(:)) * dcos(2d0*pi*z(k)/gamma)
          pn(:,k) = seed * dsin(pi*x(:)) * dsin(2d0*pi*z(k)/gamma)
+         bn(:,k) = seed * dsin(2d0*pi*z(k)/gamma) / s(j)
+         jn(:,k) = seed * dsin(pi*x(j)) * dsin(2d0*pi*z(k)/gamma)
       end do
 
       do k = 1, nz1
@@ -62,10 +64,6 @@ else
                       (s(j) * dz2)
         end do
       end do
-
-      bn(:,:) = seed
-      jn(:,:) = seed
-
    end if
 end if
 
