@@ -76,10 +76,15 @@ do k = 1, nz1
    vr(:,k) = (-1d0 / (2d0 * s(:) * delz)) * (p(:,k+1) - p(:,k-1))
 end do
 
-vr(:,0) = (-1d0 / (2d0 * s(:) * delz)) * &
-          (-3d0 * p(:,0) + 4d0 * p(:,1) - p(:,2))
-vr(:,nz) = (-1d0 / (2d0 * s(:) * delz)) * &
-           (3d0 * p(:,nz) - 4d0 * p(:,nz1) + p(:,nz-2))
+if (tau /= 1) then
+   vr(:,0) = (-1d0 / (2d0 * s(:) * delz)) * &
+             (-3d0 * p(:,0) + 4d0 * p(:,1) - p(:,2))
+   vr(:,nz) = (-1d0 / (2d0 * s(:) * delz)) * &
+              (3d0 * p(:,nz) - 4d0 * p(:,nz1) + p(:,nz-2))
+else
+   vr(:,0) = 0d0
+   vr(:,nz) = 0d0
+end if
 
 do j = 1, nx1
    vz(j,:) = (1d0 / (2d0 * s(j) * delx)) * (p(j+1,:) - p(j-1,:))

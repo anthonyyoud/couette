@@ -163,7 +163,8 @@ do p = p_start, Ntot        !start main time loop
 
       if (xsect_save) then   !save cross-sections
          if (mod(p, save_rate_2) == 0) then
-            call save_xsect(vr, vz, psi%old, t, p)
+            call save_xsect(vr, vz, psi%old, ut%new, zt%new, &
+                            bt%old, jt%old, t, p)
             !call save_surface(psi%old, ut%new, zt%new, vr, vz, &
             !                  bt%old, jt%old, p, t)
          end if
@@ -247,7 +248,8 @@ do p = p_start, Ntot        !start main time loop
       call copy_var(jt%old, jt%new)
       if (p == Ntot) then
          call end_state(ut%new, zt%new, psi%old, bt%old, jt%old, p)
-         call save_xsect(vr, vz, psi%old, t, p)   !save final state
+         call save_xsect(vr, vz, psi%old, ut%new, zt%new, &  !save final state
+                         bt%old, jt%old, t, p)
          call save_surface(psi%old, ut%new, zt%new, &
                            vr, vz, bt%old, jt%old, p, t)
       end if

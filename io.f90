@@ -137,7 +137,7 @@ write (33, '(3e17.9)') t, G1_, G2_ !G1(nz/4), G2(nz/4)
 return
 END SUBROUTINE save_torque
 
-SUBROUTINE save_xsect(ur, uz, pn, t, p)
+SUBROUTINE save_xsect(ur, uz, pn, ut, zt, bt, jt, t, p)
 !Save cross-sections of fields for use in IDL
 use parameters
 use ic_bc
@@ -145,7 +145,9 @@ implicit none
 
 integer, intent(in) :: p
 double precision, intent(in) :: ur(0:nx,0:nz), uz(0:nx,0:nz), &
-                                pn(0:nx,0:nz), t
+                                pn(0:nx,0:nz), ut(0:nx,0:nz), &
+                                zt(0:nx,0:nz), bt(0:nx,0:nz), &
+                                jt(0:nx,0:nz), t
 integer :: j, k
 
 open (32, status = 'unknown', file = 'xsect'//itos(p)//'.dat')
@@ -155,6 +157,10 @@ write (32, '(2i5)') nx, nz
 write (32, '(e17.9)') ((ur(j,k), j = 0, nx), k = 0, nz)
 write (32, '(e17.9)') ((uz(j,k), j = 0, nx), k = 0, nz)
 write (32, '(e17.9)') ((pn(j,k), j = 0, nx), k = 0, nz)
+write (32, '(e17.9)') ((ut(j,k), j = 0, nx), k = 0, nz)
+write (32, '(e17.9)') ((zt(j,k), j = 0, nx), k = 0, nz)
+write (32, '(e17.9)') ((bt(j,k), j = 0, nx), k = 0, nz)
+write (32, '(e17.9)') ((jt(j,k), j = 0, nx), k = 0, nz)
 write (32, '(e17.9)') (x(j), j = 0, nx)
 write (32, '(e17.9)') (z(k), k = 0, nz)
 
@@ -328,7 +334,8 @@ if ((p /= p_start) .and. ((p - p_start) > save_rate)) then
             call save_time_tau(tau, t)
             tau = tau + tau_step   !increment tau
             print*, 'tau = ', tau
-            call save_xsect(vr, vz, psi%old, t, p)
+            call save_xsect(vr, vz, psi%old, ut%new, zt%new, &
+                            bt%old, jt%old, t, p)
             call save_surface(psi%old, ut%new, zt%new, vr, vz, &
                               bt%old, jt%old, p, t)
          end if
@@ -355,7 +362,8 @@ if (mycol == 0) then
       print*, 'Stop requested.  Ending process ', mycol
       print*, 'Saving end state'
       call end_state(ut%old, zt%old, psi%old, bt%old, jt%old, p)
-      call save_xsect(vr, vz, psi%old, t, p)
+      call save_xsect(vr, vz, psi%old, ut%new, zt%new, &
+                      bt%old, jt%old, t, p)
       call save_surface(psi%old, ut%old, zt%old, &
                         vr, vz, bt%old, jt%old, p, t)
       end_proc = 1  !flag to send to all processes
@@ -381,7 +389,8 @@ logical :: save_exist
 
 inquire(file='SAVE', exist=save_exist)   !does 'SAVE' exist?
 if (save_exist) then   !if so then save fields
-   call save_xsect(vr, vz, psi%old, t, p)
+   call save_xsect(vr, vz, psi%old, ut%new, zt%new, &
+                   bt%old, jt%old, t, p)
    call save_surface(psi%old, ut%old, zt%old, &
                      vr, vz, bt%old, jt%old, p, t)
    open (98, file = 'SAVE')
