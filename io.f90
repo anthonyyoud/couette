@@ -114,7 +114,7 @@ growth = log(abs(ur(nx/2,nz/2)/ur_prev(nx/2,nz/2))) / (dt * save_rate)
 
 zpos = nz - (nz / (2 * gamma)) !(nz * (gamma - 1)) / (2 * gamma)
 
-write(20, '(8e19.7)') t, ur(nx/2,nz/2), growth, uz(nx/10,zpos), &
+write(20, '(8e17.9)') t, ur(nx/2,nz/2), growth, uz(nx/10,zpos), &
                       pn(nx/2,3*nz/4), v(nx/2,nz/2), &
                       z(nx/2,nz/4), Re1 + Re1_mod * dcos(om1 * t)
 
