@@ -8,13 +8,13 @@ double precision, parameter :: gamma 	   = 4d0 !(2d0 * pi) / alpha
 double precision, parameter :: eta 	   = 0.75d0
 double precision, parameter :: Re1 	   = 0d0
 double precision, parameter :: Re2 	   = 0d0
-double precision, parameter :: Re1_mod 	   = 150d0
+double precision, parameter :: Re1_mod 	   = 300d0
 double precision, parameter :: Re2_mod 	   = 0d0
 double precision, parameter :: om1 	   = 3d0
 double precision, parameter :: om2 	   = 0d0
 double precision, parameter :: dt 	   = 0.001d0
 double precision, parameter :: seed 	   = 1d-1
-double precision, parameter :: end_time    = 50d0
+double precision, parameter :: end_time    = 500d0
 double precision, parameter :: tau_init	   = 1d0
 double precision, parameter :: tau_step    = 1d0
 double precision, parameter :: tau_end     = 1d0
@@ -26,6 +26,8 @@ logical, 	  parameter :: diag 	   = .false.
 logical, 	  parameter :: xsect_save  = .false.
 logical, 	  parameter :: restart 	   = .false.
 logical,	  parameter :: auto_tau    = .false.
+double precision, parameter :: x_par_pos   = 0.5d0
+double precision, parameter :: z_par_pos   = 0.80d0
 
 integer, 	  parameter :: Ntot = end_time / dt
 double precision, parameter :: delx = 1d0 / (nx+0)
@@ -41,6 +43,8 @@ integer, parameter :: nz1 = nz-1
 integer, parameter :: xlb = 1
 integer, parameter :: zlb = 0
 double precision :: tau = tau_init
+double precision :: x_pos = x_par_pos * nx
+double precision :: z_pos = z_par_pos * nz
 
 !contains
 

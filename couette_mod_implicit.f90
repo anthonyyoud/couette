@@ -5,29 +5,24 @@ use matrices
 use io
 use ccf
 implicit none
-logical :: file_exist, file_exist2
-integer, parameter :: tfile = 11
 type (mat_comp) :: Ux, Zx
 type (uz_mat_comp) :: Uz
 type (zz_mat_comp) :: Zz
-!type (grid_setup) :: grid
-double precision :: growth_rate, p_max = 0d0, p_min = 0d0
-double precision :: x(0:nx), z(0:nz), s(0:nx), &
-!double precision :: s(0:nx), &
-                    t = 0d0, A = 0d0, A_ = 0d0, B = 0d0, B_ = 0d0, &
-u_nlin_new(0:nx,0:nz), u_nlin_old(0:nx,0:nz), &
-z_nlin_new(0:nx,0:nz), z_nlin_old(0:nx,0:nz), &
-unew(0:nx,0:nz), uold(0:nx,0:nz), uold2(0:nx,0:nz), u_int(0:nx,0:nz), &
-znew(0:nx,0:nz), zold(0:nx,0:nz), zold2(0:nx,0:nz), z_int(0:nx,0:nz), &
-pnew(0:nx,0:nz), pold(0:nx,0:nz), pold2(0:nx,0:nz), &
-vr(0:nx,0:nz), vz(0:nx,0:nz), &
-vc(0:nx), vc_(0:nx), vrold(0:nx,0:nz) = 0d0, vzold(0:nx,0:nz) = 0d0, &
-AB(2*nx1+nx1+1,nx1*nz1), F(0:nx)
-integer :: pivot(nx1*nz1)
-double precision :: xposold = 0.25d0 * nx, zposold = 0.75d0 * nz
-
-logical, parameter :: write_ofile = .true.
-integer :: j, k, p = 0, p_start = 1
+double precision :: growth_rate, p_max = 0d0, p_min = 0d0, &
+                    x(0:nx), z(0:nz), s(0:nx), t = 0d0, A = 0d0, &
+                    A_ = 0d0, B = 0d0, B_ = 0d0, u_nlin_new(0:nx,0:nz), &
+                    u_nlin_old(0:nx,0:nz), z_nlin_new(0:nx,0:nz), &
+                    z_nlin_old(0:nx,0:nz), unew(0:nx,0:nz), &
+                    uold(0:nx,0:nz), uold2(0:nx,0:nz), &
+                    u_int(0:nx,0:nz), znew(0:nx,0:nz), & 
+                    zold(0:nx,0:nz), zold2(0:nx,0:nz), &
+                    z_int(0:nx,0:nz), pnew(0:nx,0:nz), pold(0:nx,0:nz), &
+                    pold2(0:nx,0:nz), vr(0:nx,0:nz), vz(0:nx,0:nz), &
+                    vc(0:nx), vc_(0:nx), vrold(0:nx,0:nz) = 0d0, &
+                    vzold(0:nx,0:nz) = 0d0, AB(2*nx1+nx1+1,nx1*nz1), &
+                    F(0:nx) 
+integer :: pivot(nx1*nz1), j, k, p = 0, p_start = 1
+logical :: file_exist, file_exist2
 
 print*
 if (tau == 0) then
@@ -159,7 +154,7 @@ do p = p_start, Ntot
 
    if (mod(p, save_rate) == 0) then
       call r_vel(pold, s, vr, vz)
-      call particle(vr, vrold, vz, vzold, xposold, zposold)
+      call particle(vr, vrold, vz, vzold, x_pos, z_pos)
       if ((Re1 /= 0d0) .or. (Re2 /= 0d0)) then
          call save_torque(t, unew)
       end if
@@ -167,7 +162,7 @@ do p = p_start, Ntot
          call save_growth(t, vr, vrold, vz, pold, unew, znew, growth_rate)
          if ((Re1_mod == 0d0) .and. (Re2_mod == 0d0)) then
             if ((dabs(growth_rate) < 1d-8) .and. &
-                (dabs(vr(nx/2, nz/2)) > 1d+4)) then
+                (dabs(vr(nx/2, nz/2)) > 1d-3)) then
                 if ((.not. auto_tau) .or. (tau == tau_end)) then
                    call save_time_tau(tau, t)
                    call end_state(uold, zold, pold, p)

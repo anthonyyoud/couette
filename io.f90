@@ -318,9 +318,9 @@ integer :: xmin, xplu, zmin, zplu
 double precision :: c1, c2, rvel, zvel, xnew, znew
 
 xmin = int(xold)
-xplu = int(xold + 1)
+xplu = int(xold + 1d0)
 zmin = int(zold)
-zplu = int(zold + 1)
+zplu = int(zold + 1d0)
 
 c1 = (xold - xmin) / (xplu - xmin)
 c2 = (zold - zmin) / (zplu - zmin)

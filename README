@@ -1,0 +1,110 @@
+DESCRIPTION
+-----------
+Axisymmetric, modulated Couette flow in an infinite or finite cylinder 
+using 2nd order implicit Crank-Nicolson for linear terms and 2nd order 
+explicit Adams-Bashforth for non-linear terms with operator factorisation.  
+2nd order centred finite differences.  Includes homotopy parameter, tau, to 
+continuously deform the boundaries from inifinite case (tau=0) to finite 
+case (tau=1).  Also includes particle path subroutine to track the 
+trajectory of a particle.
+
+FILES
+-----
+ccf.f90				- Routines to do with Circular Couette 
+				  flow.
+couette_mod_implicit.f90	- Main program.
+derivs.f90			- Routines to calculate derivatives.
+ifc_makefile_couette		- Makefile for use with Intel Fortran 
+				  Compiler (ifc).
+io.f90				- In general routines to do with 
+				  input/output.
+matrices.f90			- Routines to set up matrices involved 
+				  in time-stepping and solving Poisson 
+				  equation.
+parameters.f90			- Parameters to set (see below).
+pressure.f90			- Routines to solve Poisson equation for 
+				  pressure.
+README				- This file.
+script				- For use on batch queues.
+setup				- Setup script to compile and setup 
+				  ready to run in separate directory.
+(f95_makefile_couette		- Old Makefile for use with NAg f95 
+				  compiler.)
+
+TO RUN
+------
+Set parameters.f90 then use:
+	source setup <directory>
+which compiles code and copies parameters.f90 and script and moves 
+couette_mod.out to <directory>.  ./couette_mod.out runs code.
+
+OUTPUT FILES
+------------
+end_state.dat	- Saves time index, p, time-step, dt, and fields u, Z, 
+		  and psi, for restart.
+max_psi.dat	- Saves maximum value of psi over whole field.  Mainly 
+		  for use with IDL plots.
+particle.dat	- Saves the radial and axial position of a particle at 
+		  each time.
+script		- For use on batch queues.
+time_tau.dat	- If auto_tau=.true. saves time at which each step in 
+		  tau occured.
+torque.dat	- For steady case saves torque on inner and outer 
+		  cylinder.  Needs more work.
+u_growth.dat	- Saves time, radial velocity, growth rate, axial 
+		  velocity, stream function, azimuthal velocity, 
+		  vorticity, and Reynolds number.  Velocities are saved 
+		  at the points defined in io.f90 - subroutine 
+		  'save_growth'.
+p*******.dat	- Stream function field saved at the time defined by 
+		  (time-step)*(number following 'p') in filename.
+u*******.dat	- As above but for azimuthal velocity field.
+z*******.dat	- As above but for vorticity field.
+vr*******.dat	- As above but for radial velocity field.
+vz*******.dat	- As above but for axial velocity field.
+xsect*******.dat- Cross-section of vr, vz and psi saved at the time 
+		  defined as above for use in IDL 'jpeg' routine.
+
+PARAMETERS
+----------
+alpha		- Wavenumber (2pi/wavelength) in the infinite case.  Set 
+		  equal zero if using finite cylinders.
+gamma		- Aspect ratio (height/gap) for the finite case.  Set 
+		  equal to 2pi/alpha if using infinite cylinders.
+eta		- Radius ratio (R1/R2).
+Re1,2		- Reynolds number in Re1,2(t)=Re1,2+Re1,2mod*cos(om1,2*t).
+Re1,2_mod	- Modulation amplitude as above.
+om1,2		- Frequency of modulation as above.
+dt		- Timestep.  10^-3 good for rough runs.  10^-4 much more 
+		  accurate for final calculations.
+seed		- Initial seed for ICS.  Set small O(10^-10) for 
+		  calculating linear growth rates.  Set O(10^-3) for 
+		  non-linear saturation.
+end_time	- Final viscous diffusion time.
+tau_init	- Initial value of homotopy parameter, tau.  0<=tau<=1.  
+		  tau=0 => infinite, tau=1 => finite.
+tau_step	- For steady case, how much tau should be increased 
+		  after saturation at each tau.
+tau_end		- For steady case, the final value of tau desired.
+nx		- Number of radial grid points.  20 seems adequate for 
+		  most runs.
+nz		- Number of axial grid points.  For infinite 2*nx is 
+		  good.  For finite gamma*nx is usually required for 
+		  full resolution.
+save_rate	- After how many time-steps should velocities be saved?
+save_rate_2	- After how many time-steps should cross-sections be 
+		  saved?
+diag		- (Obsolete, needs updating).  Diagnostic subroutines.
+xsect_save	- Should cross-sections of fields be saved?
+restart		- Should we restart from a previous run.  If .true., 
+		  file 'end_state.dat' should be copied to restart 
+		  directory.
+auto_tau	- For steady case, should tau be automatically stepped 
+		  after saturation at each tau.  Set in conjunction with 
+		  tau_step and tau_end.
+x_par_pos	- Initial radial position of a particle in the fluid as 
+		  a fraction of gap width.
+z_par_pos	- Initial axial position of a particle in the fluid as a 
+		  fraction of gamma (finite) or alpha (infinite).
+
+05/11/2003
