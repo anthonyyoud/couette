@@ -2,24 +2,25 @@ MODULE parameters
 implicit none
 save
 
-double precision, parameter :: gamma = 1.99d0 !2.09d0
-double precision, parameter :: eta = 0.5d0 !0.95d0
-double precision, parameter :: Re1 = 72.5d0 !187.25d0
+double precision, parameter :: pi = 3.14159265358979d0
+double precision, parameter :: alpha = 3.10d0
+double precision, parameter :: gamma = (2d0 * pi) / alpha
+double precision, parameter :: eta = 0.5d0
+double precision, parameter :: Re1 = 68.75d0
 double precision, parameter :: Re2 = 0d0
 double precision, parameter :: Re1_mod = 0d0
 double precision, parameter :: Re2_mod = 0d0
 double precision, parameter :: om1 = 0d0
 double precision, parameter :: om2 = 0d0
 double precision, parameter :: dt = 0.0001d0
-double precision, parameter :: pi = 3.14159265358979d0
-double precision, parameter :: seed = 1d-1
-integer, parameter :: Ntot = 200000
+double precision, parameter :: seed = 1d-8
+integer, parameter :: Ntot = 50000
 integer, parameter :: Nlim = 100000
 integer, parameter :: save_rate = 100
 integer, parameter :: save_rate_2 = 200
-integer, parameter :: nx = 40
-integer, parameter :: nz = 80
-logical, parameter :: diag = .true.
+integer, parameter :: nx = 20
+integer, parameter :: nz = 40
+logical, parameter :: diag = .false.
 logical, parameter :: xsect_save = .false.
 logical, parameter :: restart = .false.
 

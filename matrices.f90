@@ -41,13 +41,13 @@ END SUBROUTINE matrix_setup
 !double precision, intent(in) :: s(0:nx)
 !!double precision, intent(out) :: AB(2*nx1+nx1+1,nx1*nz1)
 !double precision, intent(out) :: A(nx1*nz1,nx1*nz1) != 0d0
-!double precision :: alpha(0:nx), gam(0:nx)
+!double precision :: alp(0:nx), gam(0:nx)
 !double precision :: beta, delta
 !integer :: j, k
 
 !!open (60, file = 'A_mat.dat')
 
-!alpha(:) = dz2 + 0.5d0 * delx * dz2 * (1d0 - eta) / s(:)
+!alp(:) = dz2 + 0.5d0 * delx * dz2 * (1d0 - eta) / s(:)
 !gam(:) = dz2 - 0.5d0 * delx * dz2 * (1d0 - eta) / s(:)
 !beta = -2d0 * (dz2 + dx2)
 !delta = dx2
@@ -66,7 +66,7 @@ END SUBROUTINE matrix_setup
 !end do
 
 !do j = 2, nx1*nz1
-!   A(j,j-1) = alpha(mod(j-1, nx1) + 1)
+!   A(j,j-1) = alp(mod(j-1, nx1) + 1)
 !end do
 
 !do j = nx, nx1*nz1-nx1+1, nx1
@@ -102,13 +102,13 @@ use parameters
 implicit none
 
 double precision, intent(in) :: s(0:nx)
-double precision :: alpha(0:nx), gam(0:nx)
+double precision :: alp(0:nx), gam(0:nx)
 double precision :: beta, delta
 double precision, intent(out) :: AB(2*nx1+nx1+1,nx1*nz1)
 integer :: j, k, info
 integer, intent(out) :: IPIV(nx1*nz1)
 
-alpha(:) = dz2 + 0.5d0 * delx * dz2 * (1d0 - eta) / s(:)
+alp(:) = dz2 + 0.5d0 * delx * dz2 * (1d0 - eta) / s(:)
 gam(:) = dz2 - 0.5d0 * delx * dz2 * (1d0 - eta) / s(:)
 beta = -2d0 * (dz2 + dx2)
 delta = dx2
@@ -129,8 +129,8 @@ do j = nx1, nx1*nz1-nx1, nx1
 end do
 
 do j = 2, nx1*nz1
-   AB(2*nx1+2,j-1) = alpha(mod(j-1, nx1) + 1)
-   !A(j,j-1) = alpha(mod(j-1, nx1) + 1)
+   AB(2*nx1+2,j-1) = alp(mod(j-1, nx1) + 1)
+   !A(j,j-1) = alp(mod(j-1, nx1) + 1)
 end do
 
 do j = nx, nx1*nz1-nx1+1, nx1
