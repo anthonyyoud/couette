@@ -1,0 +1,26 @@
+# Compile and setup ready to run in a separate directory
+# useage:  source setup <directory name> [compile params]
+
+mkdir $1
+
+# 				Compile
+#if(${HOST} == gauss.ncl.ac.uk) then
+#   make -f Makefile_dec clean
+#   make -f Makefile_dec
+#else
+   make -f ifc_makefile_couette clean
+   make -f ifc_makefile_couette
+#endif
+
+#				Setup dir
+mv couette_mod.out $1
+cp parameters.f90 $1
+
+#				Script
+cd $1
+
+#echo '#!/bin/sh'          	>  script
+#echo PATH=/bin:/usr/bin 	>> script
+
+echo cd $1              	>  script
+echo ./couette_mod.out 		>> script
