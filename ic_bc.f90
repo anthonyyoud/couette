@@ -40,12 +40,11 @@ if (restart) then
 else
    if (tau == 1) then
       do k = 0, nz
-         u(:,k) = seed * dsin(pi*z(k)/gamma) * dsin(pi*x(:))
+         u(:,k) = seed * dsin(2d0*pi*z(k)/gamma) * dsin(pi*x(:))
+         pn(:,k) = seed * dsin(2d0*pi*z(k)/gamma) * dsin(pi*x(:))
+         bn(:,k) = seed * dcos(2d0*pi*z(k)/gamma) / s(j)
+         jn(:,k) = seed * dsin(pi*x(j)) * dsin(2d0*pi*z(k)/gamma)
       end do
-      do j = 0, nx
-         pn(j,:) = seed * dsin(2d0*pi*z(:)/gamma) * dsin(pi*x(j))
-      end do
-      !zn(:,:) = seed
    else
       do k = 0, nz
          u(:,k) = seed * dsin(pi*x(:)) * dcos(2d0*pi*z(k)/gamma)
@@ -162,8 +161,10 @@ use parameters
 implicit none
 double precision, intent(out) :: bn(0:nx,0:nz)
 
-bn(:,0) = 0d0
-bn(:,nz) = 0d0
+if (tau == 0) then
+   bn(:,0) = 0d0
+   bn(:,nz) = 0d0
+end if
 
 return
 END SUBROUTINE b_BCS
@@ -175,6 +176,11 @@ double precision, intent(out) :: jn(0:nx,0:nz)
 
 jn(0,:) = 0d0
 jn(nx,:) = 0d0
+
+if (tau == 1) then
+   jn(:,0) = 0d0
+   jn(:,nz) = 0d0
+end if
 
 return
 END SUBROUTINE j_BCS

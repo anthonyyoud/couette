@@ -1,7 +1,7 @@
 OUTDIR		= ./
 OBJECTS		= parameters.o ic_bc.o derivs.o pressure.o magnetic.o \
                   current.o matrices.o io.o couette_mod.o
-COMPFLAGS	= -O3 -c -w95 -tpp7 -xW -ipo -unroll -vec #-parallel
+COMPFLAGS	= -O3 -c -w95 -tpp7 -xW -ipo -unroll #-parallel
 #COMPFLAGS	= -c -g -d0 -CA -CB -CS -CU -CV
 TYPE            = implicit
 LIBS            = -L/home/pg/n8049290/Utilities/LAPACK \
@@ -10,7 +10,7 @@ COMPILER	= ifc
 
 #-----------------------------------------------------------------------
 all:	$(OBJECTS)
-	$(COMPILER) -i_dynamic -O3 -w95 -tpp7 -xW -ipo -unroll -vec -o\
+	$(COMPILER) -i_dynamic -O3 -w95 -tpp7 -xW -ipo -unroll -o\
         $(OUTDIR)couette_mod.out \
         $(OBJECTS) $(LIBS)
 
@@ -52,4 +52,4 @@ couette_mod.o : couette_mod_$(TYPE).f90
                                     couette_mod_$(TYPE).f90
 #-----------------------------------------------------------------------
 clean :
-	rm -f *.o *.mod *.d *.out *.pc *.pcl
+	rm -f *.o *.mod *.d *.out *.pc *.pcl *.il

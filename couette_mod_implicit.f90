@@ -22,11 +22,10 @@ double precision :: growth_rate, t = 0d0, &
                     jnew(0:nx,0:nz), jold(0:nx,0:nz), jold2(0:nx,0:nz), &
                     vr(0:nx,0:nz), vrold(0:nx,0:nz) = 0d0, &
                     vz(0:nx,0:nz), vzold(0:nx,0:nz) = 0d0, &
-                    p_mat(2*nx1+nx1+1,nx1*nz1), & 
-                    b_mat(2*nxp1+nxp1+1,0:nxp1*nz1-1), & 
-                    j_mat(2*nx1+nx1+1,nx1*nzp1) 
-integer :: p_pivot(nx1*nz1), b_pivot(nxp1*nz1), j_pivot(nx1*nzp1), &
-           j, k, p = 0, p_start = 0
+                    p_mat(2*nx1+nx1+1,nx1*nz1) 
+double precision, allocatable :: b_mat(:,:), j_mat(:,:)
+integer, allocatable :: b_pivot(:), j_pivot(:)
+integer :: p_pivot(nx1*nz1), j, k, p = 0, p_start = 0
 logical :: run_exist, state_exist, save_exist
 
 print*
@@ -57,11 +56,30 @@ if (.not. restart) then
    call j_BCS(jnew)
 end if
 
+print*, 'Allocating matrix dimensions'
+if (tau == 0d0) then
+   allocate(b_mat(2*nxp1+nxp1+1,0:nxp1*nz1-1)) 
+   allocate(j_mat(2*nx1+nx1+1,nx1*nzp1))
+   allocate(b_pivot(nxp1*nz1))
+   allocate(j_pivot(nx1*nzp1))
+else if (tau == 1d0) then 
+   allocate(b_mat(2*nxp1+nxp1+1,0:nxp1*nzp1-1)) 
+   allocate(j_mat(2*nx1+nx1+1,nx1*nz1))
+   allocate(b_pivot(nxp1*nzp1))
+   allocate(j_pivot(nx1*nz1))
+end if
+
 print*, 'Setting up matrices...'
 call matrix_setup(Ux, Uz, Zx, Zz)
 call psi_mat_setup(p_mat, p_pivot)
-call b_mat_setup(b_mat, b_pivot)
-call j_mat_setup(j_mat, j_pivot)
+
+if (tau == 0d0) then
+   call b_mat_setup(b_mat, b_pivot)
+   call j_mat_setup(j_mat, j_pivot)
+else if (tau == 1d0) then
+   call fin_b_mat_setup(b_mat, b_pivot)
+   call fin_j_mat_setup(j_mat, j_pivot)
+end if
 
 uold = unew
 uold2 = unew
@@ -208,8 +226,13 @@ do p = p_start, Ntot
    call b_BCS(bnew)
    call j_BCS(jnew)
    call p_poisson(znew, pnew, p_mat, p_pivot)
-   call b_poisson(unew, bnew, b_mat, b_pivot)
-   call j_poisson(pnew, jnew, j_mat, j_pivot)
+   if (tau == 0d0) then
+      call b_poisson(unew, bnew, b_mat, b_pivot)
+      call j_poisson(pnew, jnew, j_mat, j_pivot)
+   else if (tau == 1d0) then
+      call fin_b_poisson(unew, bnew, b_mat, b_pivot)
+      call fin_j_poisson(pnew, jnew, j_mat, j_pivot)
+   end if
 
    if (diag) then
       call calc_rhs_u(unew, uold2, pold, t, p)

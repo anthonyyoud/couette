@@ -3,7 +3,9 @@
 #$ -j y -o run$JOB_ID.log
 #$ -cwd
 DATA_DIR=$HOME/giga_test
+#DATA_DIR=`pwd`
 RUN_DIR=/work/$JOB_ID
+touch $DATA_DIR/RUNNING
 mkdir $RUN_DIR
 cp couette_mod.out parameters.f90 $RUN_DIR
 cd $RUN_DIR

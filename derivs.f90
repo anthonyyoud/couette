@@ -31,13 +31,11 @@ end do
 return
 END SUBROUTINE deriv_xx
 
-SUBROUTINE deriv_z(f, fz, f0z, f1z)
+SUBROUTINE deriv_z(f, fz)
 use parameters
 implicit none
 double precision, intent(in) :: f(0:nx,0:nz)
 double precision, intent(out) :: fz(0:nx,0:nz)
-double precision, intent(out), optional :: f0z(0:nx,0:nz), &
-                                           f1z(0:nx,0:nz)
 integer :: j, k
 
 do k = 1, nz-1
@@ -50,13 +48,11 @@ end do
 return
 END SUBROUTINE deriv_z
 
-SUBROUTINE deriv_zz(f, fzz, f0zz, f1zz)
+SUBROUTINE deriv_zz(f, fzz)
 use parameters
 implicit none
 double precision, intent(in) :: f(0:nx,0:nz)
 double precision, intent(out) :: fzz(0:nx,0:nz)
-double precision, intent(out), optional :: f0zz(0:nx,0:nz), &
-                                           f1zz(0:nx,0:nz)
 integer :: j, k
 
 do k = 1, nz-1
