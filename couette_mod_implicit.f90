@@ -222,9 +222,9 @@ double precision, intent(out) :: u(0:nx,0:nz)
 type (deriv) :: du
 integer :: j, k
 
-call deriv_x(uo, du%x, du%bx, du%tx)
-call deriv_xx(uo, du%xx, du%bxx, du%txx)
-call deriv_zz(uo, du%zz, du%bzz, du%tzz)
+call deriv_x(uo, du%x)
+call deriv_xx(uo, du%xx)
+call deriv_zz(uo, du%zz)
 
 do j = 1, nx1
    u(j,1:nz1) = uo(j,1:nz1) + (0.5d0 * rxx * du%xx(j,1:nz1)) + &
@@ -235,15 +235,15 @@ end do
 
 if (tau /= 1) then
    do j = 1, nx1
-      u(j,0) = uo(j,0) + (0.5d0 * rxx * du%bxx(j,0)) + &
-               (((1d0 - eta) * rx) / (4d0 * s(j))) * du%bx(j,0) - &
+      u(j,0) = uo(j,0) + (0.5d0 * rxx * du%xx(j,0)) + &
+               (((1d0 - eta) * rx) / (4d0 * s(j))) * du%x(j,0) - &
                (((1d0 - eta)**2 * dt) / (2d0 * s(j)**2)) * &
-               uo(j,0) + 0.5d0 * rzz * du%bzz(j,0)
+               uo(j,0) + 0.5d0 * rzz * du%zz(j,0)
 
-      u(j,nz) = uo(j,nz) + (0.5d0 * rxx * du%txx(j,nz)) + &
-               (((1d0 - eta) * rx) / (4d0 * s(j))) * du%tx(j,nz) - &
+      u(j,nz) = uo(j,nz) + (0.5d0 * rxx * du%xx(j,nz)) + &
+               (((1d0 - eta) * rx) / (4d0 * s(j))) * du%x(j,nz) - &
                (((1d0 - eta)**2 * dt) / (2d0 * s(j)**2)) * &
-               uo(j,nz) + 0.5d0 * rzz * du%tzz(j,nz)
+               uo(j,nz) + 0.5d0 * rzz * du%zz(j,nz)
    end do
 end if
 
@@ -263,14 +263,14 @@ double precision, intent(out) :: u_nl_n(0:nx,0:nz)
 type (deriv) :: du, du2, dp, dp2                   
 integer :: j, k
 
-call deriv_x(uo, du%x, du%bx, du%tx)
-call deriv_x(uo2, du2%x, du2%bx, du2%tx)
+call deriv_x(uo, du%x)
+call deriv_x(uo2, du2%x)
 call deriv_z(uo, du%z)
 call deriv_z(uo2, du2%z)
 call deriv_x(po, dp%x)
 call deriv_x(po2, dp2%x)
-call deriv_z(po, dp%z, dp%bz, dp%tz)
-call deriv_z(po2, dp2%z, dp2%bz, dp2%tz)
+call deriv_z(po, dp%z)
+call deriv_z(po2, dp2%z)
 
 do j = 1, nx1
    u_nl_n(j,1:nz1) = (-rx / (8d0 * s(j) * delz)) * &
@@ -286,18 +286,18 @@ end do
 if (tau /= 1) then
    do j = 1, nx1
       u_nl_n(j,0) = (-rx / (8d0 * s(j) * delz)) * &
-                 (-3d0 * dp%bz(j,0) * du%bx(j,0) + &
-                 dp2%bz(j,0) * du2%bx(j,0)) + &
+                 (-3d0 * dp%z(j,0) * du%x(j,0) + &
+                 dp2%z(j,0) * du2%x(j,0)) + &
                  ((1d0 - eta) * rz / (4d0 * s(j)**2)) * &
-                 (3d0 * uo(j,0) * dp%bz(j,0) - &
-                 uo2(j,0) * dp2%bz(j,0))
+                 (3d0 * uo(j,0) * dp%z(j,0) - &
+                 uo2(j,0) * dp2%z(j,0))
 
    u_nl_n(j,nz) = (-rx / (8d0 * s(j) * delz)) * &
-                  (-3d0 * dp%tz(j,nz) * du%tx(j,nz) + &
-                  dp2%tz(j,nz) * du2%tx(j,nz)) + &
+                  (-3d0 * dp%z(j,nz) * du%x(j,nz) + &
+                  dp2%z(j,nz) * du2%x(j,nz)) + &
                   ((1d0 - eta) * rz / (4d0 * s(j)**2)) * &
-                  (3d0 * uo(j,nz) * dp%tz(j,nz) - &
-                  uo2(j,nz) * dp2%tz(j,nz))
+                  (3d0 * uo(j,nz) * dp%z(j,nz) - &
+                  uo2(j,nz) * dp2%z(j,nz))
    end do
 end if
 

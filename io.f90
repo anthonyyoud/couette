@@ -13,17 +13,9 @@ end type var
 
 type deriv
    double precision :: x(0:nx, 0:nz)
-   double precision :: bx(0:nx, 0:nz)
-   double precision :: tx(0:nx, 0:nz)
    double precision :: xx(0:nx, 0:nz)
-   double precision :: bxx(0:nx, 0:nz)
-   double precision :: txx(0:nx, 0:nz)
    double precision :: z(0:nx, 0:nz)
-   double precision :: bz(0:nx, 0:nz)
-   double precision :: tz(0:nx, 0:nz)
    double precision :: zz(0:nx, 0:nz)
-   double precision :: bzz(0:nx, 0:nz)
-   double precision :: tzz(0:nx, 0:nz)
 end type deriv
 
 type mat_comp
