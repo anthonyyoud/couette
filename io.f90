@@ -110,10 +110,7 @@ double precision, intent(in) :: t, ur(0:nx,0:nz), uz(0:nx,0:nz), &
 double precision, intent(out) :: growth
 integer :: zpos
 
-if ((Re1_mod == 0d0) .and. (Re2_mod == 0d0) .and. &
-    (om1 == 0d0) .and. (om2 == 0d0)) then
-   growth = log(abs(ur(nx/2,nz/2)/ur_prev(nx/2,nz/2))) / (dt * save_rate)
-end if
+growth = log(abs(ur(nx/2,nz/2)/ur_prev(nx/2,nz/2))) / (dt * save_rate)
 
 zpos = nz - (nz / (2 * gamma)) !(nz * (gamma - 1)) / (2 * gamma)
 
