@@ -20,7 +20,7 @@ MODULE nonlinear
     REAL (r2), INTENT(OUT) :: u_nl_n(0:nx,0:nz) 
     TYPE (DERIV)           :: du, du2, dp, dp2, db, db2
     INTEGER (i1)           :: j, k  
-                 
+
     CALL deriv_x(uo, du%x)
     CALL deriv_x(uo2, du2%x)
     CALL deriv_z(uo, du%z)

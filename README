@@ -108,7 +108,7 @@ variables.f90			- Types for variables declared, and other
 
 MAIN PARAMETERS
 ---------------
-i1		- The intrinsic data types in the code are parameterised, so
+i1		- The intrinsic data types in the code are parametrised, so
 		  the precision does not depend on the architecture on which it
 		  is run.  The Fortran intrinsic selected_int_kind() is used to
 		  select the required integer precision.  The default value of
@@ -116,7 +116,7 @@ i1		- The intrinsic data types in the code are parameterised, so
 		  machines, where 9 corresponds to the range of integers
                   (-10^9,10^9).
 
-r2		- As for i1 above, the real precision is parameterised using
+r2		- As for i1 above, the real precision is parametrised using
 		  the Fortran intrinsic selected_real_kind(), the default value
 		  of which is 15,307 corresponding to a floating point number
 		  with a precision of 15 digits and an exponent range of

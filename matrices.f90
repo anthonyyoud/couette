@@ -102,10 +102,19 @@ MODULE matrices
       cpcol = cpcol + 1
     END DO
 
-    !LU factorisation of the matrix for use in PDDBTRS to solve
-    CALL PDDBTRF(nx1*nz1, nx1, nx1, p_mat, 1, desc_p, af, laf, &
-                 work, lwork_fac, info)
-    IF (info /= 0) PRINT*, 'psi_PDDBTRF ', info
+    !LU factorisation of the matrix for use in PD/PSDBTRS to solve
+    SELECT CASE (r2)
+      CASE (SPr)
+        CALL PSDBTRF(nx1*nz1, nx1, nx1, p_mat, 1, desc_p, af, laf, &
+                     work, lwork_fac, info)
+        IF (info /= 0) PRINT*, 'psi_PSDBTRF ', info
+      CASE (DPr)
+        CALL PDDBTRF(nx1*nz1, nx1, nx1, p_mat, 1, desc_p, af, laf, &
+                     work, lwork_fac, info)
+        IF (info /= 0) PRINT*, 'psi_PDDBTRF ', info
+      CASE DEFAULT
+        STOP 'ERROR: Precision selection error - matrices.f90 psi_P*DBTRF'
+    END SELECT
 
     RETURN
   END SUBROUTINE psi_mat_setup
@@ -182,9 +191,18 @@ MODULE matrices
       cpcol = cpcol + 1
     END DO
 
-    CALL PDDBTRF(nxp1*nz1, nxp1, nxp1, b_mat, 1, desc_b, af, b_laf, &
-                 work, lwork_b_fac, info)
-    IF (info /= 0) PRINT*, 'b_infinite_PDDBTRF ', info
+    SELECT CASE (r2)
+      CASE (SPr)
+        CALL PSDBTRF(nxp1*nz1, nxp1, nxp1, b_mat, 1, desc_b, af, b_laf, &
+                     work, lwork_b_fac, info)
+        IF (info /= 0) PRINT*, 'b_infinite_PSDBTRF ', info
+      CASE (DPr)
+        CALL PDDBTRF(nxp1*nz1, nxp1, nxp1, b_mat, 1, desc_b, af, b_laf, &
+                     work, lwork_b_fac, info)
+        IF (info /= 0) PRINT*, 'b_infinite_PDDBTRF ', info
+      CASE DEFAULT
+        STOP 'ERROR: Precision selection error - matrices.f90 b_inf_P*DBTRF'
+    END SELECT
 
     RETURN
   END SUBROUTINE b_mat_setup
@@ -310,9 +328,18 @@ MODULE matrices
       cpcol = cpcol + 1
     END DO
 
-    CALL PDDBTRF(nxp1*nzp1, nxp1, nxp1, b_mat, 1, desc_b, af, b_laf, &
-                 work, lwork_b_fac, info)
-    IF (info /= 0) PRINT*, 'b_finite_PDDBTRF ', info
+    SELECT CASE (r2)
+      CASE (SPr)
+        CALL PSDBTRF(nxp1*nzp1, nxp1, nxp1, b_mat, 1, desc_b, af, b_laf, &
+                     work, lwork_b_fac, info)
+        IF (info /= 0) PRINT*, 'b_finite_PSDBTRF ', info
+      CASE (DPr)
+        CALL PDDBTRF(nxp1*nzp1, nxp1, nxp1, b_mat, 1, desc_b, af, b_laf, &
+                     work, lwork_b_fac, info)
+        IF (info /= 0) PRINT*, 'b_finite_PDDBTRF ', info
+      CASE DEFAULT
+        STOP 'ERROR: Precision selection error - matrices.f90 b_fin_P*DBTRF'
+    END SELECT
 
     RETURN
   END SUBROUTINE fin_b_mat_setup
@@ -385,9 +412,18 @@ MODULE matrices
       cpcol = cpcol + 1
     END DO
 
-    CALL PDDBTRF(nx1*nzp1, nx1, nx1, j_mat, 1, desc_j, af, laf, &
-                 work, lwork_fac, info)
-    IF (info /= 0) PRINT*, 'j_infinite_PDDBTRF ', info
+    SELECT CASE (r2)
+      CASE (SPr)
+        CALL PSDBTRF(nx1*nzp1, nx1, nx1, j_mat, 1, desc_j, af, laf, &
+                     work, lwork_fac, info)
+        IF (info /= 0) PRINT*, 'j_infinite_PSDBTRF ', info
+      CASE (DPr)
+        CALL PDDBTRF(nx1*nzp1, nx1, nx1, j_mat, 1, desc_j, af, laf, &
+                     work, lwork_fac, info)
+        IF (info /= 0) PRINT*, 'j_infinite_PDDBTRF ', info
+      CASE DEFAULT
+        STOP 'ERROR: Precision selection error - matrices.f90 j_inf_P*DBTRF'
+    END SELECT
 
     RETURN
   END SUBROUTINE j_mat_setup
@@ -446,9 +482,18 @@ MODULE matrices
       cpcol = cpcol + 1
     END DO
 
-    CALL PDDBTRF(nx1*nz1, nx1, nx1, j_mat, 1, desc_j, af, laf, &
-                 work, lwork_fac, info)
-    IF (info /= 0) PRINT*, 'j_infinite_PDDBTRF ', info
+    SELECT CASE (r2)
+      CASE (SPr)
+        CALL PSDBTRF(nx1*nz1, nx1, nx1, j_mat, 1, desc_j, af, laf, &
+                     work, lwork_fac, info)
+        IF (info /= 0) PRINT*, 'j_infinite_PSDBTRF ', info
+      CASE (DPr)
+        CALL PDDBTRF(nx1*nz1, nx1, nx1, j_mat, 1, desc_j, af, laf, &
+                     work, lwork_fac, info)
+        IF (info /= 0) PRINT*, 'j_infinite_PDDBTRF ', info
+      CASE DEFAULT
+        STOP 'ERROR: Precision selection error - matrices.f90 j_inf_P*DBTRF'
+    END SELECT
 
     RETURN
   END SUBROUTINE fin_j_mat_setup

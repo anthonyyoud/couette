@@ -41,9 +41,18 @@ MODULE stream
       cpcol = cpcol + 1
     END DO
 
-    CALL PDDBTRS('N', nx1*nz1, nx1, nx1, 1, p_mat, 1, desc_p, zvec, 1, &
-                  desc_z, af, laf, work, lwork_sol, info)
-    IF (info /= 0) PRINT*, 'psi_PDDBTRS ', info
+    SELECT CASE (r2)
+      CASE (SPr)
+        CALL PSDBTRS('N', nx1*nz1, nx1, nx1, 1, p_mat, 1, desc_p, zvec, 1, &
+                      desc_z, af, laf, work, lwork_sol, info)
+        IF (info /= 0) PRINT*, 'psi_PSDBTRS ', info
+      CASE (DPr)
+        CALL PDDBTRS('N', nx1*nz1, nx1, nx1, 1, p_mat, 1, desc_p, zvec, 1, &
+                      desc_z, af, laf, work, lwork_sol, info)
+        IF (info /= 0) PRINT*, 'psi_PDDBTRS ', info
+      CASE DEFAULT
+        STOP 'ERROR: Precision selection error - stream.f90 P*DBTRS'
+    END SELECT
 
     cpcol = 0
 

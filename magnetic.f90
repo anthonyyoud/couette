@@ -42,9 +42,18 @@ MODULE magnetic
       cpcol = cpcol + 1
     END DO
 
-    CALL PDDBTRS('N', nxp1*nz1, nxp1, nxp1, 1, b_mat, 1, desc_b, u_vec, 1, &
-                  desc_u, af, b_laf, work, lwork_b_sol, info)
-    IF (info /= 0) PRINT*, 'b_infinite_PDDBTRS ', info
+    SELECT CASE (r2)
+      CASE (SPr)
+        CALL PSDBTRS('N', nxp1*nz1, nxp1, nxp1, 1, b_mat, 1, desc_b, u_vec, 1, &
+                      desc_u, af, b_laf, work, lwork_b_sol, info)
+        IF (info /= 0) PRINT*, 'b_infinite_PSDBTRS ', info
+      CASE (DPr)
+        CALL PDDBTRS('N', nxp1*nz1, nxp1, nxp1, 1, b_mat, 1, desc_b, u_vec, 1, &
+                      desc_u, af, b_laf, work, lwork_b_sol, info)
+        IF (info /= 0) PRINT*, 'b_infinite_PDDBTRS ', info
+      CASE DEFAULT
+        STOP 'ERROR: Precision selection error - magnetic.f90 infinite P*DBTRS'
+    END SELECT
 
     cpcol = 0
 
@@ -115,9 +124,18 @@ MODULE magnetic
       cpcol = cpcol + 1
     END DO
 
-    CALL PDDBTRS('N', nxp1*nzp1, nxp1, nxp1, 1, b_mat, 1, desc_b, u_vec, 1, &
-                  desc_u, af, b_laf, work, lwork_b_sol, info)
-    IF (info /= 0) PRINT*, 'b_finite_PDDBTRS ', info
+    SELECT CASE (r2)
+      CASE (SPr)
+        CALL PSDBTRS('N', nxp1*nzp1, nxp1, nxp1, 1, b_mat, 1, desc_b, u_vec, 1, &
+                      desc_u, af, b_laf, work, lwork_b_sol, info)
+        IF (info /= 0) PRINT*, 'b_finite_PSDBTRS ', info
+      CASE (DPr)
+        CALL PDDBTRS('N', nxp1*nzp1, nxp1, nxp1, 1, b_mat, 1, desc_b, u_vec, 1, &
+                      desc_u, af, b_laf, work, lwork_b_sol, info)
+        IF (info /= 0) PRINT*, 'b_finite_PDDBTRS ', info
+      CASE DEFAULT
+        STOP 'ERROR: Precision selection error - magnetic.f90 finite P*DBTRS'
+    END SELECT
 
     cpcol = 0
 

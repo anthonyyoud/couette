@@ -84,7 +84,7 @@ MODULE io
     xpos = nx/2
     zpos = nz/2   !position at which to save fields
 
-    WRITE(20, '(12e17.9)') t, ur(nx/2,nz/2), ur(nx/2,nz*2/gamma), &
+    WRITE(20, '(12e17.9)') t, ur(nx/2,nz/2), ur(nx/2,0), &
                            growth, growth_vz, &
                            uz(xpos,zpos), &
                            pn(nx/4,3*nz/4), v(nx/2,nz/2), &

@@ -63,10 +63,19 @@ MODULE current
       cpcol = cpcol + 1  !next process column
     END DO
 
-    !Solve Poisson equation using factorised matrix from PDDBTRF
-    CALL PDDBTRS('N', nx1*nzp1, nx1, nx1, 1, j_mat, 1, desc_j, p_vec, 1, &
-                  desc_rp, af, laf, work, lwork_sol, info)
-    IF (info /= 0) PRINT*, 'j_infinite_PDDBTRS ', info
+    !Solve Poisson equation using factorised matrix from PD/PSDBTRF
+    SELECT CASE (r2)
+      CASE (SPr)
+        CALL PSDBTRS('N', nx1*nzp1, nx1, nx1, 1, j_mat, 1, desc_j, p_vec, 1, &
+                      desc_rp, af, laf, work, lwork_sol, info)
+        IF (info /= 0) PRINT*, 'j_infinite_PSDBTRS ', info
+      CASE (DPr)
+        CALL PDDBTRS('N', nx1*nzp1, nx1, nx1, 1, j_mat, 1, desc_j, p_vec, 1, &
+                      desc_rp, af, laf, work, lwork_sol, info)
+        IF (info /= 0) PRINT*, 'j_infinite_PDDBTRS ', info
+      CASE DEFAULT
+        STOP 'ERROR: Precision selection error - current.f90 infinite P*DBTRS'
+    END SELECT
 
     cpcol = 0   !reset current process column
 
@@ -155,9 +164,18 @@ MODULE current
       cpcol = cpcol + 1
     END DO
 
-    CALL PDDBTRS('N', nx1*nz1, nx1, nx1, 1, j_mat, 1, desc_j, p_vec, 1, &
-                  desc_rp, af, laf, work, lwork_sol, info)
-    IF (info /= 0) PRINT*, 'j_finite_PDDBTRS ', info
+    SELECT CASE (r2)
+      CASE (SPr)
+        CALL PSDBTRS('N', nx1*nz1, nx1, nx1, 1, j_mat, 1, desc_j, p_vec, 1, &
+                      desc_rp, af, laf, work, lwork_sol, info)
+        IF (info /= 0) PRINT*, 'j_finite_PSDBTRS ', info
+      CASE (DPr)
+        CALL PDDBTRS('N', nx1*nz1, nx1, nx1, 1, j_mat, 1, desc_j, p_vec, 1, &
+                      desc_rp, af, laf, work, lwork_sol, info)
+        IF (info /= 0) PRINT*, 'j_finite_PDDBTRS ', info
+      CASE DEFAULT
+        STOP 'ERROR: Precision selection error - current.f90 finite P*DBTRS'
+    END SELECT
 
     cpcol = 0
 
