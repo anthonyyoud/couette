@@ -173,18 +173,19 @@ write (33, '(3e17.9)') t, G1_, G2_ !G1(nz/4), G2(nz/4)
 return
 END SUBROUTINE save_torque
 
-SUBROUTINE save_xsect(ur, uz, pn, p)
+SUBROUTINE save_xsect(ur, uz, pn, t, p)
 use parameters
 use ic_bc
 implicit none
 
 integer, intent(in) :: p
 double precision, intent(in) :: ur(0:nx,0:nz), uz(0:nx,0:nz), &
-                                pn(0:nx,0:nz)
+                                pn(0:nx,0:nz), t
 integer :: j, k
 
 open (32, status = 'unknown', file = 'xsect'//itos(p)//'.dat')
 
+write (32, '(e17.9)') t
 write (32, '(2i5)') nx, nz
 write (32, '(e17.9)') ((ur(j,k), j = 0, nx), k = 0, nz)
 write (32, '(e17.9)') ((uz(j,k), j = 0, nx), k = 0, nz)
