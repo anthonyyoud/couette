@@ -15,10 +15,10 @@ MODULE stream
     IMPLICIT NONE
 
     INTEGER (i1), INTENT(IN)  :: desc_p(7)
-    REAL (r2),    INTENT(IN)  :: af(laf), Z_mat(0:nx,0:nz), p_mat(p_M,p_N)
-    REAL (r2),    INTENT(OUT) :: psi(0:nx,0:nz)
-    REAL (r2)                 :: zvec(nb), work(lwork_sol)
+    REAL    (r2), INTENT(IN)  :: af(laf), Z_mat(0:nx,0:nz), p_mat(p_M,p_N)
+    REAL    (r2), INTENT(OUT) :: psi(0:nx,0:nz)
     INTEGER (i1)              :: i, j, k, info, cpcol, desc_z(7)
+    REAL    (r2)              :: zvec(nb), work(lwork_sol)
 
     desc_z(1) = 502
     desc_z(2) = ictxt

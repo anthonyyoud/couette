@@ -52,10 +52,10 @@ MODULE matrices
     IMPLICIT NONE
 
     INTEGER (i1), INTENT(OUT) :: desc_p(7)
-    REAL (r2),    INTENT(OUT) :: p_mat(p_M,p_N), af(laf)
-    REAL (r2)                 :: alp(0:nx), gam(0:nx), beta, delta, &
-                                 work(lwork_fac)
+    REAL    (r2), INTENT(OUT) :: p_mat(p_M,p_N), af(laf)
     INTEGER (i1)              :: i, j, k, info, cpcol
+    REAL    (r2)              :: alp(0:nx), gam(0:nx), beta, delta, &
+                                 work(lwork_fac)
 
     alp(:) = dz2 + 0.5_r2 * delx * dz2 * one_eta / s(:)   !coefficients
     gam(:) = dz2 - 0.5_r2 * delx * dz2 * one_eta / s(:)   !in matrix
@@ -127,10 +127,10 @@ MODULE matrices
     IMPLICIT NONE
 
     INTEGER (i1), INTENT(OUT) :: desc_b(7)
-    REAL (r2),    INTENT(OUT) :: b_mat(b_M,b_N), af(b_laf)
-    REAL (r2)                 :: alp(0:nx), beta(0:nx), gam(0:nx), delta, &
-                                 work(lwork_b_fac)
+    REAL    (r2), INTENT(OUT) :: b_mat(b_M,b_N), af(b_laf)
     INTEGER (i1)              :: i, j, k, info, cpcol
+    REAL    (r2)              :: alp(0:nx), beta(0:nx), gam(0:nx), delta, &
+                                 work(lwork_b_fac)
 
     alp(:) = dz2 - 0.5_r2 * delx * dz2 * one_eta / s(:)
     beta(:) = -2.0_r2 * (dz2 + dx2) - dx2 * dz2 * one_eta**2 / s(:)**2
@@ -213,10 +213,10 @@ MODULE matrices
     IMPLICIT NONE
 
     INTEGER (i1), INTENT(OUT) :: desc_b(7)
-    REAL (r2),    INTENT(OUT) :: b_mat(b_M,b_N), af(b_laf)
-    REAL (r2)                 :: alp(0:nx), beta(0:nx), gam(0:nx), delta, &
-                                 work(lwork_b_fac)
+    REAL    (r2), INTENT(OUT) :: b_mat(b_M,b_N), af(b_laf)
     INTEGER (i1)              :: i, j, k, info, cpcol
+    REAL    (r2)              :: alp(0:nx), beta(0:nx), gam(0:nx), delta, &
+                                 work(lwork_b_fac)
 
     alp(:) = dz2 - 0.5_r2 * delx * dz2 * one_eta / s(:)
     beta(:) = -2.0_r2 * (dz2 + dx2) - dx2 * dz2 * one_eta**2 / s(:)**2
@@ -350,10 +350,10 @@ MODULE matrices
     IMPLICIT NONE
 
     INTEGER (i1), INTENT(OUT) :: desc_j(7)
-    REAL (r2),    INTENT(OUT) :: j_mat(j_M,j_N), af(laf)
-    REAL (r2)                 :: alp(0:nx), beta(0:nx), gam(0:nx), delta, &
-                                 work(lwork_fac)
+    REAL    (r2), INTENT(OUT) :: j_mat(j_M,j_N), af(laf)
     INTEGER (i1)              :: i, j, k, info, cpcol
+    REAL    (r2)              :: alp(0:nx), beta(0:nx), gam(0:nx), delta, &
+                                 work(lwork_fac)
 
     alp(:) = dz2 - 0.5_r2 * delx * dz2 * one_eta / s(:)
     beta(:) = -2.0_r2 * (dz2 + dx2) - dx2 * dz2 * one_eta**2 / s(:)**2
@@ -434,10 +434,10 @@ MODULE matrices
     IMPLICIT NONE
 
     INTEGER (i1), INTENT(OUT) :: desc_j(7)
-    REAL (r2),    INTENT(OUT) :: j_mat(j_M,j_N), af(laf)
-    REAL (r2)                 :: alp(0:nx), beta(0:nx), gam(0:nx), delta, &
-                                 work(lwork_fac)
+    REAL    (r2), INTENT(OUT) :: j_mat(j_M,j_N), af(laf)
     INTEGER (i1)              :: i, j, k, info, cpcol
+    REAL    (r2)              :: alp(0:nx), beta(0:nx), gam(0:nx), delta, &
+                                 work(lwork_fac)
 
     alp(:) = dz2 - 0.5_r2 * delx * dz2 * one_eta / s(:)
     beta(:) = -2.0_r2 * (dz2 + dx2) - dx2 * dz2 * one_eta**2 / s(:)**2

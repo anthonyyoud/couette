@@ -14,10 +14,10 @@ MODULE linear
     USE ic_bc, ONLY : s
     IMPLICIT NONE
 
-    REAL (r2), INTENT(IN)  :: uo(0:nx,0:nz)
-    REAL (r2), INTENT(OUT) :: u(0:nx,0:nz)
-    TYPE (DERIV)           :: du
-    INTEGER (i1)           :: j, k
+    REAL    (r2),   INTENT(IN)  :: uo(0:nx,0:nz)
+    REAL    (r2),   INTENT(OUT) :: u(0:nx,0:nz)
+    INTEGER (i1)                :: j, k
+    TYPE    (DERIV)             :: du
 
     CALL deriv_x(uo, du%x)
     CALL deriv_xx(uo, du%xx)   !get derivatives
@@ -53,10 +53,10 @@ MODULE linear
     USE ic_bc, ONLY : s
     IMPLICIT NONE
 
-    REAL (r2), INTENT(IN)  :: zo(0:nx,0:nz)
-    REAL (r2), INTENT(OUT) :: zn(0:nx,0:nz)
-    TYPE (DERIV)           :: dz
-    INTEGER (i1)           :: j, k
+    REAL    (r2),   INTENT(IN)  :: zo(0:nx,0:nz)
+    REAL    (r2),   INTENT(OUT) :: zn(0:nx,0:nz)
+    INTEGER (i1)                :: j, k
+    TYPE    (DERIV)             :: dz
 
     CALL deriv_x(zo, dz%x)
     CALL deriv_xx(zo, dz%xx)   !get derivatives

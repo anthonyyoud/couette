@@ -12,17 +12,17 @@ PROGRAM couette_mod
   USE current
   IMPLICIT NONE
   
-  TYPE (MAT_COMP)           :: Ux, Zx
-  TYPE (UZ_MAT_COMP)        :: Uz
-  TYPE (ZZ_MAT_COMP)        :: Zz
-  REAL (r2)                 :: p_fill(laf), b_fill(b_laf), j_fill(laf), &
-                               wtime(10), t=0.0_r2
-  REAL (r2),    ALLOCATABLE :: p_mat(:,:), b_mat(:,:), j_mat(:,:)
-  REAL (r2),    EXTERNAL    :: SLINQUIRE
-  INTEGER (i1), EXTERNAL    :: NUMROC
-  INTEGER (i1)              :: j, k, p=0, p_start=0, alloc_err=0, &
-                               desc_p(7), desc_b(7), desc_j(7)
-  LOGICAL                   :: state_exist
+  INTEGER (i1)                      :: j, k, p=0, p_start=0, alloc_err=0, &
+                                       desc_p(7), desc_b(7), desc_j(7)
+  INTEGER (i1),         EXTERNAL    :: NUMROC
+  REAL    (r2)                      :: p_fill(laf), b_fill(b_laf), &
+                                       j_fill(laf), wtime(10), t=0.0_r2
+  REAL    (r2),         ALLOCATABLE :: p_mat(:,:), b_mat(:,:), j_mat(:,:)
+  REAL    (r2),         EXTERNAL    :: SLINQUIRE
+  TYPE    (MAT_COMP)                :: Ux, Zx
+  TYPE    (UZ_MAT_COMP)             :: Uz
+  TYPE    (ZZ_MAT_COMP)             :: Zz
+  LOGICAL                           :: state_exist
  
   IF (mycol == 0) THEN
     PRINT*

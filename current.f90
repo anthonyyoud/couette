@@ -14,12 +14,12 @@ MODULE current
     USE derivs
     IMPLICIT NONE
 
-    INTEGER (i1), INTENT(IN)  :: desc_j(7)
-    REAL (r2),    INTENT(IN)  :: af(laf), p_mat(0:nx,0:nz), j_mat(j_M,j_N)
-    REAL (r2),    INTENT(OUT) :: jn(0:nx,0:nz)
-    REAL (r2)                 :: p_vec(nb), work(lwork_sol)
-    INTEGER (i1)              :: h, i, j, k, l, info, cpcol, desc_rp(7)
-    TYPE (DERIV)              :: dp
+    INTEGER (i1),   INTENT(IN)  :: desc_j(7)
+    REAL    (r2),   INTENT(IN)  :: af(laf), p_mat(0:nx,0:nz), j_mat(j_M,j_N)
+    REAL    (r2),   INTENT(OUT) :: jn(0:nx,0:nz)
+    REAL    (r2)                :: p_vec(nb), work(lwork_sol)
+    INTEGER (i1)                :: h, i, j, k, l, info, cpcol, desc_rp(7)
+    TYPE    (DERIV)             :: dp
 
     desc_rp(1) = 502
     desc_rp(2) = ictxt
@@ -115,13 +115,12 @@ MODULE current
     USE derivs
     IMPLICIT NONE
 
-    INTEGER (i1), INTENT(IN)  :: desc_j(7)
-    REAL (r2),    INTENT(IN)  :: af(laf), p_mat(0:nx,0:nz), j_mat(j_M,j_N)
-    REAL (r2),    INTENT(OUT) :: jn(0:nx,0:nz)
-    REAL (r2)                 :: p_vec(nb)
-    INTEGER (i1)              :: h, i, j, k, l, info, cpcol, desc_rp(7)
-    REAL (r2)                 :: work(lwork_sol)
-    TYPE (DERIV)              :: dp
+    INTEGER (i1),   INTENT(IN)  :: desc_j(7)
+    REAL    (r2),   INTENT(IN)  :: af(laf), p_mat(0:nx,0:nz), j_mat(j_M,j_N)
+    REAL    (r2),   INTENT(OUT) :: jn(0:nx,0:nz)
+    INTEGER (i1)                :: h, i, j, k, l, info, cpcol, desc_rp(7)
+    REAL    (r2)                :: work(lwork_sol), p_vec(nb)
+    TYPE    (DERIV)             :: dp
 
     desc_rp(1) = 502
     desc_rp(2) = ictxt

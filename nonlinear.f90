@@ -14,12 +14,12 @@ MODULE nonlinear
     USE ic_bc, ONLY : s 
     IMPLICIT NONE
 
-    REAL (r2), INTENT(IN)  :: uo(0:nx,0:nz), uo2(0:nx,0:nz), &
-                              po(0:nx,0:nz), po2(0:nx,0:nz), &
-                              bo(0:nx,0:nz), bo2(0:nx,0:nz)
-    REAL (r2), INTENT(OUT) :: u_nl_n(0:nx,0:nz) 
-    TYPE (DERIV)           :: du, du2, dp, dp2, db, db2
-    INTEGER (i1)           :: j, k  
+    REAL    (r2),   INTENT(IN)  :: uo(0:nx,0:nz), uo2(0:nx,0:nz), &
+                                   po(0:nx,0:nz), po2(0:nx,0:nz), &
+                                   bo(0:nx,0:nz), bo2(0:nx,0:nz)
+    REAL    (r2),   INTENT(OUT) :: u_nl_n(0:nx,0:nz) 
+    INTEGER (i1)                :: j, k  
+    TYPE    (DERIV)             :: du, du2, dp, dp2, db, db2
 
     CALL deriv_x(uo, du%x)
     CALL deriv_x(uo2, du2%x)
@@ -76,13 +76,13 @@ MODULE nonlinear
     USE ic_bc, ONLY : s
     IMPLICIT NONE
 
-    REAL (r2), INTENT(IN)  :: t, uo(0:nx,0:nz), uo2(0:nx,0:nz), &
-                              po(0:nx,0:nz), po2(0:nx,0:nz), &
-                              zo(0:nx,0:nz), zo2(0:nx,0:nz), &
-                              jo(0:nx,0:nz), jo2(0:nx,0:nz)
-    REAL (r2), INTENT(OUT) :: z_nl_n(0:nx,0:nz)
-    TYPE (DERIV)           :: du, du2, dp, dp2, dz, dz_2, dj, dj2
-    INTEGER (i1)           :: j, k
+    REAL    (r2),   INTENT(IN)  :: t, uo(0:nx,0:nz), uo2(0:nx,0:nz), &
+                                   po(0:nx,0:nz), po2(0:nx,0:nz), &
+                                   zo(0:nx,0:nz), zo2(0:nx,0:nz), &
+                                   jo(0:nx,0:nz), jo2(0:nx,0:nz)
+    REAL    (r2),   INTENT(OUT) :: z_nl_n(0:nx,0:nz)
+    INTEGER (i1)                :: j, k
+    TYPE    (DERIV)             :: du, du2, dp, dp2, dz, dz_2, dj, dj2
 
     CALL deriv_z(uo, du%z)
     CALL deriv_z(uo2, du2%z)

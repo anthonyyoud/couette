@@ -73,9 +73,9 @@ MODULE variables
     USE ic_bc, ONLY : s
     IMPLICIT NONE
 
-    REAL (r2), INTENT(IN)  :: p(0:nx,0:nz)
-    REAL (r2), INTENT(OUT) :: vr(0:nx,0:nz), vz(0:nx,0:nz)
-    INTEGER (i1)           :: j, k
+    REAL    (r2), INTENT(IN)  :: p(0:nx,0:nz)
+    REAL    (r2), INTENT(OUT) :: vr(0:nx,0:nz), vz(0:nx,0:nz)
+    INTEGER (i1)              :: j, k
 
     DO k = 1, nz1
       vr(:,k) = (-1.0_r2 / (2.0_r2 * s(:) * delz)) * (p(:,k+1) - p(:,k-1))

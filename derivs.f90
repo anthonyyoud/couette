@@ -11,9 +11,9 @@ MODULE derivs
     USE parameters
     IMPLICIT NONE
 
-    REAL (r2), INTENT(IN)  :: f(0:nx,0:nz)
-    REAL (r2), INTENT(OUT) :: fx(0:nx,0:nz)
-    INTEGER (i1)           :: j, k
+    REAL    (r2), INTENT(IN)  :: f(0:nx,0:nz)
+    REAL    (r2), INTENT(OUT) :: fx(0:nx,0:nz)
+    INTEGER (i1)              :: j, k
 
     DO j = 1, nx1
       fx(j,:) = f(j+1,:) - f(j-1,:)
@@ -27,9 +27,9 @@ MODULE derivs
     USE parameters
     IMPLICIT NONE
 
-    REAL (r2), INTENT(IN)  :: f(0:nx,0:nz)
-    REAL (r2), INTENT(OUT) :: fxx(0:nx,0:nz)
-    INTEGER (i1)           :: j, k
+    REAL    (r2), INTENT(IN)  :: f(0:nx,0:nz)
+    REAL    (r2), INTENT(OUT) :: fxx(0:nx,0:nz)
+    INTEGER (i1)              :: j, k
 
     DO j = 1, nx1
       fxx(j,:) = f(j+1,:) - 2.0_r2 * f(j,:) + f(j-1,:)
@@ -43,9 +43,9 @@ MODULE derivs
     USE parameters
     IMPLICIT NONE
 
-    REAL (r2), INTENT(IN)  :: f(0:nx,0:nz)
-    REAL (r2), INTENT(OUT) :: fz(0:nx,0:nz)
-    INTEGER (i1)           :: j, k
+    REAL    (r2), INTENT(IN)  :: f(0:nx,0:nz)
+    REAL    (r2), INTENT(OUT) :: fz(0:nx,0:nz)
+    INTEGER (i1)              :: j, k
 
     DO k = 1, nz1
       fz(1:nx1,k) = f(1:nx1,k+1) - f(1:nx1,k-1)
@@ -62,9 +62,9 @@ MODULE derivs
     USE parameters
     IMPLICIT NONE
 
-    REAL (r2), INTENT(IN)  :: f(0:nx,0:nz)
-    REAL (r2), INTENT(OUT) :: fzz(0:nx,0:nz)
-    INTEGER (i1)           :: j, k
+    REAL    (r2), INTENT(IN)  :: f(0:nx,0:nz)
+    REAL    (r2), INTENT(OUT) :: fzz(0:nx,0:nz)
+    INTEGER (i1)              :: j, k
 
     DO k = 1, nz1
       fzz(1:nx1,k) = f(1:nx1,k+1) - 2.0_r2 * f(1:nx1,k) + f(1:nx1,k-1)

@@ -15,10 +15,10 @@ MODULE magnetic
     IMPLICIT NONE
 
     INTEGER (i1), INTENT(IN)  :: desc_b(7)
-    REAL (r2),    INTENT(IN)  :: af(b_laf), u_mat(0:nx,0:nz), b_mat(b_M,b_N)
-    REAL (r2),    INTENT(OUT) :: bn(0:nx,0:nz)
-    REAL (r2)                 :: u_vec(nb), work(lwork_b_sol)
+    REAL    (r2), INTENT(IN)  :: af(b_laf), u_mat(0:nx,0:nz), b_mat(b_M,b_N)
+    REAL    (r2), INTENT(OUT) :: bn(0:nx,0:nz)
     INTEGER (i1)              :: i, j, k, info, cpcol, desc_u(7)
+    REAL    (r2)              :: u_vec(nb), work(lwork_b_sol)
 
     desc_u(1) = 502
     desc_u(2) = ictxt
@@ -89,11 +89,11 @@ MODULE magnetic
     IMPLICIT NONE
 
     INTEGER (i1), INTENT(IN)  :: desc_b(7)
-    REAL (r2),    INTENT(IN)  :: af(b_laf), u_mat(0:nx,0:nz), b_mat(b_M,b_N)
-    REAL (r2),    INTENT(OUT) :: bn(0:nx,0:nz)
-    REAL (r2)                 :: u_vec(nb), u_mat_z(0:nx,0:nz), &
-                                 work(lwork_b_sol)
+    REAL    (r2), INTENT(IN)  :: af(b_laf), u_mat(0:nx,0:nz), b_mat(b_M,b_N)
+    REAL    (r2), INTENT(OUT) :: bn(0:nx,0:nz)
     INTEGER (i1)              :: i, j, k, info, cpcol, desc_u(7)
+    REAL    (r2)              :: u_vec(nb), u_mat_z(0:nx,0:nz), &
+                                 work(lwork_b_sol)
 
     IF (mycol == 0) THEN
       CALL deriv_z(u_mat, u_mat_z)

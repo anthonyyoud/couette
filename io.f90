@@ -13,9 +13,9 @@ MODULE io
     USE parameters, ONLY : i1
     IMPLICIT NONE
 
-    CHARACTER(7)             :: itos
     INTEGER (i1), INTENT(IN) :: n
     INTEGER (i1)             :: i, n_, d(7)
+    CHARACTER(7)             :: itos
     CHARACTER                :: c(0:9) = (/'0','1','2','3','4','5',&
                                            '6','7','8','9'/)
 
@@ -68,14 +68,14 @@ MODULE io
     USE parameters
     IMPLICIT NONE
 
-    REAL (r2), INTENT(IN)  :: t, ur(0:nx,0:nz), uz(0:nx,0:nz), &
-                              pn(0:nx,0:nz), bn(0:nx,0:nz), &
-                              jn(0:nx,0:nz), v(0:nx,0:nz), &
-                              zn(0:nx,0:nz), ur_prev(0:nx,0:nz), &
-                              uz_prev(0:nx,0:nz)
-    REAL (r2), INTENT(OUT) :: growth, growth_vz
-    REAL (r2), SAVE        :: min_p, max_p, min_ur, max_ur, min_uz, max_uz
-    INTEGER (i1)           :: zpos, xpos
+    REAL    (r2), INTENT(IN)  :: t, ur(0:nx,0:nz), uz(0:nx,0:nz), &
+                                 pn(0:nx,0:nz), bn(0:nx,0:nz), &
+                                 jn(0:nx,0:nz), v(0:nx,0:nz), &
+                                 zn(0:nx,0:nz), ur_prev(0:nx,0:nz), &
+                                 uz_prev(0:nx,0:nz)
+    REAL    (r2), INTENT(OUT) :: growth, growth_vz
+    INTEGER (i1)              :: zpos, xpos
+    REAL    (r2), SAVE        :: min_p, max_p, min_ur, max_ur, min_uz, max_uz
 
     !growth rate of vortices
     growth = LOG(ABS(ur(nx/2,nz/2)/ur_prev(nx/2,nz/2))) / (dt * save_rate)
@@ -122,9 +122,9 @@ MODULE io
     USE parameters
     IMPLICIT NONE
 
-    REAL (r2), INTENT(IN) :: t, v(0:nx,0:nz)
-    INTEGER (i1)          :: k
-    REAL (r2)             :: xi, C1, C2, G1(0:nz), G2(0:nz), G1_, G2_
+    REAL    (r2), INTENT(IN) :: t, v(0:nx,0:nz)
+    INTEGER (i1)             :: k
+    REAL    (r2)             :: xi, C1, C2, G1(0:nz), G2(0:nz), G1_, G2_
 
     xi = Re1_mod * COS(om1 * t) - eta * Re2_mod * COS(om2 * t)
     xi = xi / (Re1 - eta * Re2)
@@ -152,7 +152,7 @@ MODULE io
     IMPLICIT NONE
 
     INTEGER (i1), INTENT(IN) :: p
-    REAL (r2),    INTENT(IN) :: ur(0:nx,0:nz), uz(0:nx,0:nz), &
+    REAL    (r2), INTENT(IN) :: ur(0:nx,0:nz), uz(0:nx,0:nz), &
                                 pn(0:nx,0:nz), ut(0:nx,0:nz), &
                                 zt(0:nx,0:nz), bt(0:nx,0:nz), &
                                 jt(0:nx,0:nz), t
@@ -184,10 +184,10 @@ MODULE io
     IMPLICIT NONE
 
     INTEGER (i1), INTENT(IN) :: p
-    REAL (r2),    INTENT(IN) :: u_r(0:nx,0:nz), u_t(0:nx,0:nz), &
+    REAL    (r2), INTENT(IN) :: u_r(0:nx,0:nz), u_t(0:nx,0:nz), &
                                 u_z(0:nx,0:nz), pn(0:nx,0:nz)
-    REAL (r2)                :: hel(0:nx,0:nz)
     INTEGER (i1)             :: j, k, l
+    REAL    (r2)             :: hel(0:nx,0:nz)
 
     !OPEN (35, STATUS = 'unknown', FILE = 'p3d'//itos(p)//'.dat')
 
@@ -229,11 +229,11 @@ MODULE io
     USE derivs, ONLY : deriv_x, deriv_z
     IMPLICIT NONE
 
-    REAL (r2), INTENT(IN)  :: u_r(0:nx,0:nz), u_t(0:nx,0:nz), u_z(0:nx,0:nz)
-    REAL (r2), INTENT(OUT) :: hel(0:nx, 0:nz)
-    REAL (r2)              :: u_r_z(0:nx,0:nz), u_t_z(0:nx,0:nz), &
-                              u_t_x(0:nx,0:nz), u_z_x(0:nx,0:nz)
-    INTEGER (i1)           :: k
+    REAL    (r2), INTENT(IN)  :: u_r(0:nx,0:nz), u_t(0:nx,0:nz), u_z(0:nx,0:nz)
+    REAL    (r2), INTENT(OUT) :: hel(0:nx, 0:nz)
+    INTEGER (i1)              :: k
+    REAL    (r2)              :: u_r_z(0:nx,0:nz), u_t_z(0:nx,0:nz), &
+                                 u_t_x(0:nx,0:nz), u_z_x(0:nx,0:nz)
 
     CALL deriv_z(u_r, u_r_z)
     CALL deriv_z(u_t, u_t_z)
@@ -258,7 +258,7 @@ MODULE io
     IMPLICIT NONE
 
     INTEGER (i1), INTENT(IN) :: p
-    REAL (r2),    INTENT(IN) :: t, pn(0:nx,0:nz), v(0:nx,0:nz), &
+    REAL    (r2), INTENT(IN) :: t, pn(0:nx,0:nz), v(0:nx,0:nz), &
                                 zn(0:nx,0:nz), bn(0:nx,0:nz), &
                                 jn(0:nx,0:nz), ur(0:nx,0:nz), &
                                 uz(0:nx,0:nz)
@@ -321,8 +321,8 @@ MODULE io
     IMPLICIT NONE
 
     INTEGER (i1), INTENT(IN) :: p, p_start
-    REAL (r2),    INTENT(IN) :: t
-    REAL (r2)                :: growth_rate, growth_rate_vz
+    REAL    (r2), INTENT(IN) :: t
+    REAL    (r2)             :: growth_rate, growth_rate_vz
 
     CALL vr_vz(psi%old, vr, vz)   !get radial, axial velocities
     IF (save_part) THEN
@@ -363,7 +363,7 @@ MODULE io
     IMPLICIT NONE
 
     INTEGER (i1), INTENT(IN) :: p
-    REAL (r2),    INTENT(IN) :: t
+    REAL    (r2), INTENT(IN) :: t
     LOGICAL                  :: run_exist
 
     IF (mycol == 0) THEN
@@ -395,7 +395,7 @@ MODULE io
     IMPLICIT NONE
 
     INTEGER (i1), INTENT(IN) :: p
-    REAL (r2),    INTENT(IN) :: t
+    REAL    (r2), INTENT(IN) :: t
     LOGICAL                  :: save_exist
 
     INQUIRE(FILE='SAVE', EXIST=save_exist)   !does 'SAVE' exist?
@@ -416,10 +416,10 @@ MODULE io
     USE parameters
     IMPLICIT NONE
 
-    REAL (r2),    INTENT(IN) :: u(0:nx,0:nz), zn(0:nx,0:nz), &
+    INTEGER (i1), INTENT(IN) :: p
+    REAL    (r2), INTENT(IN) :: u(0:nx,0:nz), zn(0:nx,0:nz), &
                                 pn(0:nx,0:nz), bn(0:nx,0:nz), &
                                 jn(0:nx,0:nz)
-    INTEGER (i1), INTENT(IN) :: p
     INTEGER (i1)             :: j, k
 
     OPEN (50, FILE = 'end_state.dat')
@@ -458,11 +458,11 @@ MODULE io
     USE parameters
     IMPLICIT NONE
 
-    REAL (r2), INTENT(IN)    :: vr(0:nx, 0:nz), vz(0:nx, 0:nz), &
-                                vrold(0:nx, 0:nz), vzold(0:nx, 0:nz)
-    REAL (r2), INTENT(INOUT) :: xold, zold
-    INTEGER (i1)             :: xmin, xplu, zmin, zplu, j
-    REAL (r2)                :: c1, c2, rvel, zvel, xnew, znew, del_t
+    REAL    (r2), INTENT(IN)    :: vr(0:nx, 0:nz), vz(0:nx, 0:nz), &
+                                   vrold(0:nx, 0:nz), vzold(0:nx, 0:nz)
+    REAL    (r2), INTENT(INOUT) :: xold, zold
+    INTEGER (i1)                :: xmin, xplu, zmin, zplu, j
+    REAL    (r2)                :: c1, c2, rvel, zvel, xnew, znew, del_t
 
     del_t = dt / 1.0_r2
 

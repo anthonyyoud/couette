@@ -13,11 +13,11 @@ MODULE solve
     USE ic_bc, ONLY : u_BCS, s
     IMPLICIT NONE
 
-    REAL (r2),       INTENT(IN)    :: t, u(0:nx,0:nz), u_nl(0:nx,0:nz)
-    TYPE (MAT_COMP), INTENT(IN)    :: ux
-    REAL (r2),       INTENT(INOUT) :: uo(0:nx,0:nz)
-    REAL (r2)                      :: ux_rhs(nx1)
-    INTEGER (i1)                   :: j, k
+    REAL    (r2),       INTENT(IN)    :: t, u(0:nx,0:nz), u_nl(0:nx,0:nz)
+    REAL    (r2),       INTENT(INOUT) :: uo(0:nx,0:nz)
+    TYPE    (MAT_COMP), INTENT(IN)    :: ux
+    INTEGER (i1)                      :: j, k
+    REAL    (r2)                      :: ux_rhs(nx1)
 
     CALL u_BCS(uo, t)
 
@@ -59,12 +59,12 @@ MODULE solve
     USE ic_bc, ONLY : z_BCS, s
     IMPLICIT NONE
 
-    REAL (r2),       INTENT(IN)    :: t, zn(0:nx,0:nz), po(0:nx,0:nz), &
-                                      z_nl(0:nx,0:nz)
-    TYPE (MAT_COMP), INTENT(IN)    :: zx
-    REAL (r2),       INTENT(INOUT) :: zo(0:nx,0:nz)
-    REAL (r2)                      :: zx_rhs(nx1)
-    INTEGER (i1)                   :: j, k
+    REAL    (r2),       INTENT(IN)    :: t, zn(0:nx,0:nz), po(0:nx,0:nz), &
+                                         z_nl(0:nx,0:nz)
+    REAL    (r2),       INTENT(INOUT) :: zo(0:nx,0:nz)
+    TYPE    (MAT_COMP), INTENT(IN)    :: zx
+    INTEGER (i1)                      :: j, k
+    REAL    (r2)                      :: zx_rhs(nx1)
 
     CALL z_BCS(zo, po, t)
 
@@ -91,12 +91,12 @@ MODULE solve
     USE ic_bc, ONLY : u_BCS, s
     IMPLICIT NONE
 
-    REAL (r2),          INTENT(IN)    :: t, uo(0:nx,0:nz)
-    TYPE (UZ_MAT_COMP), INTENT(IN)    :: uz
-    REAL (r2),          INTENT(INOUT) :: u(0:nx,0:nz)
-    REAL (r2)                         :: uz_rhs(0:nz), uz_rhs_t1(nz1), &
-                                         up(nz-2), di(nz1), lo(2:nz1)
-    INTEGER (i1)                      :: j, k
+    REAL    (r2),          INTENT(IN)    :: t, uo(0:nx,0:nz)
+    REAL    (r2),          INTENT(INOUT) :: u(0:nx,0:nz)
+    TYPE    (UZ_MAT_COMP), INTENT(IN)    :: uz
+    INTEGER (i1)                         :: j, k
+    REAL    (r2)                         :: uz_rhs(0:nz), uz_rhs_t1(nz1), &
+                                            up(nz-2), di(nz1), lo(2:nz1)
 
     CALL u_BCS(u, t)
 
@@ -135,11 +135,11 @@ MODULE solve
     USE ic_bc, ONLY : z_BCS, s
     IMPLICIT NONE
 
-    REAL (r2),          INTENT(IN)    :: t, zo(0:nx,0:nz), po(0:nx,0:nz)
-    TYPE (ZZ_MAT_COMP), INTENT(IN)    :: zz
-    REAL (r2),          INTENT(INOUT) :: zn(0:nx,0:nz)
-    REAL (r2)                         :: Zz_rhs(nz1)
-    INTEGER (i1)                      :: j, k
+    REAL    (r2),          INTENT(IN)    :: t, zo(0:nx,0:nz), po(0:nx,0:nz)
+    REAL    (r2),          INTENT(INOUT) :: zn(0:nx,0:nz)
+    TYPE    (ZZ_MAT_COMP), INTENT(IN)    :: zz
+    INTEGER (i1)                         :: j, k
+    REAL    (r2)                         :: Zz_rhs(nz1)
 
     CALL z_BCS(zn, po, t)
 
@@ -162,11 +162,11 @@ MODULE solve
     USE parameters, ONLY : i1, r2
     IMPLICIT NONE
 
-    INTEGER (i1)                :: j
     INTEGER (i1), INTENT(IN)    :: m, lb  !lb is the vector lower-bound
-    REAL (r2),    INTENT(IN)    :: up(lb:m-1), di(lb:m), lo(lb+1:m)
-    REAL (r2),    INTENT(INOUT) :: r(lb:m)
-    REAL (r2)                   :: dnew(lb:m), aa = 0.0_r2
+    REAL    (r2), INTENT(IN)    :: up(lb:m-1), di(lb:m), lo(lb+1:m)
+    REAL    (r2), INTENT(INOUT) :: r(lb:m)
+    REAL    (r2)                :: dnew(lb:m), aa = 0.0_r2
+    INTEGER (i1)                :: j
 
     dnew = di   !create new diagonal so as not to destroy original
     DO j = lb+1, m

@@ -40,10 +40,10 @@ MODULE ic_bc
     USE parameters
     IMPLICIT NONE
 
-    REAL (r2),    INTENT(INOUT) :: u(0:nx,0:nz), zn(0:nx,0:nz), &
+    INTEGER (i1), INTENT(OUT)   :: p
+    REAL    (r2), INTENT(INOUT) :: u(0:nx,0:nz), zn(0:nx,0:nz), &
                                    pn(0:nx,0:nz), bn(0:nx,0:nz), &
                                    jn(0:nx,0:nz)
-    INTEGER (i1), INTENT(OUT)   :: p
     INTEGER (i1)                :: j, k
     LOGICAL                     :: state_exist
 
@@ -92,14 +92,13 @@ MODULE ic_bc
     USE parameters
     IMPLICIT NONE
 
-    REAL (r2),    INTENT(OUT) :: u(0:nx,0:nz), zn(0:nx,0:nz), &
-                                 pn(0:nx,0:nz), bn(0:nx,0:nz), &
-                                 jn(0:nx,0:nz)
-    REAL (r2),    ALLOCATABLE :: u_prev(:,:), z_prev(:,:), p_prev(:,:), &
-                                 b_prev(:,:), j_prev(:,:)
     INTEGER (i1), INTENT(OUT) :: p
-    REAL (r2)                 :: dt_prev
+    REAL    (r2), INTENT(OUT) :: u(0:nx,0:nz), zn(0:nx,0:nz), pn(0:nx,0:nz), &
+                                 bn(0:nx,0:nz), jn(0:nx,0:nz)
     INTEGER (i1)              :: j, k, nx_prev, nz_prev, alloc_err
+    REAL    (r2)              :: dt_prev
+    REAL    (r2), ALLOCATABLE :: u_prev(:,:), z_prev(:,:), p_prev(:,:), &
+                                 b_prev(:,:), j_prev(:,:)
 
     OPEN (50, FILE = 'end_state.dat')
 
@@ -161,14 +160,14 @@ MODULE ic_bc
     IMPLICIT NONE
 
     INTEGER (i1), INTENT(IN)  :: nxp, nzp
-    REAL (r2),    INTENT(IN)  :: u_(0:nxp,0:nzp), z_(0:nxp,0:nzp), &
+    REAL    (r2), INTENT(IN)  :: u_(0:nxp,0:nzp), z_(0:nxp,0:nzp), &
                                  p_(0:nxp,0:nzp), b_(0:nxp,0:nzp), &
                                  j_(0:nxp,0:nzp)
-    REAL (r2),    INTENT(OUT) :: u(0:nx,0:nz), zn(0:nx,0:nz), &
+    REAL    (r2), INTENT(OUT) :: u(0:nx,0:nz), zn(0:nx,0:nz), &
                                  pn(0:nx,0:nz), bn(0:nx,0:nz), &
                                  jn(0:nx,0:nz)
-    REAL (r2)                 :: dx_prev, dz_prev, x_prev(0:nxp), z_prev(0:nzp)
     INTEGER (i1)              :: j, k
+    REAL    (r2)              :: dx_prev, dz_prev, x_prev(0:nxp), z_prev(0:nzp)
 
     dx_prev = 1.0_r2 / nxp       !previous space mesh
     dz_prev = gamma / nzp
@@ -197,11 +196,11 @@ MODULE ic_bc
     IMPLICIT NONE
     
     INTEGER (i1), INTENT(IN)  :: nxp, nzp
-    REAL (r2),    INTENT(IN)  :: in_var(0:nxp,0:nzp), x_prev(0:nxp), &
+    REAL    (r2), INTENT(IN)  :: in_var(0:nxp,0:nzp), x_prev(0:nxp), &
                                  z_prev(0:nzp)
-    REAL (r2),    INTENT(OUT) :: out_var(0:nx,0:nz)
-    REAL (r2)                 :: int1, int2
+    REAL    (r2), INTENT(OUT) :: out_var(0:nx,0:nz)
     INTEGER (i1)              :: j, k, j2, k2
+    REAL    (r2)              :: int1, int2
 
     DO k = 0, nz   !new 'z' index
       k2 = INT(nzp*k/nz,i1)   !old 'z' index
@@ -224,9 +223,9 @@ MODULE ic_bc
     USE parameters
     IMPLICIT NONE
 
-    REAL (r2), INTENT(OUT) :: u(0:nx,0:nz)
-    REAL (r2), INTENT(IN)  :: t
-    INTEGER (i1)           :: k
+    REAL    (r2), INTENT(IN)  :: t
+    REAL    (r2), INTENT(OUT) :: u(0:nx,0:nz)
+    INTEGER (i1)              :: k
 
     u(0,:) = Re1 + Re1_mod * COS(om1 * t) + &
              eps1 * Re1 * (1.0_r2 / eta - 1.0_r2) * COS(freq1 * z(:))
@@ -246,8 +245,8 @@ MODULE ic_bc
     USE parameters
     IMPLICIT NONE
 
-    REAL (r2), INTENT(OUT) :: zn(0:nx,0:nz)
     REAL (r2), INTENT(IN)  :: t, pn(0:nx,0:nz)
+    REAL (r2), INTENT(OUT) :: zn(0:nx,0:nz)
 
     zn(0,:) = -(8.0_r2 * pn(1,:) - pn(2,:)) / (2.0_r2 * s(0) * dx2)
     zn(nx,:) = -(8.0_r2 * pn(nx1,:) - pn(nx-2,:)) / (2.0_r2 * s(nx) * dx2)
@@ -321,7 +320,7 @@ MODULE ic_bc
     IMPLICIT NONE
 
     INTEGER (i1), INTENT(IN) :: index
-    REAL (r2)                :: f1
+    REAL    (r2)             :: f1
 
     f1 = eps1 * COS(freq1*z(index))
 
@@ -333,7 +332,7 @@ MODULE ic_bc
     IMPLICIT NONE
 
     INTEGER (i1), INTENT(IN) :: index
-    REAL (r2)                :: f2
+    REAL    (r2)             :: f2
 
     f2 = eps2 * COS(freq2*z(index)-pi)
 
