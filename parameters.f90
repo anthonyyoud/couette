@@ -3,24 +3,24 @@ implicit none
 save
 
 double precision, parameter :: pi 	   = 3.14159265358979d0
-double precision, parameter :: alpha 	   = 3.73d0
+double precision, parameter :: alpha 	   = 3.75d0
 double precision, parameter :: gamma 	   = (2d0 * pi) / alpha
 double precision, parameter :: eta 	   = 0.25d0
 double precision, parameter :: Q	   = 48d0
-double precision, parameter :: Re1 	   = 156d0
+double precision, parameter :: Re1 	   = 157d0
 double precision, parameter :: Re2 	   = 0d0 !-1d0*(1d0/eta)*Re1
 double precision, parameter :: Re1_mod 	   = 0d0
 double precision, parameter :: Re2_mod 	   = 0d0
 double precision, parameter :: om1 	   = 0d0
 double precision, parameter :: om2 	   = 0d0
-double precision, parameter :: dt 	   = 0.00005d0
+double precision, parameter :: dt 	   = 0.0001d0
 double precision, parameter :: seed 	   = 1d-8
 double precision, parameter :: end_time    = 1000d0
 double precision, parameter :: tau_init	   = 0d0
 double precision, parameter :: tau_step    = 1d0
 double precision, parameter :: tau_end     = 1d0
-integer, 	  parameter :: nx 	   = 100
-integer, 	  parameter :: nz 	   = 200
+integer, 	  parameter :: nx 	   = 40
+integer, 	  parameter :: nz 	   = 80
 integer, 	  parameter :: save_rate   = 10
 integer, 	  parameter :: save_rate_2 = 10
 logical, 	  parameter :: diag 	   = .false.
