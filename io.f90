@@ -114,7 +114,7 @@ if ((Re1_mod == 0d0) .and. (Re2_mod == 0d0) .and. &
    growth = log(ur(nx/2,nz/2)/ur_prev(nx/2,nz/2)) / (dt * save_rate)
 end if
 
-write(20, '(7e19.7)') t, ur(nx/2,nz/2), growth, uz(nx/4,nz/4), &
+write(20, '(7e19.7)') t, ur(nx/2,nz/2), growth, uz(nx/2,nz/2), &
                       pn(nx/2,3*nz/4), v(nx/2,nz/2), &
                       z(nx/2,nz/4)
 

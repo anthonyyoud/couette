@@ -160,7 +160,9 @@ do p = p_start, Ntot
 
    if (mod(p, save_rate) == 0) then
       call r_vel(pold, s, vr, vz)
-      call save_torque(t, unew)
+      if ((Re1 /= 0d0) .or. (Re2 /= 0d0)) then
+         call save_torque(t, unew)
+      end if
       if (p /= save_rate) then
          call save_growth(t, vr, vr2, vz, pold, unew, znew)
       end if
