@@ -160,7 +160,7 @@ do p = p_start, Ntot
       if ((Re1 /= 0d0) .or. (Re2 /= 0d0)) then
          call save_torque(t, unew)
       end if
-      if (p /= save_rate) then
+      if ((p /= save_rate) .and. ((p - p_start) > save_rate)) then
          call save_growth(t, vr, vr2, vz, pold, unew, znew, growth_rate)
          if ((Re1_mod == 0d0) .and. (Re2_mod == 0d0)) then
             if ((dabs(growth_rate) < 1d-8) .and. &
