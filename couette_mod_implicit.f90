@@ -68,7 +68,7 @@ print*, 'Entering time loop'
 
 do p = p_start, Ntot
    inquire(file='RUNNING', exist=run_exist)
-   if (.not. file_exist) then
+   if (.not. run_exist) then
       print*, 'Stop requested'
       print*, 'Saving end state'
       call end_state(uold, zold, pold, p)
@@ -79,7 +79,7 @@ do p = p_start, Ntot
 
    inquire(file='SAVE', exist=save_exist)
    if (save_exist) then
-      call save_xsect(vr, vz, pold, p, t)
+      call save_xsect(vr, vz, pold, t, p)
       call save_surface(pold, uold, zold, vr, vz, p, t)
       open (98, file = 'SAVE')
       close (98, status = 'delete')
@@ -357,6 +357,9 @@ do j = 1, nx1
    z_nl_n(j,1:nz1) = (((1d0 - eta) * rz) / (2d0 * s(j))) * &
                  (3d0 * uo(j,1:nz1) * du%z(j,1:nz1) - &
                  uo2(j,1:nz1) * du2%z(j,1:nz1)) - &
+                 ((1d0 - eta) * rz / (4d0 * s(j)**2)) * &
+                 (3d0 * zo(j,1:nz1) * dp%z(j,1:nz1) - &
+                 zo2(j,1:nz1) * dp2%z(j,1:nz1)) - &
                  (rx / (8d0 * s(j) * delz)) * &
                  ((3d0 * (dp%x(j,1:nz1) * dz%z(j,1:nz1) - &
                  dp%z(j,1:nz1) * dz%x(j,1:nz1))) - &
