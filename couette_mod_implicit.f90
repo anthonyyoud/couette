@@ -52,10 +52,9 @@ if (mycol == 0) then                                            !initial
    call ICS(ut%new, zt%new, psi%new, bt%new, jt%new, p_start)   !conditions
 
    if (.not. restart) then
-      inquire(file='end_state.dat', exist=state_exist)      !exit if not doing
-      if (state_exist) then                                 !restart but
-         STOP 'restart=.false. but end_state.dat exists.'   !endstate.dat
-      end if                                                !exists
+      inquire(file='end_state.dat', exist=state_exist)
+      !exit if not doing restart but end_state.dat exists
+      if (state_exist) STOP 'restart=.false. but end_state.dat exists.'
       print*, 'Setting up BCS...'
       call u_BCS(ut%new, 0d0)
       call p_BCS(psi%new)

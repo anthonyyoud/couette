@@ -43,9 +43,8 @@ logical :: state_exist
 
 if (restart) then
    inquire(file='end_state.dat', exist=state_exist)
-   if (.not. state_exist) then
-      STOP 'restart=.true. but end_state.dat does not exist.'
-   end if  
+   !exit if doing restart but end_state.dat does not exist
+   if (.not. state_exist) STOP 'restart=.true. but end_state.dat does not exist.'
    print*, 'Getting restart conditions'
    call state_restart(u, zn, pn, bn, jn, p)  !get saved data if restart
 else                   !put in estimate of eigen-function shape
