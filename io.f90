@@ -318,22 +318,22 @@ if (save_part) call particle(vr, vrold, vz, vzold, x_pos, z_pos) !save particle
 if ((p /= p_start) .and. ((p - p_start) > save_rate)) then
    call save_growth(t, vr, vrold, vz, vzold, psi%old, ut%new, zt%new, &
                     bt%old, jt%old, growth_rate, growth_rate_vz)
-   !if ((om1 == 0d0) .and. (om2 == 0d0)) then
-   !   if ((dabs(growth_rate_vz) < 1d-8) .and. &  !if vr saturated
-   !       (dabs(vr(nx/2, nz/2)) > 1d-3)) then
-   !      if ((.not. auto_tau) .or. (tau == tau_end)) then  !if tau not auto
-   !         call save_time_tau(tau, t)                     !or tau at end
-   !         call end_state(ut%old, zt%old, psi%old, bt%old, jt%old, p) !finish
-   !      else if (tau < 1d0) then
-   !         call save_time_tau(tau, t)
-   !         tau = tau + tau_step   !increment tau
-   !         print*, 'tau = ', tau
-   !         call save_xsect(vr, vz, psi%old, t, p)
-   !         call save_surface(psi%old, ut%new, zt%new, vr, vz, &
-   !                           bt%old, jt%old, p, t)
-   !      end if
-   !   end if
-   !end if
+   if ((om1 == 0d0) .and. (om2 == 0d0)) then
+      if ((dabs(growth_rate) < 1d-8) .and. &  !if vr saturated
+          (dabs(vr(nx/2, nz/2)) > 1d-3)) then
+         if ((.not. auto_tau) .or. (tau == tau_end)) then  !if tau not auto
+            call save_time_tau(tau, t)                     !or tau at end
+            call end_state(ut%old, zt%old, psi%old, bt%old, jt%old, p) !finish
+         else if (tau < 1d0) then
+            call save_time_tau(tau, t)
+            tau = tau + tau_step   !increment tau
+            print*, 'tau = ', tau
+            call save_xsect(vr, vz, psi%old, t, p)
+            call save_surface(psi%old, ut%new, zt%new, vr, vz, &
+                              bt%old, jt%old, p, t)
+         end if
+      end if
+   end if
 end if
 
 return
@@ -404,6 +404,8 @@ integer :: j, k
 
 open (50, file = 'end_state.dat')
 
+write(50, *) nx
+write(50, *) nz
 write(50, '(i8)') p
 write(50, '(e19.7)') dt
 write(50, '(e19.7)') ((u(j,k), k = 0, nz), j = 0, nx)

@@ -83,19 +83,38 @@ implicit none
 double precision, intent(out) :: u(0:nx,0:nz), zn(0:nx,0:nz), &
                                  pn(0:nx,0:nz), bn(0:nx,0:nz), &
                                  jn(0:nx,0:nz)
+double precision, allocatable :: u_prev(:,:), z_prev(:,:), p_prev(:,:), &
+                                 b_prev(:,:), j_prev(:,:)
 double precision :: dt_prev
 integer, intent(out) :: p
-integer :: j, k
+integer :: j, k, nx_prev, nz_prev
 
 open (50, file = 'end_state.dat')
 
+read(50, *) nx_prev
+read(50, *) nz_prev
 read(50, *) p
 read(50, *) dt_prev
-read(50, *) ((u(j,k), k = 0, nz), j = 0, nx)
-read(50, *) ((zn(j,k), k = 0, nz), j = 0, nx)
-read(50, *) ((pn(j,k), k = 0, nz), j = 0, nx)
-read(50, *) ((bn(j,k), k = 0, nz), j = 0, nx)
-read(50, *) ((jn(j,k), k = 0, nz), j = 0, nx)
+
+if ((nx_prev /= nx) .or. (nz_prev /= nz)) then
+   allocate(u_prev(0:nx_prev,0:nz_prev), z_prev(0:nx_prev,0:nz_prev), &
+            p_prev(0:nx_prev,0:nz_prev), b_prev(0:nx_prev,0:nz_prev) , &
+            j_prev(0:nx_prev,0:nz_prev)) 
+   read(50, *) ((u_prev(j,k), k = 0, nz_prev), j = 0, nx_prev)
+   read(50, *) ((z_prev(j,k), k = 0, nz_prev), j = 0, nx_prev)
+   read(50, *) ((p_prev(j,k), k = 0, nz_prev), j = 0, nx_prev)
+   read(50, *) ((b_prev(j,k), k = 0, nz_prev), j = 0, nx_prev)
+   read(50, *) ((j_prev(j,k), k = 0, nz_prev), j = 0, nx_prev)
+   call inter(u_prev, z_prev, p_prev, b_prev, j_prev, nx_prev, nz_prev, &
+              u, zn, pn, bn, jn)
+   deallocate(u_prev, z_prev, p_prev, b_prev, j_prev)
+else
+   read(50, *) ((u(j,k), k = 0, nz), j = 0, nx)
+   read(50, *) ((zn(j,k), k = 0, nz), j = 0, nx)
+   read(50, *) ((pn(j,k), k = 0, nz), j = 0, nx)
+   read(50, *) ((bn(j,k), k = 0, nz), j = 0, nx)
+   read(50, *) ((jn(j,k), k = 0, nz), j = 0, nx)
+end if
 
 close (50)   
 
@@ -111,6 +130,68 @@ end if
 
 return
 END SUBROUTINE state_restart
+
+SUBROUTINE inter(u_, z_, p_, b_, j_, nxp, nzp, &
+                 u, zn, pn, bn, jn)
+use parameters
+implicit none
+
+double precision, intent(in) :: u_(0:nxp,0:nzp), z_(0:nxp,0:nzp), &
+                                p_(0:nxp,0:nzp), b_(0:nxp,0:nzp), &
+                                j_(0:nxp,0:nzp)
+double precision, intent(out) :: u(0:nx,0:nz), zn(0:nx,0:nz), &
+                                 pn(0:nx,0:nz), bn(0:nx,0:nz), &
+                                 jn(0:nx,0:nz)
+double precision :: dx_prev, dz_prev, x_prev(0:nxp), z_prev(0:nzp)
+integer, intent(in) :: nxp, nzp
+integer :: j, k
+
+dx_prev = 1d0 / nxp
+dz_prev = gamma / nzp
+
+do j = 0, nxp
+   x_prev(j) = dble(j) * dx_prev
+end do
+
+do k = 0, nzp
+   z_prev(k) = dble(k) * dz_prev
+end do
+
+call inter_var(u_, x_prev, z_prev, nxp, nzp, u)
+call inter_var(z_, x_prev, z_prev, nxp, nzp, zn)
+call inter_var(p_, x_prev, z_prev, nxp, nzp, pn)
+call inter_var(b_, x_prev, z_prev, nxp, nzp, bn)
+call inter_var(j_, x_prev, z_prev, nxp, nzp, jn)
+
+return
+END SUBROUTINE inter
+
+SUBROUTINE inter_var(in_var, x_prev, z_prev, nxp, nzp, out_var)
+use parameters
+implicit none
+
+integer, intent(in) :: nxp, nzp
+double precision, intent(in) :: in_var(0:nxp,0:nzp), x_prev(0:nxp), &
+                                z_prev(0:nzp)
+double precision, intent(out) :: out_var(0:nx,0:nz)
+double precision :: int1, int2
+integer :: j, k, j2, k2
+
+do k = 0, nz
+   k2 = int(nzp*k/nz)
+   do j = 0, nx
+      j2 = int(nxp*j/nx)
+      int1 = (x(j) - x_prev(j2)) / (x_prev(j2+1) - x_prev(j2))
+      int2 = (z(k) - z_prev(k2)) / (z_prev(k2+1) - z_prev(k2))
+      out_var(j,k) = (1d0 - int1) * (1d0 - int2) * in_var(j2,k2) + &
+                     int1 * (1d0 - int2) * in_var(j2+1,k2) + &
+                     int1 * int2 * in_var(j2+1,k2+1) + &
+                     (1d0 - int1) * int2 * in_var(j2,k2+1)
+   end do
+end do
+
+return
+END SUBROUTINE inter_var
 
 SUBROUTINE u_BCS(u, t)
 !Boundary conditions for total azimuthal velocity (including CCF)
