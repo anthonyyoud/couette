@@ -52,19 +52,19 @@ contains
 
 FUNCTION itos(n)
 implicit none
-character(6) :: itos
+character(7) :: itos
 integer, intent(in) :: n
-integer   :: i, n_, d(6)
+integer   :: i, n_, d(7)
 character :: c(0:9) =  &
    (/'0','1','2','3','4','5','6','7','8','9'/)
 
 n_ = n
-do i = 6, 1, -1
+do i = 7, 1, -1
    d(i) = mod(n_,10)
    n_ = n_ / 10
 end do
 
-itos = c(d(1))//c(d(2))//c(d(3))//c(d(4))//c(d(5))//c(d(6))
+itos = c(d(1))//c(d(2))//c(d(3))//c(d(4))//c(d(5))//c(d(6))//c(d(7))
 
 return
 END FUNCTION itos
