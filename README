@@ -64,9 +64,6 @@ nonlinear.f90			- As linear.f90 but for the nonlinear terms.
 
 parameters.f90			- Parameters to set (see below).
 
-pressure.f90			- Routines to solve Poisson equation for 
-				  pressure.
-
 README				- This file.
 
 run_script.sh			- For use on giga cluster.  Parameters to 
@@ -79,6 +76,9 @@ setup				- Setup script to compile and set up
 solve.f90			- Routines to solve for the azimuthal velocity
                                   and vorticity fields, as well as the Thomas
                                   algorithm.
+
+stream.f90			- Routines to solve Poisson equation for 
+				  stream-function.
 
 variables.f90			- Types for variables declared, and other
                                   routines to do with variables in general.

@@ -1,6 +1,6 @@
 PROGRAM couette_mod
 use parameters
-use pressure
+use stream
 use matrices
 use io
 use ic_bc

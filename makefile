@@ -1,13 +1,13 @@
 OUTDIR		= ./
-OBJECTS		= parameters.o ic_bc.o variables.o derivs.o pressure.o \
+OBJECTS		= parameters.o ic_bc.o variables.o derivs.o stream.o \
                   variables.o magnetic.o current.o matrices.o io.o linear.o \
                   nonlinear.o solve.o couette_mod.o
 COMPFLAGS	= -O3 -w95 -tpp7 -xW -unroll #-parallel
 #COMPFLAGS	= -d0 -CA -CB -CS -CU -CV
-LINKFLAGS	= -i_dynamic
+LINKFLAGS	= -static
 TYPE            = implicit
-LIBS            = -L $(HOME)/lib/ -lscalapack -lblacsF77init_MPI-LINUX-0 \
-                  -lblacs_MPI-LINUX-0 -lblacsCinit_MPI-LINUX-0 -lblas_ref
+LIBS            = -L $(HOME)/lib/tmp -lscalapack_ref -lblacsF77init_MPI-LINUX-0 \
+                  -lblacs_MPI-LINUX-0 -lblacsCinit_MPI-LINUX-0 -lblas_ref_ifc8
 COMPILER	= mpif77
 
 #-----------------------------------------------------------------------
@@ -37,8 +37,8 @@ derivs.o : derivs.f90
 	$(COMPILER) $(COMPFLAGS) -c derivs.f90
 
 #-----------------------------------------------------------------------
-pressure.o : pressure.f90
-	$(COMPILER) $(COMPFLAGS) -c variables.f90 io.f90 pressure.f90
+stream.o : stream.f90
+	$(COMPILER) $(COMPFLAGS) -c variables.f90 io.f90 stream.f90
 
 #-----------------------------------------------------------------------
 magnetic.o : magnetic.f90

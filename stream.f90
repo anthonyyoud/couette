@@ -1,4 +1,4 @@
-MODULE pressure
+MODULE stream
 !Algorithms for the solution of the stream-function Poisson equation are as
 !for the current in current.f90
 implicit none
@@ -73,4 +73,4 @@ end if
 return
 END SUBROUTINE p_poisson
 
-END MODULE pressure
+END MODULE stream
