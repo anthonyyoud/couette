@@ -38,10 +38,14 @@ double precision, intent(inout) :: u(0:nx,0:nz), zn(0:nx,0:nz), &
                                    pn(0:nx,0:nz), bn(0:nx,0:nz), &
                                    jn(0:nx,0:nz)
 integer, intent(out) :: p
-real :: rand
 integer :: j, k
+logical :: state_exist
 
 if (restart) then
+   inquire(file='end_state.dat', exist=state_exist)
+   if (.not. state_exist) then
+      STOP 'restart=.true. but end_state.dat does not exist.'
+   end if  
    print*, 'Getting restart conditions'
    call state_restart(u, zn, pn, bn, jn, p)  !get saved data if restart
 else                   !put in estimate of eigen-function shape
