@@ -158,6 +158,31 @@ close (32)
 return
 END SUBROUTINE
 
+SUBROUTINE save_3d(pn, p)
+use parameters
+use ic_bc
+implicit none
+
+integer, intent(in) :: p
+double precision, intent(in) :: pn(0:nx,0:nz)
+integer :: j, k, l
+
+open (35, status = 'unknown', file = 'p3d'//itos(p)//'.dat')
+
+do j = 0, nx
+   do l = 0, nt
+      do k = 0, nz
+         write(35,'(4e11.3)') x_(j) * dcos(th(l)), x_(j) * dsin(th(l)), &
+	                      z(k), pn(j,k)
+      end do
+   end do
+end do
+
+close(35)
+
+return
+END SUBROUTINE save_3d
+
 SUBROUTINE save_surface(pn, v, zn, ur, uz, bn, jn, p, t)
 !Save surfaces of fields for use in gnuplot
 use parameters

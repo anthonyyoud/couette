@@ -164,6 +164,12 @@ do p = p_start, Ntot        !start main time loop
          end if
       end if
 
+      if (save3d) then   !save 3D surface
+         if (mod(p, save_rate_2) == 0) then
+            call save_3d(psi%old, p)
+         end if
+      end if
+
       call copy_var(ut%old, ut%new)
       call copy_var(zt%old, zt%new)   !update variables
 

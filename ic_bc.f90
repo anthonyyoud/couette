@@ -2,7 +2,8 @@ MODULE ic_bc
 use parameters
 implicit none
 
-double precision :: x(0:nx), z(0:nz), s(0:nx)   !finite-difference mesh
+double precision :: x(0:nx), x_(0:nx), th(0:nt), z(0:nz), s(0:nx) 
+                                                !finite-difference mesh
                                                 !s=eta+(1-eta)*x
 contains
 
@@ -11,15 +12,19 @@ SUBROUTINE get_xzs()
 use parameters
 implicit none
 
-integer :: j, k
+integer :: j, k, l
 
 do k = 0, nz
    z(k) = dble(k) * delz
+end do
+do l = 0, nt
+   th(l) = dble(l) * delt
 end do
 do j = 0, nx
    x(j) = dble(j) * delx
 end do
 
+x_ = x + 1d0
 s = eta + ((1d0 - eta) * x)
 
 return
