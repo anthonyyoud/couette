@@ -261,9 +261,9 @@ double precision, intent(in) :: z(0:nz), t
 integer :: k
 
 u(0,:) = Re1 + Re1_mod * dcos(om1 * t) + &
-         eps1 * dsin(freq1 * z(:))
+         eps1 * dcos(freq1 * z(:))
 u(nx,:) = Re2 + Re2_mod * dcos(om2 * t) + &
-         eps2 * dsin(freq2 * z(:))
+         eps2 * dcos(freq2 * z(:))
 
 if (tau == 1) then
    u(:,0) = 0d0
