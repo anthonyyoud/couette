@@ -202,40 +202,37 @@ END PROGRAM couette_mod
 SUBROUTINE get_rhs_ux(uo, u)
 use parameters
 use derivs
+use io
 use ic_bc
 implicit none
 
 double precision, intent(in) :: uo(0:nx,0:nz)
 double precision, intent(out) :: u(0:nx,0:nz)
-double precision :: uo_x(0:nx,0:nz), uo_0x(0:nx,0:nz), &
-                    uo_1x(0:nx,0:nz),  uo_xx(0:nx,0:nz), &
-                    uo_0xx(0:nx,0:nz),  uo_1xx(0:nx,0:nz), &
-                    uo_zz(0:nx,0:nz), uo_0zz(0:nx,0:nz), &
-                    uo_1zz(0:nx,0:nz)
+type (deriv) :: du
 integer :: j, k
 
-call deriv_x(uo, uo_x, uo_0x, uo_1x)
-call deriv_xx(uo, uo_xx, uo_0xx, uo_1xx)
-call deriv_zz(uo, uo_zz, uo_0zz, uo_1zz)
+call deriv_x(uo, du%x, du%bx, du%tx)
+call deriv_xx(uo, du%xx, du%bxx, du%txx)
+call deriv_zz(uo, du%zz, du%bzz, du%tzz)
 
 do j = 1, nx1
-   u(j,1:nz1) = uo(j,1:nz1) + (0.5d0 * rxx * uo_xx(j,1:nz1)) + &
-            (((1d0 - eta) * rx) / (4d0 * s(j))) * uo_x(j,1:nz1) - &
+   u(j,1:nz1) = uo(j,1:nz1) + (0.5d0 * rxx * du%xx(j,1:nz1)) + &
+            (((1d0 - eta) * rx) / (4d0 * s(j))) * du%x(j,1:nz1) - &
             (((1d0 - eta)**2 * dt) / (2d0 * s(j)**2)) * &
-            uo(j,1:nz1) + 0.5d0 * rzz * uo_zz(j,1:nz1)
+            uo(j,1:nz1) + 0.5d0 * rzz * du%zz(j,1:nz1)
 end do
 
 if (tau /= 1) then
    do j = 1, nx1
-      u(j,0) = uo(j,0) + (0.5d0 * rxx * uo_0xx(j,0)) + &
-               (((1d0 - eta) * rx) / (4d0 * s(j))) * uo_0x(j,0) - &
+      u(j,0) = uo(j,0) + (0.5d0 * rxx * du%bxx(j,0)) + &
+               (((1d0 - eta) * rx) / (4d0 * s(j))) * du%bx(j,0) - &
                (((1d0 - eta)**2 * dt) / (2d0 * s(j)**2)) * &
-               uo(j,0) + 0.5d0 * rzz * uo_0zz(j,0)
+               uo(j,0) + 0.5d0 * rzz * du%bzz(j,0)
 
-      u(j,nz) = uo(j,nz) + (0.5d0 * rxx * uo_1xx(j,nz)) + &
-               (((1d0 - eta) * rx) / (4d0 * s(j))) * uo_1x(j,nz) - &
+      u(j,nz) = uo(j,nz) + (0.5d0 * rxx * du%txx(j,nz)) + &
+               (((1d0 - eta) * rx) / (4d0 * s(j))) * du%tx(j,nz) - &
                (((1d0 - eta)**2 * dt) / (2d0 * s(j)**2)) * &
-               uo(j,nz) + 0.5d0 * rzz * uo_1zz(j,nz)
+               uo(j,nz) + 0.5d0 * rzz * du%tzz(j,nz)
    end do
 end if
 
@@ -245,57 +242,51 @@ END SUBROUTINE get_rhs_ux
 SUBROUTINE get_nlin_ux(uo, uo2, po, po2, u_nl_n)
 use parameters
 use derivs
+use io
 use ic_bc
 implicit none
 double precision, intent(in) :: uo(0:nx,0:nz), uo2(0:nx,0:nz), &
                                 po(0:nx,0:nz), po2(0:nx,0:nz)
 double precision, intent(out) :: u_nl_n(0:nx,0:nz)
-double precision :: uo_x(0:nx,0:nz), uo2_x(0:nx,0:nz), &
-                    uo_z(0:nx,0:nz), uo2_z(0:nx,0:nz), &
-                    po_x(0:nx,0:nz), po2_x(0:nx,0:nz), &
-                    po_z(0:nx,0:nz), po2_z(0:nx,0:nz), &
-                    uo_0x(0:nx,0:nz), uo2_0x(0:nx,0:nz), &
-                    uo_1x(0:nx,0:nz), uo2_1x(0:nx,0:nz), &
-                    po_0z(0:nx,0:nz), po2_0z(0:nx,0:nz), &
-                    po_1z(0:nx,0:nz), po2_1z(0:nx,0:nz)
-                   
+
+type (deriv) :: du, du2, dp, dp2                   
 integer :: j, k
 
-call deriv_x(uo, uo_x, uo_0x, uo_1x)
-call deriv_x(uo2, uo2_x, uo2_0x, uo2_1x)
-call deriv_z(uo, uo_z)
-call deriv_z(uo2, uo2_z)
-call deriv_x(po, po_x)
-call deriv_x(po2, po2_x)
-call deriv_z(po, po_z, po_0z, po_1z)
-call deriv_z(po2, po2_z, po2_0z, po2_1z)
+call deriv_x(uo, du%x, du%bx, du%tx)
+call deriv_x(uo2, du2%x, du2%bx, du2%tx)
+call deriv_z(uo, du%z)
+call deriv_z(uo2, du2%z)
+call deriv_x(po, dp%x)
+call deriv_x(po2, dp2%x)
+call deriv_z(po, dp%z, dp%bz, dp%tz)
+call deriv_z(po2, dp2%z, dp2%bz, dp2%tz)
 
 do j = 1, nx1
    u_nl_n(j,1:nz1) = (-rx / (8d0 * s(j) * delz)) * &
-                 (3d0 * (po_x(j,1:nz1) * uo_z(j,1:nz1) - &
-                 po_z(j,1:nz1) * uo_x(j,1:nz1)) - &
-                 (po2_x(j,1:nz1) * uo2_z(j,1:nz1) - &
-                 po2_z(j,1:nz1) * uo2_x(j,1:nz1))) + &
+                 (3d0 * (dp%x(j,1:nz1) * du%z(j,1:nz1) - &
+                 dp%z(j,1:nz1) * du%x(j,1:nz1)) - &
+                 (dp2%x(j,1:nz1) * du2%z(j,1:nz1) - &
+                 dp2%z(j,1:nz1) * du2%x(j,1:nz1))) + &
                  ((1d0 - eta) * rz / (4d0 * s(j)**2)) * &
-                 (3d0 * uo(j,1:nz1) * po_z(j,1:nz1) - &
-                 uo2(j,1:nz1) * po2_z(j,1:nz1))
+                 (3d0 * uo(j,1:nz1) * dp%z(j,1:nz1) - &
+                 uo2(j,1:nz1) * dp2%z(j,1:nz1))
 end do
 
 if (tau /= 1) then
    do j = 1, nx1
       u_nl_n(j,0) = (-rx / (8d0 * s(j) * delz)) * &
-                 (-3d0 * po_0z(j,0) * uo_0x(j,0) + &
-                 po2_0z(j,0) * uo2_0x(j,0)) + &
+                 (-3d0 * dp%bz(j,0) * du%bx(j,0) + &
+                 dp2%bz(j,0) * du2%bx(j,0)) + &
                  ((1d0 - eta) * rz / (4d0 * s(j)**2)) * &
-                 (3d0 * uo(j,0) * po_0z(j,0) - &
-                 uo2(j,0) * po2_0z(j,0))
+                 (3d0 * uo(j,0) * dp%bz(j,0) - &
+                 uo2(j,0) * dp2%bz(j,0))
 
    u_nl_n(j,nz) = (-rx / (8d0 * s(j) * delz)) * &
-                  (-3d0 * po_1z(j,nz) * uo_1x(j,nz) + &
-                  po2_1z(j,nz) * uo2_1x(j,nz)) + &
+                  (-3d0 * dp%tz(j,nz) * du%tx(j,nz) + &
+                  dp2%tz(j,nz) * du2%tx(j,nz)) + &
                   ((1d0 - eta) * rz / (4d0 * s(j)**2)) * &
-                  (3d0 * uo(j,nz) * po_1z(j,nz) - &
-                  uo2(j,nz) * po2_1z(j,nz))
+                  (3d0 * uo(j,nz) * dp%tz(j,nz) - &
+                  uo2(j,nz) * dp2%tz(j,nz))
    end do
 end if
 
@@ -305,21 +296,22 @@ END SUBROUTINE get_nlin_ux
 SUBROUTINE get_rhs_Zx(zo, zn)
 use parameters
 use derivs
+use io
 use ic_bc
 implicit none
 double precision, intent(in) :: zo(0:nx,0:nz)
 double precision, intent(out) :: zn(0:nx,0:nz)
-double precision :: zo_x(0:nx,0:nz), zo_xx(0:nx,0:nz), zo_zz(0:nx,0:nz)
+type (deriv) :: dz
 integer :: j, k
 
-call deriv_x(zo, zo_x)
-call deriv_xx(zo, zo_xx)
-call deriv_zz(zo, zo_zz)
+call deriv_x(zo, dz%x)
+call deriv_xx(zo, dz%xx)
+call deriv_zz(zo, dz%zz)
 
 do j = 1, nx1
-   zn(j,1:nz1) = zo(j,1:nz1) + (0.5d0 * rxx * zo_xx(j,1:nz1)) + &
+   zn(j,1:nz1) = zo(j,1:nz1) + (0.5d0 * rxx * dz%xx(j,1:nz1)) + &
                   ((3d0 * (1d0 - eta) * rx) / (4d0 * s(j))) * &
-                  zo_x(j,1:nz1) + 0.5d0 * rzz * zo_zz(j,1:nz1)
+                  dz%x(j,1:nz1) + 0.5d0 * rzz * dz%zz(j,1:nz1)
 end do
 
 return
@@ -328,40 +320,36 @@ END SUBROUTINE get_rhs_Zx
 SUBROUTINE get_nlin_Zx(t, uo, uo2, po, po2, zo, zo2, z_nl_n)
 use parameters
 use derivs
+use io
 use ic_bc
 implicit none
 double precision, intent(in) :: t, uo(0:nx,0:nz), uo2(0:nx,0:nz), &
                                 po(0:nx,0:nz), po2(0:nx,0:nz), &
                                 zo(0:nx,0:nz), zo2(0:nx,0:nz)
 double precision, intent(out) :: z_nl_n(0:nx,0:nz)
-double precision :: uo_z(0:nx,0:nz), uo2_z(0:nx,0:nz), &
-                    po_x(0:nx,0:nz), po2_x(0:nx,0:nz), &
-                    po_z(0:nx,0:nz), po2_z(0:nx,0:nz), &
-                    zo_x(0:nx,0:nz), zo2_x(0:nx,0:nz), &
-                    zo_z(0:nx,0:nz), zo2_z(0:nx,0:nz)
-
+type (deriv) :: du, du2, dp, dp2, dz, dz_2
 integer :: j, k
 
-call deriv_z(uo, uo_z)
-call deriv_z(uo2, uo2_z)
-call deriv_x(po, po_x)
-call deriv_x(po2, po2_x)
-call deriv_z(po, po_z)
-call deriv_z(po2, po2_z)
-call deriv_x(zo, zo_x)
-call deriv_x(zo2, zo2_x)
-call deriv_z(zo, zo_z)
-call deriv_z(zo2, zo2_z)
+call deriv_z(uo, du%z)
+call deriv_z(uo2, du2%z)
+call deriv_x(po, dp%x)
+call deriv_x(po2, dp2%x)
+call deriv_z(po, dp%z)
+call deriv_z(po2, dp2%z)
+call deriv_x(zo, dz%x)
+call deriv_x(zo2, dz_2%x)
+call deriv_z(zo, dz%z)
+call deriv_z(zo2, dz_2%z)
 
 do j = 1, nx1
    z_nl_n(j,1:nz1) = (((1d0 - eta) * rz) / (2d0 * s(j)**2)) * &
-                 (3d0 * uo(j,1:nz1) * uo_z(j,1:nz1) - &
-                 uo2(j,1:nz1) * uo2_z(j,1:nz1)) - &
+                 (3d0 * uo(j,1:nz1) * du%z(j,1:nz1) - &
+                 uo2(j,1:nz1) * du2%z(j,1:nz1)) - &
                  (rx / (8d0 * s(j) * delz)) * &
-                 ((3d0 * (po_x(j,1:nz1) * zo_z(j,1:nz1) - &
-                 po_z(j,1:nz1) * zo_x(j,1:nz1))) - &
-                 (po2_x(j,1:nz1) * zo2_z(j,1:nz1) - &
-                 po2_z(j,1:nz1) * zo2_x(j,1:nz1)))
+                 ((3d0 * (dp%x(j,1:nz1) * dz%z(j,1:nz1) - &
+                 dp%z(j,1:nz1) * dz%x(j,1:nz1))) - &
+                 (dp2%x(j,1:nz1) * dz_2%z(j,1:nz1) - &
+                 dp2%z(j,1:nz1) * dz_2%x(j,1:nz1)))
 end do
 
 return
