@@ -22,31 +22,31 @@ MODULE parameters
   !Parameters to set
   !****************************************************************************
   REAL    (r2), PARAMETER :: pi          = 3.14159265358979_r2
-  REAL    (r2), PARAMETER :: alpha       = 0.0_r2 !3.73_r2
-  REAL    (r2), PARAMETER :: gamma       = 0.70_r2 !(2.0_r2 * pi) / alpha
-  REAL    (r2), PARAMETER :: eta         = 0.667_r2
+  REAL    (r2), PARAMETER :: alpha       = 3.13_r2
+  REAL    (r2), PARAMETER :: gamma       = (2.0_r2 * pi) / alpha
+  REAL    (r2), PARAMETER :: eta         = 0.765_r2
   REAL    (r2), PARAMETER :: Q           = 0.0_r2
-  REAL    (r2), PARAMETER :: Re1         = 940.0_r2
+  REAL    (r2), PARAMETER :: Re1         = 132.0_r2
   REAL    (r2), PARAMETER :: Re2         = 0.0_r2 !-1.0_r2*(1.0_r2/eta)*Re1
   REAL    (r2), PARAMETER :: Re1_mod     = 0.0_r2
   REAL    (r2), PARAMETER :: Re2_mod     = 0.0_r2
   REAL    (r2), PARAMETER :: om1         = 0.0_r2
   REAL    (r2), PARAMETER :: om2         = 0.0_r2
-  REAL    (r2), PARAMETER :: dt          = 0.00001_r2
+  REAL    (r2), PARAMETER :: dt          = 0.0001_r2
   REAL    (r2), PARAMETER :: seed        = 1e-1_r2
   REAL    (r2), PARAMETER :: end_time    = 1000.00_r2
-  REAL    (r2), PARAMETER :: tau_init    = 1.0_r2
+  REAL    (r2), PARAMETER :: tau_init    = 0.0_r2
   REAL    (r2), PARAMETER :: tau_step    = 1.0_r2
   REAL    (r2), PARAMETER :: tau_end     = 1.0_r2
-  INTEGER (i1), PARAMETER :: nx          = 80
+  INTEGER (i1), PARAMETER :: nx          = 40
   INTEGER (i1), PARAMETER :: nt          = 20
-  INTEGER (i1), PARAMETER :: nz          = 56
+  INTEGER (i1), PARAMETER :: nz          = 80
   INTEGER (i1), PARAMETER :: save_rate   = 10
-  INTEGER (i1), PARAMETER :: save_rate_2 = 1047
+  INTEGER (i1), PARAMETER :: save_rate_2 = 4
   LOGICAL,      PARAMETER :: xsect_save  = .FALSE.
   LOGICAL,      PARAMETER :: save3d      = .FALSE.
   LOGICAL,      PARAMETER :: iso_hel     = .FALSE.
-  LOGICAL,      PARAMETER :: restart     = .TRUE.
+  LOGICAL,      PARAMETER :: restart     = .FALSE.
   LOGICAL,      PARAMETER :: auto_tau    = .FALSE.
   !****************************************************************************
 
@@ -71,6 +71,7 @@ MODULE parameters
   REAL    (r2), PARAMETER :: delx = 1.0_r2 / REAL(nx,r2)
   REAL    (r2), PARAMETER :: delt = 2.0_r2*pi / REAL(nt,r2)
   REAL    (r2), PARAMETER :: delz = gamma / REAL(nz,r2)
+  REAL    (r2), PARAMETER :: ds = (1.0_r2 - eta) * delx
   REAL    (r2), PARAMETER :: dx2 = delx ** 2
   REAL    (r2), PARAMETER :: dz2 = delz ** 2
   REAL    (r2), PARAMETER :: rx = dt / delx

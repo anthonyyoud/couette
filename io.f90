@@ -75,6 +75,7 @@ MODULE io
                                  uz_prev(0:nx,0:nz)
     REAL    (r2), INTENT(OUT) :: growth, growth_vz
     INTEGER (i1)              :: zpos, xpos
+    REAL    (r2)              :: Eccf, E
     REAL    (r2), SAVE        :: min_p, max_p, min_ur, max_ur, min_uz, max_uz
 
     !growth rate of vortices
@@ -84,12 +85,15 @@ MODULE io
     xpos = nx/2
     zpos = nz/2   !position at which to save fields
 
-    WRITE(20, '(12e17.9)') t, ur(nx/2,nz/2), ur(nx/2,0), &
+    CALL energy_CCF(t, Eccf)
+    CALL save_energy(ur, v, uz, E)
+    
+    WRITE(20, '(14e17.9)') t, ur(nx/2,nz/2), ur(nx/2,0), &
                            growth, growth_vz, &
                            uz(xpos,zpos), &
                            pn(nx/4,3*nz/4), v(nx/2,nz/2), &
                            zn(nx/2,nz/4), bn(nx/2,nz/4), jn(nx/2,nz/2), &
-                           Re1 + Re1_mod * COS(om1 * t)
+                           Eccf, E, Re1 + Re1_mod * COS(om1 * t)
 
     IF (MAXVAL(ur) > max_ur) THEN
       max_ur = MAXVAL(ur)
@@ -336,7 +340,7 @@ MODULE io
                        bt%old, jt%old, growth_rate, growth_rate_vz)
       IF ((ABS(om1 - 0.0_r2) < EPSILON(om1)) .AND. &
           (ABS(om2 - 0.0_r2) < EPSILON(om2))) THEN
-        IF ((ABS(growth_rate_vz) < 1e-8_r2) .AND. &  !if vr saturated
+        IF ((ABS(growth_rate) < 1e-8_r2) .AND. &  !if vr saturated
             (ABS(vr(nx/2, nz/2)) > 1e-3_r2)) THEN
           saturated = saturated + 1
           IF (saturated > 4) THEN
@@ -502,6 +506,106 @@ MODULE io
     RETURN
   END SUBROUTINE particle
 
+  SUBROUTINE energy_CCF(t, Eccf)
+    USE parameters
+    IMPLICIT NONE
+
+    REAL (r2), INTENT(IN)  :: t
+    REAL (r2), INTENT(OUT) :: Eccf
+    REAL (r2)              :: a, b, c
+
+    a = 0.25_r2 * (Re_2(t) - eta * Re_1(t))**2 * (1.0_r2 - eta**4)
+    b = (Re_2(t) - eta * Re_1(t)) * (Re_1(t) - eta * Re_2(t)) * &
+        eta * (1.0_r2 - eta**2)
+    c = eta**2 * (Re_1(t) - eta * Re_2(t))**2 * LOG(1.0_r2 / eta)
+
+    Eccf = gamma * pi * (a + b + c) / &
+          ((1.0_r2 + eta)**2 * (1.0_r2 - eta)**4)
+    
+    RETURN
+  END SUBROUTINE energy_CCF
+
+  SUBROUTINE save_energy(ur, ut, uz, E)
+    USE parameters
+    IMPLICIT NONE
+
+    REAL (r2), INTENT(IN)  :: ur(0:nx,0:nz), uz(0:nx,0:nz)
+    REAL (r2), INTENT(OUT) :: E
+    REAL (r2)              :: u2(0:nx,0:nz)
+
+    u2 = ur**2 + ut**2 + uz**2
+
+    CALL integrate(u2, E)
+
+    CONTAINS
+
+    SUBROUTINE integrate(in_var, out_var)
+      USE parameters
+      USE ic_bc, ONLY : s
+      IMPLICIT NONE
+
+      REAL    (r2), INTENT(IN)  :: in_var(0:nx,0:nz)
+      REAL    (r2), INTENT(OUT) :: out_var
+      INTEGER (i1)              :: j, k
+      REAL    (r2)              :: z_int
+      REAL    (r2)              :: var(0:nx,0:nz), r_int(0:nz)
+      REAL    (r2), PARAMETER   :: c1=3.0_r2/8.0_r2, &
+                                   c2=7.0_r2/6.0_r2, &
+                                   c3=23.0_r2/24.0_r2
+
+      DO j = 0, nx
+        var(j,:) = in_var(j,:) * s(j) / (1.0_r2 - eta)**2
+      END DO
+
+      DO k = 0, nz
+        r_int(k) = (c1 * var(0,k) + &
+                    c2 * var(1,k) + &
+                    c3 * var(2,k) + &
+                    SUM(var(3:nx-3,k)) + &
+                    c3 * var(nx-2,k) + &
+                    c2 * var(nx-1,k) + &
+                    c1 * var(nx,k)) * ds
+      END DO      
+    
+      z_int = (c1 * r_int(0) + &
+               c2 * r_int(1) + &
+               c3 * r_int(2) + &
+               SUM(r_int(3:nz-3)) + &
+               c3 * r_int(nz-2) + &
+               c2 * r_int(nz-1) + &
+               c1 * r_int(nz)) * delz
+
+      out_var = pi * z_int
+
+      RETURN
+    END SUBROUTINE integrate
+
+  END SUBROUTINE save_energy
+  
+  FUNCTION Re_1(t)
+    USE parameters
+    IMPLICIT NONE
+
+    REAL (r2), INTENT(IN) :: t
+    REAL (r2)             :: Re_1
+
+    Re_1 = Re1 + Re1_mod * COS(om1 * t)
+
+    RETURN
+  END FUNCTION Re_1
+  
+  FUNCTION Re_2(t)
+    USE parameters
+    IMPLICIT NONE
+
+    REAL (r2), INTENT(IN) :: t
+    REAL (r2)             :: Re_2
+
+    Re_2 = Re2 + Re2_mod * COS(om2 * t)
+
+    RETURN
+  END FUNCTION Re_2
+  
   SUBROUTINE get_timestep()
     USE parameters
     IMPLICIT NONE
