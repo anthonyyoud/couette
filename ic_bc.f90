@@ -24,7 +24,7 @@ do j = 0, nx
    x(j) = dble(j) * delx
 end do
 
-x_ = x + 1d0
+x_ = x + 1d0                 !shift radial coordinate for OpenDX
 s = eta + ((1d0 - eta) * x)
 
 return

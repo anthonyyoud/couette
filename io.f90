@@ -104,7 +104,7 @@ if (minval(pn) < min_p) then
    min_p = minval(pn)
 end if
 
-write (22, '(7e17.9)') t, max_p, min_p, max_ur, min_ur, max_uz, min_uz
+!write (22, '(7e17.9)') t, max_p, min_p, max_ur, min_ur, max_uz, min_uz
 
 return
 END SUBROUTINE save_growth
@@ -164,6 +164,7 @@ return
 END SUBROUTINE
 
 SUBROUTINE save_3d(u_r, u_t, u_z, pn, p)
+!Save 3D isosurface for use in OpenDX
 use parameters
 use ic_bc
 implicit none
@@ -180,7 +181,7 @@ if (iso_hel) call helicity(u_r, u_t, u_z, hel)
 
 write(35,*) 'nx, nt, nz = ', nx, nt, nz, p
 
-if (iso_hel) then
+if (iso_hel) then            !save helicity u.(curl u)
    do j = 0, nx
       do l = 0, nt
          do k = 0, nz
@@ -208,6 +209,7 @@ return
 END SUBROUTINE save_3d
 
 SUBROUTINE helicity(u_r, u_t, u_z, hel)
+!Calculate helicity u.(curl u)
 use parameters
 use ic_bc
 use derivs
@@ -316,22 +318,22 @@ if (save_part) call particle(vr, vrold, vz, vzold, x_pos, z_pos) !save particle
 if ((p /= p_start) .and. ((p - p_start) > save_rate)) then
    call save_growth(t, vr, vrold, vz, vzold, psi%old, ut%new, zt%new, &
                     bt%old, jt%old, growth_rate, growth_rate_vz)
-   if ((om1 == 0d0) .and. (om2 == 0d0)) then
-      if ((dabs(growth_rate_vz) < 1d-8) .and. &  !if vr saturated
-          (dabs(vr(nx/2, nz/2)) > 1d-3)) then
-         if ((.not. auto_tau) .or. (tau == tau_end)) then  !if tau not auto
-            call save_time_tau(tau, t)                     !or tau at end
-            call end_state(ut%old, zt%old, psi%old, bt%old, jt%old, p) !finish
-         else if (tau < 1d0) then
-            call save_time_tau(tau, t)
-            tau = tau + tau_step   !increment tau
-            print*, 'tau = ', tau
-            call save_xsect(vr, vz, psi%old, t, p)
-            call save_surface(psi%old, ut%new, zt%new, vr, vz, &
-                              bt%old, jt%old, p, t)
-         end if
-      end if
-   end if
+   !if ((om1 == 0d0) .and. (om2 == 0d0)) then
+   !   if ((dabs(growth_rate_vz) < 1d-8) .and. &  !if vr saturated
+   !       (dabs(vr(nx/2, nz/2)) > 1d-3)) then
+   !      if ((.not. auto_tau) .or. (tau == tau_end)) then  !if tau not auto
+   !         call save_time_tau(tau, t)                     !or tau at end
+   !         call end_state(ut%old, zt%old, psi%old, bt%old, jt%old, p) !finish
+   !      else if (tau < 1d0) then
+   !         call save_time_tau(tau, t)
+   !         tau = tau + tau_step   !increment tau
+   !         print*, 'tau = ', tau
+   !         call save_xsect(vr, vz, psi%old, t, p)
+   !         call save_surface(psi%old, ut%new, zt%new, vr, vz, &
+   !                           bt%old, jt%old, p, t)
+   !      end if
+   !   end if
+   !end if
 end if
 
 return
