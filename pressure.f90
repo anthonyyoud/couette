@@ -3,7 +3,7 @@ implicit none
 
 contains
 
-SUBROUTINE p_poisson(Z_mat, psi, p_mat, p_IPIV)
+SUBROUTINE p_poisson(Z_mat, psi, p_mat, IPIV)
 use parameters
 use ic_bc
 implicit none
@@ -13,7 +13,7 @@ double precision, intent(in) :: Z_mat(0:nx,0:nz)
 double precision, intent(in) :: p_mat(2*nx1+nx1+1,nx1*nz1)
 double precision, intent(out) :: psi(0:nx,0:nz)
 double precision :: zvec(nx1*nz1)
-integer, intent(in) :: p_IPIV(nx1*nz1)
+integer, intent(in) :: IPIV(nx1*nz1)
 integer :: j, k, info
 
 if (write_file) then
@@ -34,7 +34,7 @@ if (write_file) then
 end if
 
 call DGBTRS('N', nx1*nz1, nx1, nx1, 1, p_mat, 2*nx1+nx1+1, &
-             p_IPIV, zvec, nx1*nz1, info)
+             IPIV, zvec, nx1*nz1, info)
 
 if (write_file) then
    write(62, '(e17.9)') (zvec(j), j = 1, nx1*nz1)

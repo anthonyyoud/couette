@@ -3,7 +3,7 @@ implicit none
 
 contains
 
-SUBROUTINE j_poisson(p_mat, jn, j_mat, j_IPIV)
+SUBROUTINE j_poisson(p_mat, jn, j_mat, IPIV)
 use parameters
 use io
 use ic_bc
@@ -14,7 +14,7 @@ double precision, intent(in) :: p_mat(0:nx,0:nz)
 double precision, intent(in) :: j_mat(2*nx1+nx1+1,nx1*nzp1)
 double precision, intent(out) :: jn(0:nx,0:nz)
 double precision :: p_vec(nx1*nzp1)
-integer, intent(in) :: j_IPIV(nx1*nzp1)
+integer, intent(in) :: IPIV(nx1*nzp1)
 integer :: j, k, info
 type (deriv) :: dp
 
@@ -45,7 +45,7 @@ end do
 !write(6,'(e17.9)') j_mat(2*nx-1,1), j_mat(2*nx-2,2), j_mat(nx,1+nx1)
 !write(6,*)
 call DGBTRS('N', nx1*nzp1, nx1, nx1, 1, j_mat, 2*nx1+nx1+1, &
-             j_IPIV, p_vec, nx1*nzp1, info)
+             IPIV, p_vec, nx1*nzp1, info)
 !write(6,'(e17.9)') p_vec
 !write(6,*)
 
