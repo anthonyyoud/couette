@@ -38,385 +38,410 @@ zz%up(:) = -0.5d0 * rzz
 return
 END SUBROUTINE matrix_setup
 
-SUBROUTINE psi_mat_setup(p_mat, IPIV)
+SUBROUTINE psi_mat_setup(p_mat, desc_p, af)
 use parameters
 use ic_bc
 implicit none
 
 double precision :: alp(0:nx), gam(0:nx)
 double precision :: beta, delta
-double precision, intent(out) :: p_mat(2*nx1+nx1+1,nx1*nz1)
-integer :: j, k, info
-integer, intent(out) :: IPIV(nx1*nz1)
+integer, intent(out) :: desc_p(7)
+double precision, intent(out) :: p_mat(p_M,p_N)
+integer :: i, j, k, info, cpcol
+double precision :: work(lwork_fac)
+double precision, intent(out) :: af(laf)
 
 alp(:) = dz2 + 0.5d0 * delx * dz2 * (1d0 - eta) / s(:)
 gam(:) = dz2 - 0.5d0 * delx * dz2 * (1d0 - eta) / s(:)
 beta = -2d0 * (dz2 + dx2)
 delta = dx2
 
-do j = 1, nx1*nz1
-   p_mat(2*nx1+1,j) = beta
+desc_p(1) = 501
+desc_p(2) = ictxt
+desc_p(3) = nx1*nz1
+desc_p(4) = nb
+desc_p(5) = 0
+desc_p(6) = 2*nx1+1
+
+cpcol = 0
+
+do j = 1, nx1*nz1, nb
+   if (mycol == cpcol) then
+      do k = 1, min(nb, nx1*nz1-j+1)
+         i = k + j - 1
+         p_mat(nx,k) = beta
+         if (i /= 1) then
+            p_mat(nx1,k) = gam(modulo(i-1, nx1))
+            if(modulo(i-1, nx1) == 0) then
+               p_mat(nx1,k) = 0d0
+            end if
+         end if
+         if (i /= nx1*nz1) then
+            p_mat(nxp1,k) = alp(modulo(i, nx1) + 1)
+            if (modulo(i, nx1) == 0) then
+               p_mat(nxp1,k) = 0d0
+            end if
+         end if
+         if (i > nx1) then
+            p_mat(1,k) = delta
+         end if
+         if (i <= nx1*nz1-nx1) then
+            p_mat(2*nx1+1,k) = delta
+        end if
+      end do
+   end if
+   if (cpcol == npcol) exit
+   cpcol = cpcol + 1
 end do
 
-do j = 1, nx1*nz1-1
-   p_mat(2*nx1,j+1) = gam(mod(j, nx1))
-end do
-
-do j = nx1, nx1*nz1-nx1, nx1
-   p_mat(2*nx1,j+1) = 0d0
-end do
-
-do j = 2, nx1*nz1
-   p_mat(2*nx1+2,j-1) = alp(mod(j-1, nx1) + 1)
-end do
-
-do j = nx, nx1*nz1-nx1+1, nx1
-   p_mat(2*nx1+2,j-1) = 0d0
-end do
-
-do j = 1, nx1*nz1-nx1
-   p_mat(2*nx1+1-nx1,j+nx1) = delta
-end do
-
-do j = nx, nx1*nz1
-   p_mat(2*nx1+1+nx1,j-nx1) = delta
-end do
-
-!open (60, file = 'p_mat.dat')
-!write(60, '(16f7.2)') ((p_mat(j,k), k = 1, nx1*nz1), j = 1, 2*nx1+nx1+1)
-!close (60)
-
-call DGBTRF(nx1*nz1, nx1*nz1, nx1, nx1, p_mat, 2*nx1+nx1+1, IPIV, info)
-!print*,info
+call PDDBTRF(nx1*nz1, nx1, nx1, p_mat, 1, desc_p, af, laf, &
+             work, lwork_fac, info)
+if (info /= 0) print*, 'psi_PDDBTRF ', info
 
 return
 END SUBROUTINE psi_mat_setup
 
-SUBROUTINE b_mat_setup(b_mat, IPIV)
+SUBROUTINE b_mat_setup(b_mat, desc_b, af)
 use parameters
 use ic_bc
 implicit none
 
 double precision :: alp(0:nx), beta(0:nx), gam(0:nx), delta
-double precision, intent(out) :: b_mat(2*nxp1+nxp1+1,0:nxp1*nz1-1)
-integer :: j, k, info
-integer, intent(out) :: IPIV(nxp1*nz1)
+integer, intent(out) :: desc_b(7)
+double precision, intent(out) :: b_mat(b_M,b_N)
+integer :: i, j, k, info, cpcol
+double precision :: work(lwork_b_fac)
+double precision, intent(out) :: af(b_laf)
 
 alp(:) = dz2 - 0.5d0 * delx * dz2 * (1d0 - eta) / s(:)
 beta(:) = -2d0 * (dz2 + dx2) - dx2 * dz2 * (1d0 - eta)**2 / s(:)**2
 gam(:) = dz2 + 0.5d0 * delx * dz2 * (1d0 - eta) / s(:)
 delta = dx2
 
-do j = 0, nxp1*nz1-1
-   b_mat(2*nx+3,j) = beta(mod(j, nxp1))
+desc_b(1) = 501
+desc_b(2) = ictxt
+desc_b(3) = nxp1*nz1
+desc_b(4) = nb
+desc_b(5) = 0
+desc_b(6) = 2*nxp1+1
+
+cpcol = 0
+
+do j = 0, nxp1*nz1-1, nb
+   if (mycol == cpcol) then
+      do k = 1, min(nb, nxp1*nz1-j)
+         i = k + j - 1
+         b_mat(nx+2,k) = beta(modulo(i, nxp1))
+         if (modulo(i, nxp1) == 0d0) then
+            b_mat(nx+2,k) = (2d0 * alp(0) * delx * (1d0 - eta) / &
+                          s(0)) + beta(0)
+         end if
+         if (modulo(i+1, nxp1) == 0d0) then
+            b_mat(nx+2,k) = (-2d0 * gam(nx) * delx * (1d0 - eta) / &
+                          s(nx)) + beta(nx)
+         end if
+         if (i /= 0) then
+            b_mat(nxp1,k) = gam(modulo(i-1, nxp1))
+            if(modulo(i, nxp1) == 0) then
+               b_mat(nxp1,k) = 0d0
+            end if
+            if(modulo(i-1, nxp1) == 0d0) then
+               b_mat(nxp1,k) = alp(0) + gam(0)
+            end if
+         end if
+         if (i /= nxp1*nz1-1) then
+            if (modulo(i+1, nxp1) /= 0d0) then
+               b_mat(nx+3,k) = alp(modulo(i+1,nxp1))
+            end if
+            if (modulo(i+1, nxp1) == 0) then
+               b_mat(nx+3,k) = 0d0
+            end if
+            if (modulo(i+2, nxp1) == 0d0) then
+               b_mat(nx+3,k) = alp(nx) + gam(nx)
+            end if
+         end if
+         if (i > nx) then
+            b_mat(1,k) = delta
+         end if
+         if (i < nxp1*nz1-nxp1) then
+            b_mat(2*nxp1+1,k) = delta
+         end if
+      end do
+   end if
+   if (cpcol == npcol) exit
+   cpcol = cpcol + 1
 end do
 
-do j = 0, nxp1*nz1-2
-   b_mat(2*nx+2,j+1) = gam(mod(j, nxp1))
-end do
-
-do j = 1, nxp1*nz1-1
-   b_mat(2*nx+4,j-1) = alp(mod(j, nxp1))
-end do
-
-do j = 0, nxp1*nz1-nxp1-1
-   b_mat(nx+2,j+nxp1) = delta
-end do
-
-do j = nxp1, nxp1*nz1-1
-   b_mat(3*nx+4,j-nxp1) = delta
-end do
-
-do j = nx, nxp1*nz1-nxp1-1, nxp1
-   b_mat(2*nx+2,j+1) = 0d0
-end do
-
-do j = nxp1, nxp1*nz1-nxp1, nxp1
-   b_mat(2*nx+4,j-1) = 0d0
-end do
-
-do j = 0, nxp1*nz1-nxp1, nxp1
-   b_mat(2*nx+3,j) = (2d0 * alp(0) * delx * (1d0 - eta) / s(0)) + beta(0)
-end do
-
-do j = nx, nxp1*nz1-1, nxp1
-   b_mat(2*nx+3,j) = (-2d0 * gam(nx) * delx * (1d0 - eta) / s(nx)) + beta(nx)
-end do
-
-do j = 0, nxp1*nz1-nxp1, nxp1
-   b_mat(2*nx+2,j+1) = alp(0) + gam(0)
-end do
-
-do j = nx, nxp1*nz1-1, nxp1
-   b_mat(2*nx+4,j-1) = alp(nx) + gam(nx)
-end do
-
-open (61, file = 'b_mat.dat')
-write(61, '(15f7.2)') ((b_mat(j,k), k = 0, nxp1*nz1-1), j = 1, 2*nxp1+nxp1+1)
-close (61)
-
-call DGBTRF(nxp1*nz1, nxp1*nz1, nxp1, nxp1, b_mat, 2*nxp1+nxp1+1, IPIV, info)
+call PDDBTRF(nxp1*nz1, nxp1, nxp1, b_mat, 1, desc_b, af, b_laf, &
+             work, lwork_b_fac, info)
+if (info /= 0) print*, 'b_infinite_PDDBTRF ', info
 
 return
 END SUBROUTINE b_mat_setup
 
-SUBROUTINE fin_b_mat_setup(b_mat, IPIV)
+SUBROUTINE fin_b_mat_setup(b_mat, desc_b, af)
 use parameters
 use ic_bc
 implicit none
 
 double precision :: alp(0:nx), beta(0:nx), gam(0:nx), delta
-double precision, intent(out) :: b_mat(2*nxp1+nxp1+1,0:nxp1*nzp1-1)
-integer :: j, k, info
-integer, intent(out) :: IPIV(nxp1*nzp1)
+integer, intent(out) :: desc_b(7)
+double precision, intent(out) :: b_mat(b_M,b_N)
+integer :: i, j, k, info, cpcol
+double precision :: work(lwork_b_fac)
+double precision, intent(out) :: af(b_laf)
 
 alp(:) = dz2 - 0.5d0 * delx * dz2 * (1d0 - eta) / s(:)
 beta(:) = -2d0 * (dz2 + dx2) - dx2 * dz2 * (1d0 - eta)**2 / s(:)**2
 gam(:) = dz2 + 0.5d0 * delx * dz2 * (1d0 - eta) / s(:)
 delta = dx2
 
-!diagonal
-do j = 0, nxp1*nzp1-1
-   b_mat(2*nx+3,j) = beta(mod(j, nxp1))
+desc_b(1) = 501
+desc_b(2) = ictxt
+desc_b(3) = nxp1*nzp1
+desc_b(4) = nb
+desc_b(5) = 0
+desc_b(6) = 2*nxp1+1
+
+cpcol = 0
+
+do j = 0, nxp1*nzp1-1, nb
+   if (mycol == cpcol) then
+      do k = 1, min(nb, nxp1*nzp1-j)
+         i = k + j - 1
+         !diagonal
+         b_mat(nx+2,k) = beta(modulo(i, nxp1))
+         !diagonal, j=0
+         if (modulo(i, nxp1) == 0d0) then
+            b_mat(nx+2,k) = (2d0 * alp(0) * delx * (1d0 - eta) / &
+                          s(0)) + beta(0)
+         end if
+         !diagonal, k=0
+         if (i < nxp1) then
+            b_mat(nx+2,k) = beta(modulo(i, nxp1)) - &
+                         2d0 * delta * delz * (1d0 - tau) / tau
+         end if
+         !diagonal, j=nx
+         if (modulo(i+1, nxp1) == 0d0) then
+            b_mat(nx+2,k) = (-2d0 * gam(nx) * delx * (1d0 - eta) / &
+                          s(nx)) + beta(nx)
+         end if
+         !diagonal, k=nz
+         if (i > nxp1*nzp1-nxp1) then
+           b_mat(nx+2,k) = beta(modulo(i, nxp1)) - &
+                         2d0 * delta * delz * (1d0 - tau) / tau
+         end if
+         !diagonal, j=0, k=0
+         if (i == 0) then
+            b_mat(nx+2,k) = beta(0) - &
+                         2d0 * delta * delz * (1d0 - tau) / tau + &
+                        (2d0 * alp(0) * delx * (1d0 - eta) / s(0))
+         end if
+         !diagonal, j=0, k=nz
+         if (i == nxp1*nzp1-nxp1) then
+            b_mat(nx+2,k) = beta(0) - &
+                         2d0 * delta * delz * (1d0 - tau) / tau + &
+                        (2d0 * alp(0) * delx * (1d0 - eta) / s(0))
+         end if
+         !diagonal, j=nx, k=0
+         if (i == nx) then
+            b_mat(nx+2,k) = beta(nx) - &
+                         2d0 * delta * delz * (1d0 - tau) / tau - &
+                        (2d0 * gam(nx) * delx * (1d0 - eta) / s(nx))
+         end if
+         !diagonal, j=nx, k=nz
+         if (i == nxp1*nzp1-1) then
+            b_mat(nx+2,k) = beta(nx) - &
+                         2d0 * delta * delz * (1d0 - tau) / tau - &
+                        (2d0 * gam(nx) * delx * (1d0 - eta) / s(nx))
+         end if
+         if (i /= 0) then
+            !super-diagonal
+            b_mat(nxp1,k) = gam(modulo(i-1, nxp1))
+            !super-diagonal, j=nx, so j=0 not present
+            if(modulo(i, nxp1) == 0) then
+               b_mat(nxp1,k) = 0d0
+            end if
+            !super-diagonal, j=0
+            if(modulo(i-1, nxp1) == 0d0) then
+               b_mat(nxp1,k) = alp(0) + gam(0)
+            end if
+         end if
+         if (i /= nxp1*nzp1-1) then
+            !sub-diagonal
+            if (modulo(i+1, nxp1) /= 0d0) then
+               b_mat(nx+3,k) = alp(modulo(i+1, nxp1))
+            end if
+            !sub-diagonal, j=0, so j=nx not present
+            if (modulo(i+1, nxp1) == 0) then
+               b_mat(nx+3,k) = 0d0
+            end if
+            !sub-diagonal, j=nx
+            if (modulo(i+2, nxp1) == 0d0) then
+               b_mat(nx+3,k) = alp(nx) + gam(nx)
+            end if
+         end if
+         !upper branch
+         if (i > nx) then
+            b_mat(1,k) = delta
+            if (i < 2*nxp1) then
+               b_mat(1,k) = 2d0 * delta
+            end if
+         end if
+         !lower branch
+         if (i < nxp1*nzp1-nxp1) then
+            b_mat(2*nxp1+1,k) = delta
+            if (i >= nxp1*nzp1-2*nxp1) then
+               b_mat(2*nxp1+1,k) = 2d0 * delta
+            end if
+         end if
+      end do
+   end if
+   if (cpcol == npcol) exit
+   cpcol = cpcol + 1
 end do
 
-!upper diagonal
-do j = 0, nxp1*nzp1-2
-   b_mat(2*nx+2,j+1) = gam(mod(j, nxp1))
-end do
-
-!lower diagonal
-do j = 1, nxp1*nzp1-1
-   b_mat(2*nx+4,j-1) = alp(mod(j, nxp1))
-end do
-
-!upper diagonal branch
-do j = 0, nxp1*nzp1-nxp1-1
-   b_mat(nx+2,j+nxp1) = delta
-end do
-
-!lower diagonal branch
-do j = nxp1, nxp1*nzp1-1
-   b_mat(3*nx+4,j-nxp1) = delta
-end do
-
-!upper diagonal, j=nx, so j=0 not present
-do j = nx, nxp1*nzp1-nxp1-1, nxp1
-   b_mat(2*nx+2,j+1) = 0d0
-end do
-
-!lower diagonal, j=0, so j=nx not present
-do j = nxp1, nxp1*nzp1-nxp1, nxp1
-   b_mat(2*nx+4,j-1) = 0d0
-end do
-
-!diagonal, j=0
-do j = 0, nxp1*nzp1-nxp1, nxp1
-   b_mat(2*nx+3,j) = (2d0 * alp(0) * delx * (1d0 - eta) / s(0)) + beta(0)
-end do
-
-!diagonal, k=0
-do j = 0, nx
-   b_mat(2*nx+3,j) = beta(mod(j, nxp1)) - &
-                     2d0 * delta * delz * (1d0 - tau) / tau
-end do
-
-!diagonal, j=nx
-do j = nx, nxp1*nzp1-1, nxp1
-   b_mat(2*nx+3,j) = (-2d0 * gam(nx) * delx * (1d0 - eta) / s(nx)) + beta(nx)
-end do
-
-!diagonal, k=nz
-do j = nxp1*nzp1-nxp1, nxp1*nzp1-1
-   b_mat(2*nx+3,j) = beta(mod(j, nxp1)) - &
-                     2d0 * delta * delz * (1d0 - tau) / tau
-end do
-
-!diagonal, j=0, k=0
-b_mat(2*nx+3,0) = beta(0) - &
-                  2d0 * delta * delz * (1d0 - tau) / tau + &
-                 (2d0 * alp(0) * delx * (1d0 - eta) / s(0))
-
-!diagonal, j=0, k=nz
-b_mat(2*nx+3,nxp1*nzp1-nxp1) = beta(0) - &
-                               2d0 * delta * delz * (1d0 - tau) / tau + &
-                              (2d0 * alp(0) * delx * (1d0 - eta) / s(0))
-
-!diagonal, j=nx, k=0
-b_mat(2*nx+3,nx) = beta(nx) - &
-                  2d0 * delta * delz * (1d0 - tau) / tau - &
-                 (2d0 * gam(nx) * delx * (1d0 - eta) / s(nx))
-
-!diagonal, j=nx, k=nz
-b_mat(2*nx+3,nxp1*nzp1-1) = beta(nx) - &
-                            2d0 * delta * delz * (1d0 - tau) / tau - &
-                           (2d0 * gam(nx) * delx * (1d0 - eta) / s(nx))
-
-!upper diagonal, j=0
-do j = 0, nxp1*nzp1-nxp1, nxp1
-   b_mat(2*nx+2,j+1) = alp(0) + gam(0)
-end do
-
-!lower diagonal, j=nx
-do j = nx, nxp1*nzp1-1, nxp1
-   b_mat(2*nx+4,j-1) = alp(nx) + gam(nx)
-end do
-
-!upper diagonal branch, k=0
-do j = 0, nx
-   b_mat(nx+2,j+nxp1) = 2d0 * delta
-end do
-
-!lower diagonal branch, k=nz
-do j = nxp1*nzp1-nxp1, nxp1*nzp1-1
-   b_mat(3*nx+4,j-nxp1) = 2d0 * delta
-end do
-
-!open (61, file = 'b_mat.dat')
-!write(61, '(20f7.2)') ((b_mat(j,k), k = 0, nxp1*nzp1-1), j = 1, 2*nxp1+nxp1+1)
-!close (61)
-
-call DGBTRF(nxp1*nzp1, nxp1*nzp1, nxp1, nxp1, b_mat, 2*nxp1+nxp1+1, IPIV, info)
+call PDDBTRF(nxp1*nzp1, nxp1, nxp1, b_mat, 1, desc_b, af, b_laf, &
+             work, lwork_b_fac, info)
+if (info /= 0) print*, 'b_finite_PDDBTRF ', info
 
 return
 END SUBROUTINE fin_b_mat_setup
 
-SUBROUTINE j_mat_setup(j_mat, IPIV)
+SUBROUTINE j_mat_setup(j_mat, desc_j, af)
 use parameters
 use ic_bc
 implicit none
 
-double precision :: alp(0:nx), beta(0:nx), gam(0:nx), delta !, &
-                    !j_test(nx1*nzp1,nx1*nzp1)
-double precision, intent(out) :: j_mat(2*nx1+nx1+1,nx1*nzp1)
-integer :: j, k, info
-integer, intent(out) :: IPIV(nx1*nzp1)
+double precision :: alp(0:nx), beta(0:nx), gam(0:nx), delta
+integer, intent(out) :: desc_j(7)
+double precision, intent(out) :: j_mat(j_M,j_N)
+integer :: i, j, k, info, cpcol
+double precision :: work(lwork_fac)
+double precision, intent(out) :: af(laf)
 
 alp(:) = dz2 - 0.5d0 * delx * dz2 * (1d0 - eta) / s(:)
 beta(:) = -2d0 * (dz2 + dx2) - dx2 * dz2 * (1d0 - eta)**2 / s(:)**2
 gam(:) = dz2 + 0.5d0 * delx * dz2 * (1d0 - eta) / s(:)
 delta = dx2
 
-do j = 1, nx1*nzp1
-   j_mat(2*nx-1,j) = beta(mod(j-1, nx1)+1)
-   !j_test(j,j) = beta(mod(j-1, nx1)+1)
+desc_j(1) = 501
+desc_j(2) = ictxt
+desc_j(3) = nx1*nzp1
+desc_j(4) = nb
+desc_j(5) = 0
+desc_j(6) = 2*nx1+1
+
+cpcol = 0
+
+do j = 1, nx1*nzp1, nb
+   if (mycol == cpcol) then
+      do k = 1, min(nb, nx1*nzp1-j+1)
+         i = k + j - 1
+         j_mat(nx,k) = beta(modulo(i-1, nx1) + 1)
+         if (i <= nx1) then
+            j_mat(nx,k) = beta(modulo(i-1, nx1) + 1) - &
+                       2d0 * delta * delz * tau / (1d0 - tau)
+         end if
+         if (i >= nx1*nzp1-nx1+1) then
+            j_mat(nx,k) = beta(modulo(i-1, nx1) + 1) - &
+                       2d0 * delta * delz * tau / (1d0 - tau)
+         end if
+         if (i /= 1) then
+            j_mat(nx1,k) = gam(modulo(i-1, nx1))
+            if(modulo(i-1, nx1) == 0) then
+               j_mat(nx1,k) = 0d0
+            end if
+         end if
+         if (i /= nx1*nzp1) then
+            j_mat(nxp1,k) = alp(modulo(i,nx1) + 1)
+            if (modulo(i, nx1) == 0) then
+               j_mat(nxp1,k) = 0d0
+            end if
+         end if
+         if (i > nx1) then
+            j_mat(1,k) = delta
+            if (i <= 2*nx1) then
+               j_mat(1,k) = 2d0 * delta
+            end if
+         end if
+         if (i <= nx1*nzp1-nx1) then
+            j_mat(2*nx1+1,k) = delta
+            if (i > nx1*nzp1-2*nx1) then
+               j_mat(2*nx1+1,k) = 2d0 * delta
+            end if
+         end if
+      end do
+   end if
+   if (cpcol == npcol) exit
+   cpcol = cpcol + 1
 end do
 
-do j = 1, nx1
-   j_mat(2*nx-1,j) = beta(mod(j-1, nx1)+1) - &
-                     2d0 * delta * delz * tau / (1d0 - tau)
-end do
-
-do j = nx1*nzp1-nx1+1, nx1*nzp1
-   j_mat(2*nx-1,j) = beta(mod(j-1, nx1)+1) - &
-                     2d0 * delta * delz * tau / (1d0 - tau)
-end do
-
-do j = 1, nx1*nzp1-1
-   j_mat(2*nx-2,j+1) = gam(mod(j, nx1))
-   !j_test(j,j+1) = gam(mod(j, nx1))
-end do
-
-do j = nx1, nx1*nzp1-nx1, nx1
-   j_mat(2*nx-2,j+1) = 0d0
-   !j_test(j,j+1) = 0d0
-end do
-
-do j = 2, nx1*nzp1
-   j_mat(2*nx,j-1) = alp(mod(j-1, nx1) + 1)
-   !j_test(j,j-1) = alp(mod(j-1, nx1) + 1)
-end do
-
-do j = nx, nx1*nzp1-nx1+1, nx1
-   j_mat(2*nx,j-1) = 0d0
-   !j_test(j,j-1) = 0d0
-end do
-
-do j = 1, nx1*nzp1-nx1
-   j_mat(nx,j+nx1) = delta
-   !j_test(j,j+nx1) = delta
-end do
-
-do j = nx, nx1*nzp1
-   j_mat(3*nx-2,j-nx1) = delta
-   !j_test(j,j-nx1) = delta
-end do
-
-do j = 1, nx1
-   j_mat(nx,j+nx1) = 2d0 * delta
-   !j_test(j,j+nx1) = 2d0 * delta
-end do
-
-do j = nx1*nzp1-nx1+1, nx1*nzp1
-   j_mat(3*nx-2,j-nx1) = 2d0 * delta
-   !j_test(j,j-nx1) = 2d0 * delta
-end do
-
-!open(73,file='j_mat.dat')
-!write(73,'(15f7.2)') ((j_mat(j,k), k = 1, nx1*nzp1), j = 1, 2*nx1+nx1+1)
-!close(73)
-
-call DGBTRF(nx1*nzp1, nx1*nzp1, nx1, nx1, j_mat, 2*nx1+nx1+1, IPIV, info)
+call PDDBTRF(nx1*nzp1, nx1, nx1, j_mat, 1, desc_j, af, laf, &
+             work, lwork_fac, info)
+if (info /= 0) print*, 'j_infinite_PDDBTRF ', info
 
 return
 END SUBROUTINE j_mat_setup
 
-SUBROUTINE fin_j_mat_setup(j_mat, IPIV)
+SUBROUTINE fin_j_mat_setup(j_mat, desc_j, af)
 use parameters
 use ic_bc
 implicit none
 
-double precision :: alp(0:nx), beta(0:nx), gam(0:nx), delta !, &
-                    !j_test(nx1*nzp1,nx1*nzp1)
-double precision, intent(out) :: j_mat(2*nx1+nx1+1,nx1*nz1)
-integer :: j, k, info
-integer, intent(out) :: IPIV(nx1*nz1)
+double precision :: alp(0:nx), beta(0:nx), gam(0:nx), delta
+integer, intent(out) :: desc_j(7)
+double precision, intent(out) :: j_mat(j_M,j_N)
+integer :: i, j, k, info, cpcol
+double precision :: work(lwork_fac)
+double precision, intent(out) :: af(laf)
 
 alp(:) = dz2 - 0.5d0 * delx * dz2 * (1d0 - eta) / s(:)
 beta(:) = -2d0 * (dz2 + dx2) - dx2 * dz2 * (1d0 - eta)**2 / s(:)**2
 gam(:) = dz2 + 0.5d0 * delx * dz2 * (1d0 - eta) / s(:)
 delta = dx2
 
-do j = 1, nx1*nz1
-   j_mat(2*nx-1,j) = beta(mod(j-1, nx1)+1)
-   !j_test(j,j) = beta(mod(j-1, nx1)+1)
+desc_j(1) = 501
+desc_j(2) = ictxt
+desc_j(3) = nx1*nz1
+desc_j(4) = nb
+desc_j(5) = 0
+desc_j(6) = 2*nx1+1
+
+cpcol = 0
+
+do j = 1, nx1*nz1, nb
+   if (mycol == cpcol) then
+      do k = 1, min(nb, nx1*nz1-j+1)
+         i = k + j - 1
+         j_mat(nx,k) = beta(modulo(i-1, nx1) + 1)
+         if (i /= 1) then
+            j_mat(nx1,k) = gam(modulo(i-1, nx1))
+            if(modulo(i-1, nx1) == 0) then
+               j_mat(nx1,k) = 0d0
+            end if
+         end if
+         if (i /= nx1*nz1) then
+            j_mat(nxp1,k) = alp(modulo(i, nx1) + 1)
+            if (modulo(i, nx1) == 0) then
+               j_mat(nxp1,k) = 0d0
+            end if
+         end if
+         if (i > nx1) then
+            j_mat(1,k) = delta
+         end if
+         if (i <= nx1*nz1-nx1) then
+            j_mat(2*nx1+1,k) = delta
+         end if
+      end do
+   end if
+   if (cpcol == npcol) exit
+   cpcol = cpcol + 1
 end do
 
-do j = 1, nx1*nz1-1
-   j_mat(2*nx-2,j+1) = gam(mod(j, nx1))
-   !j_test(j,j+1) = gam(mod(j, nx1))
-end do
-
-do j = nx1, nx1*nz1-nx1, nx1
-   j_mat(2*nx-2,j+1) = 0d0
-   !j_test(j,j+1) = 0d0
-end do
-
-do j = 2, nx1*nz1
-   j_mat(2*nx,j-1) = alp(mod(j-1, nx1) + 1)
-   !j_test(j,j-1) = alp(mod(j-1, nx1) + 1)
-end do
-
-do j = nx, nx1*nz1-nx1+1, nx1
-   j_mat(2*nx,j-1) = 0d0
-   !j_test(j,j-1) = 0d0
-end do
-
-do j = 1, nx1*nz1-nx1
-   j_mat(nx,j+nx1) = delta
-   !j_test(j,j+nx1) = delta
-end do
-
-do j = nx, nx1*nz1
-   j_mat(3*nx-2,j-nx1) = delta
-   !j_test(j,j-nx1) = delta
-end do
-
-!open(73,file='j_mat.dat')
-!write(73,'(16f7.2)') ((j_mat(j,k), k = 1, nx1*nz1), j = 1, 2*nx1+nx1+1)
-!close(73)
-
-call DGBTRF(nx1*nz1, nx1*nz1, nx1, nx1, j_mat, 2*nx1+nx1+1, IPIV, info)
+call PDDBTRF(nx1*nz1, nx1, nx1, j_mat, 1, desc_j, af, laf, &
+             work, lwork_fac, info)
+if (info /= 0) print*, 'j_infinite_PDDBTRF ', info
 
 return
 END SUBROUTINE fin_j_mat_setup

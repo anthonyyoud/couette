@@ -2,6 +2,32 @@ DESCRIPTION
 -----------
 Axisymmetric, hydromagnetic, modulated Couette flow in an infinite or finite cylinder with the small Prandtl number limit using 2nd order implicit Crank-Nicolson for linear terms and 2nd order explicit Adams-Bashforth for non-linear terms with operator factorisation.  2nd order centred finite differences.  Includes homotopy parameter, tau, to continuously deform the boundaries from infinite case (tau=0) to finite case (tau=1).  Also includes particle path subroutine to track the trajectory of a particle.  Also allows for axial oscillation of the inner and/or outer Reynolds numbers to mimic a wavy cylinder boundary.
 
+Uses linear algebra package ScaLAPACK to enable parallelism in solving the Poisson equations associated with stream-function, current and magnetic field.
+
+IMPORTANT INFORMATION
+---------------------
+Since the code uses ScaLAPACK for the parallelism, this package must be available.  ScaLAPACK in turn depends on other packages.  These are (in order):
+MPI	- A version of the message-passing interface should be installed.  This
+          code has only been tested using LAM-MPI, therefore this would be
+          the recommended version to use.
+BLACS	- The Basic Linear Algebra Communication System should be installed.
+          ScaLAPACK uses this to call the MPI commands, hence no knowledge
+          of MPI is required.
+BLAS	- The Basic Linear Algebra Subprograms.  Contrary to other
+          recommendations, the reference version of the BLAS should be used
+          and not a machine optimised version (such as ATLAS or Intel MKL).
+          Since the matrices in this code are banded, the code does not
+          benefit from the faster Level 3 BLAS routines that an optimised
+          library provides.  Most of the calls are to Level 2 BLAS.
+
+It is not necessary for LAPACK to be installed.
+
+To ensure that this code compiles, links and runs correctly, it is *highly* recommended that MPI, BLACS, BLAS and ScaLAPACK are all compiled with the same Fortran compiler.  The code has been tested and is known to work with the Intel Fortran Compiler versions 7.0 and 8.0.  Version 7.1 should be avoided due to a compiler bug.  For consistency the Intel C++ Compiler should also be used when necessary (although gcc will work as well).  This code should then be compiled using the MPI compiler 'mpif77' which will be a wrapper for the Intel compiler, ensuring that all the necessary libraries are linked and available.
+
+Failure to be consistent in the use of a Fortran compiler will almost certainly result in undefined references to libraries and other routines and missing symbols at link time, as well as the likelihood that the Fortran to C naming conventions will be broken.
+
+For these reasons it is recommended to use ifc and icc v7.0 as the compiler for all the above packages.
+
 FILES
 -----
 ccf.f90				- OLD.  Routines to do with Circular Couette 
@@ -20,7 +46,7 @@ current.f90			- Routines to solve the Poisson equation for
 				  the azimuthal current.
 derivs.f90			- Routines to calculate derivatives.
 ifc_makefile_couette		- Makefile for use with Intel Fortran 
-				  Compiler (ifc).
+				  Compiler (see below).
 io.f90				- In general, routines to do with 
 				  input/output.
 magnetic.f90			- Routines to solve the Poisson equation for
@@ -32,55 +58,35 @@ parameters.f90			- Parameters to set (see below).
 pressure.f90			- Routines to solve Poisson equation for 
 				  pressure.
 README				- This file.
-run_script.sh			- For use on batch queues.
+run_script.sh			- For use on giga cluster.  Parameters to 
+                                  determine parallelism should be set in 
+                                  this file. (see below)
 setup				- Setup script to compile and setup 
 				  ready to run in separate directory.
 (f95_makefile_couette		- Old Makefile for use with NAg f95 
 				  compiler.)
 
-TO RUN
-------
-Set parameters.f90 then use:
-	source setup <directory>
-which compiles code and copies parameters.f90 and script and moves 
-couette_mod.out to <directory>.  ./couette_mod.out runs code.
-If using a batch queue such as the giga cluster then the command:
-	qsub run_script.sh
-will submit the job to one of the nodes of the cluster.  'qstat' will tell you on which node the job is being run and the job ID.  All files are copied back to the directory <submit-directory>/$JOB-ID when the job is finished.
-
-OUTPUT FILES
-------------
-end_state.dat	- Saves time index, p, time-step, dt, and fields u, Z, 
-		  and psi, for restart.
-max_psi.dat	- Saves maximum value of psi (and vr, vz) over whole 
-		  field.  Mainly for use with IDL plots.
-particle.dat	- Saves the radial and axial position of a particle at 
-		  each time.
-run_script.sh	- For use on batch queues.
-time_tau.dat	- If auto_tau=.true. saves time at which each step in 
-		  tau occured.
-torque.dat	- For steady case saves torque on inner and outer 
-		  cylinder.  Needs more work.
-u_growth.dat	- Saves time, radial velocity (outflow, inflow), growth 
-		  rate, axial velocity, stream function, azimuthal 
-		  velocity, vorticity, and Reynolds number.  Velocities 
-		  are saved at the points defined in io.f90 - subroutine 
-		  'save_growth'.
-p*******.dat	- Stream function field saved at the time defined by 
-		  (time-step)*(number following 'p') in filename.  (Only 
-		  if xsect_save == .true.).
-u*******.dat	- As above but for azimuthal velocity field.
-z*******.dat	- As above but for vorticity field.
-vr*******.dat	- As above but for radial velocity field.
-vz*******.dat	- As above but for axial velocity field.
-j*******.dat	- As above but for azimuthal current field.
-b*******.dat	- As above but for azimuthal magnetic field.
-xsect*******.dat- Cross-section of vr, vz and psi saved at the time 
-		  defined as above for use in IDL 'jpeg' routine.  (Only 
-		  if xsect_save == .true.).
-
 PARAMETERS
 ----------
+nprow		- The number of process rows to use for distribution of the
+                  matrices.  As of release 1.7 of ScaLAPACK, this must be set
+                  to 1.
+npcol		- As above but for the number of process columns.  This can
+                  be any integer.  In practice this should not exceed the
+                  number of CPU's available.  It can be set to 1 in which
+                  case the job will be run on one CPU.  Doing this will
+                  guarantee a faster version of the code than the standard
+                  serial version.  The matrix orders must be large before
+                  any speedup (over a parallel 1-CPU run) is observed in a 
+                  multi-CPU run.
+nb		- The 'blocking factor' to use when distributing the matrices
+                  over the process grid.  See the ScaLAPACK documentation for
+                  a full explanation of what this does; basically it
+                  determines the size of the matrices on each CPU.  For
+                  banded codes like this there can only be one block per CPU,
+                  meaning that this should be set to at least
+                  ceiling( (nx+1)*(nz+1) ) / npcol.  This guarantees that each
+                  CPU receives only one block of the matrix.
 alpha		- Wavenumber (2pi/wavelength) in the infinite case.  Set 
 		  equal zero if using finite cylinders.
 gamma		- Aspect ratio (height/gap) for the finite case.  Set 
@@ -129,4 +135,126 @@ x_par_pos	- Initial radial position of a particle in the fluid as
 z_par_pos	- Initial axial position of a particle in the fluid as a 
 		  fraction of gamma (finite) or alpha (infinite).
 
-20/05/2004
+RUN_SCRIPT.sh
+-------------
+This is a bash script that is read whenever a job is submitted to the giga queue.
+
+SERIAL		- Set to 0 if you want to run the parallel version of the code.
+                  Set to 1 if you want to use this script to run the serial
+                  version of the code.  (Will not work with parallel version).
+NPROCS		- Total number of processes on which the job will be run.
+                  This should be equal to 'npcol' in parameters.f90.
+EXE		- The executable that will be run.
+DATA		- Any files that will be copied from the submit directory
+                  to the work directory.
+NODECPU		- The number of CPU's available on each node.  The giga
+                  cluster has 24 nodes each with dual hyperthreaded Intel
+                  P4 Xeon's at 2.8GHz.  Physically, this means there are 2
+                  CPU's per node, and NODECPU should probably be set to 2,
+                  unless the job is incredibly large and requires more than
+                  48 CPU's, in which case NODECPU can be set to 4 (giving
+                  access to 96 CPU's).  It should be noted that any code will
+                  run faster on physical CPU's than on logical CPU's.
+NODELIST	- A list of the nodes that the script will attempt to submit
+                  the job to.  There should be no more names here than
+                  necessary.  e.g. if NPROCS=16 and NODECPU=2 then you will
+                  need to set 8 hostnames; if NODECPU=4 then you will only
+                  need 4 hostnames.
+DATA_DIR	- The directory where all data will be stored.  Set to `pwd`
+                  if the submit directory should be used.
+RUN_DIR		- The directory where the job will run on the nodes.  This
+                  shouldn't need changing.  /work is the space where all
+                  submitted jobs should be run, and appending $JOB_ID
+                  ensures that the job name is totally unique (to prevent
+                  accidentally overwriting previous runs).
+
+MAKEFILE
+--------
+Most of the settings here should not need changing (or in fact be changed).  This is included for information.
+
+OUTDIR		- The output directory of the object files and executable.
+OBJECTS		- The object files that should be linked.
+COMPFLAGS	- Compiler flags for the Intel Fortran Compiler.  By default
+                  these are set to very aggressive optimisations.
+                  Specifically, the -tpp7 and -xW flags optimise for P4
+                  CPU's only.  If the code is run on any other CPU, it
+                  **will not work**.  If the CPU is not a P4 (including
+                  Xeon's) then these two flags should be changed before
+                  compilation.  The commented out COMPFLAGS enable
+                  debugging and will give more output in case of an error.
+                  In this case, no optimisation is performed.
+TYPE		- Shouldn't be changed.  Leave as 'implicit'.
+LIBS		- These are the libraries with which to link.  The code uses
+                  ScaLAPACK and so the necessary libraries to link with
+                  (in this order) are:
+                  ScaLAPACK's own library	- libscalapack****
+                  BLACS F77 library		- libblacsF77init****
+                  BLACS MPI library		- libblacs_MPI****
+                  BLACS C library		- libblacsCinit****
+                  BLAS library			- libblas****.
+                  Here **** denotes the string appended when these libraries
+                  are built.
+COMPILER	- The 'mpi' compiler to use.
+
+TO RUN
+------
+Set parameters.f90 and run_script.sh (if on giga cluster) then use:
+	source setup <directory>
+which compiles code and copies parameters.f90 and script and moves 
+couette_mod.out to <directory>.  ./couette_mod.out runs code.
+If using the giga cluster then the command:
+	qsub run_script.sh
+will submit the job to one (or more) of the nodes of the cluster.
+
+The file 'nodes.dat' in the run directory will tell you on which nodes the job is running.  The number towards the end of each line tells you how many processors are available to use on each node.  This can be altered in run_script.sh.
+
+'qstat' will tell you on which node the job was submitted and subsequently distributed, and also the job ID.  All files are copied back to the directory <submit-directory>/$JOB-ID when the job is finished.
+
+OUTPUT FILES
+------------
+end_state.dat	- Saves time index, p, time-step, dt, and fields u, Z, 
+		  psi, current and magnetic field for restart.
+max_psi.dat	- Saves maximum value of psi (and vr, vz) over whole 
+		  field.  Mainly for use with IDL plots.
+particle.dat	- Saves the radial and axial position of a particle at 
+		  each time.
+run_script.sh	- For use on giga queue.
+time_tau.dat	- If auto_tau=.true. saves time at which each step in 
+		  tau occured.
+torque.dat	- For steady case saves torque on inner and outer 
+		  cylinder.  Needs more work.
+u_growth.dat	- Saves time, radial velocity (outflow, inflow), growth 
+		  rate, axial velocity, stream function, azimuthal 
+		  velocity, vorticity, azimuthal current and magnetic field,
+                  and Reynolds number.  Velocities are saved at the points 
+                  defined in io.f90 - subroutine 'save_growth'.
+p*******.dat	- Stream function field saved at the time defined by 
+		  (time-step)*(number following 'p') in filename.  (Only 
+		  if xsect_save == .true.).
+u*******.dat	- As above but for azimuthal velocity field.
+z*******.dat	- As above but for vorticity field.
+vr*******.dat	- As above but for radial velocity field.
+vz*******.dat	- As above but for axial velocity field.
+j*******.dat	- As above but for azimuthal current field.
+b*******.dat	- As above but for azimuthal magnetic field.
+xsect*******.dat- Cross-section of vr, vz and psi saved at the time 
+		  defined as above for use in IDL 'jpeg' routine.  (Only 
+		  if xsect_save == .true.).
+
+Additional output files if job is run on giga queue.  These files are in the directory below the numbered directory where all data files are stored.
+
+hostfile	- Contains the hostnames of the giga nodes that the job
+                  will be submitted to, as well as the number of CPU's
+                  available to use on each node.
+nodes.dat	- Similar to hostfile, but also shows the originating node,
+                  i.e. the node from which the job is submitted.
+run******.log	- Info file; showing the number of processes which the job
+                  uses, the boot sequence for LAM MPI (parallelism),
+                  information about the current run of the code, a list of
+                  the processes which end cleanly (if the run ends cleanly
+                  then this file should include the statement
+                  'Ending Process' followed by a process number.  This
+                  statement is repeated for all processes).  Any error
+                  messages will also be shown here.  Finally, the total time
+                  for the job to complete is shown.
+05/07/2004

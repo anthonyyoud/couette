@@ -3,56 +3,69 @@ implicit none
 
 contains
 
-SUBROUTINE p_poisson(Z_mat, psi, p_mat, IPIV)
+SUBROUTINE p_poisson(Z_mat, psi, p_mat, desc_p, af)
 use parameters
 use ic_bc
 implicit none
 
-logical, parameter :: write_file = .false.
+integer :: desc_z(7)
+integer, intent(in) :: desc_p(7)
+double precision, intent(in) :: af(laf)
 double precision, intent(in) :: Z_mat(0:nx,0:nz)
-double precision, intent(in) :: p_mat(2*nx1+nx1+1,nx1*nz1)
+double precision, intent(in) :: p_mat(p_M,p_N)
 double precision, intent(out) :: psi(0:nx,0:nz)
-double precision :: zvec(nx1*nz1)
-integer, intent(in) :: IPIV(nx1*nz1)
-integer :: j, k, info
+double precision :: zvec(nb)
+integer :: i, j, k, info, cpcol
+double precision :: work(lwork_sol)
 
-if (write_file) then
-   open (61, file = 'zvecin.dat')
-   open (62, file = 'zvecout.dat')
-end if
+desc_z(1) = 502
+desc_z(2) = ictxt
+desc_z(3) = nx1*nz1
+desc_z(4) = nb
+desc_z(5) = 0
+desc_z(6) = nb
 
-do k = 1, nz1
-   do j = 1, nx1
-      zvec(nx1*(k-1)+j) = -s(j) * dx2 * dz2 * Z_mat(j,k)
-!      zvec(nx1*(k-1)+j) = -2d0 * pi**2 * dx2 * dz2 * &
-!                          sin(pi*x(j)) * sin(pi*z(k))
-   end do
+cpcol = 0
+
+do j = 1, nx1*nz1, nb
+   if (mycol == cpcol) then
+      do k = 1, min(nb, nx1*nz1-j+1)
+         i = k + j - 1
+         zvec(k) = -s(modulo(i-1, nx1) + 1) * dx2 * dz2 * &
+                    Z_mat(modulo(i-1, nx1) + 1, (i-1)/nx1 + 1)
+      end do
+   end if
+   if (cpcol == npcol) exit
+   cpcol = cpcol + 1
 end do
 
-if (write_file) then
-   write(61, '(e17.9)') (zvec(j), j = 1, nx1*nz1)
-end if
+call PDDBTRS('N', nx1*nz1, nx1, nx1, 1, p_mat, 1, desc_p, zvec, 1, &
+              desc_z, af, laf, work, lwork_sol, info)
+if (info /= 0) print*, 'psi_PDDBTRS ', info
 
-call DGBTRS('N', nx1*nz1, nx1, nx1, 1, p_mat, 2*nx1+nx1+1, &
-             IPIV, zvec, nx1*nz1, info)
+cpcol = 0
 
-if (write_file) then
-   write(62, '(e17.9)') (zvec(j), j = 1, nx1*nz1)
-end if
-
-do k = 1, nz1
-   do j = 1, nx1
-      psi(j,k) = zvec(nx1*(k-1)+j)
-   end do
+psi = 0d0
+do j = 1, nx1*nz1, nb
+   if (mycol == cpcol) then
+      do k = 1, min(nb, nx1*nz1-j+1)
+         i = k + j - 1
+         psi(modulo(i-1, nx1) + 1, (i-1)/nx1 + 1) = zvec(k)
+      end do
+   end if
+   if (cpcol == npcol) exit
+   cpcol = cpcol + 1
 end do
 
-call p_BCS(psi)
+call SLTIMER(6)
+call DGSUM2D(ictxt, 'A', ' ', nxp1, nzp1, psi, nxp1, 0, 0)
+call SLTIMER(6)
 
-if (write_file) then
-   close (61)
-   close (62)
+if (mycol == 0) then
+   call p_BCS(psi)
 end if
 
+return
 END SUBROUTINE p_poisson
 
 END MODULE pressure

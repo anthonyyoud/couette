@@ -42,15 +42,15 @@ else
       do k = 0, nz
          u(:,k) = seed * dsin(2d0*pi*z(k)/gamma) * dsin(pi*x(:))
          pn(:,k) = seed * dsin(2d0*pi*z(k)/gamma) * dsin(pi*x(:))
-         bn(:,k) = seed * dcos(2d0*pi*z(k)/gamma) / s(j)
-         jn(:,k) = seed * dsin(pi*x(j)) * dsin(2d0*pi*z(k)/gamma)
+         bn(:,k) = seed * dcos(2d0*pi*z(k)/gamma) / s(:)
+         jn(:,k) = seed * dsin(pi*x(:)) * dsin(2d0*pi*z(k)/gamma)
       end do
    else
       do k = 0, nz
          u(:,k) = seed * dsin(pi*x(:)) * dcos(2d0*pi*z(k)/gamma)
          pn(:,k) = seed * dsin(pi*x(:)) * dsin(2d0*pi*z(k)/gamma)
-         bn(:,k) = seed * dsin(2d0*pi*z(k)/gamma) / s(j)
-         jn(:,k) = seed * dsin(pi*x(j)) * dcos(2d0*pi*z(k)/gamma)
+         bn(:,k) = seed * dsin(2d0*pi*z(k)/gamma) / s(:)
+         jn(:,k) = seed * dsin(pi*x(:)) * dcos(2d0*pi*z(k)/gamma)
       end do
 
       do k = 1, nz1

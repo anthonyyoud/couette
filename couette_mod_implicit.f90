@@ -21,229 +21,287 @@ double precision :: growth_rate, t = 0d0, &
                     bnew(0:nx,0:nz), bold(0:nx,0:nz), bold2(0:nx,0:nz), &
                     jnew(0:nx,0:nz), jold(0:nx,0:nz), jold2(0:nx,0:nz), &
                     vr(0:nx,0:nz), vrold(0:nx,0:nz) = 0d0, &
-                    vz(0:nx,0:nz), vzold(0:nx,0:nz) = 0d0, &
-                    p_mat(2*nx1+nx1+1,nx1*nz1) 
-double precision, allocatable :: b_mat(:,:), j_mat(:,:)
-integer, allocatable :: b_pivot(:), j_pivot(:)
-integer :: p_pivot(nx1*nz1), j, k, p = 0, p_start = 0
+                    vz(0:nx,0:nz), vzold(0:nx,0:nz) = 0d0
+double precision, allocatable :: p_mat(:,:), b_mat(:,:), j_mat(:,:)
+double precision :: p_fill(laf), b_fill(b_laf), j_fill(laf), wtime(10)
+double precision, external :: SLINQUIRE
+integer :: j, k, p = 0, p_start = 0, end_proc = 0, &
+           desc_p(7), desc_b(7), desc_j(7)
+integer, external :: NUMROC
 logical :: run_exist, state_exist, save_exist
 
-print*
-if (tau == 0) then
-   write(6, '(A7, f4.2, A21)') 'tau = ', tau, '- Infinite cylinder'
-else if (tau == 1) then
-   write(6, '(A7, f4.2, A22)') 'tau = ', tau, '- Finite aspect ratio'
-else
-   write(6, '(A7, f4.2)') 'tau = ', tau
-end if   
+call SLBOOT()
+call SL_INIT(ictxt, nprow, npcol)
+call BLACS_GRIDINFO(ictxt, nprow, npcol, myrow, mycol)
+if ((myrow < 0) .or. (mycol < 0)) stop
 
-call open_files()
+if (mycol == 0) then
+   print*
+   if (tau == 0) then
+      write(6, '(A7, f4.2, A21)') 'tau = ', tau, '- Infinite cylinder'
+   else if (tau == 1) then
+      write(6, '(A7, f4.2, A22)') 'tau = ', tau, '- Finite aspect ratio'
+   else
+      write(6, '(A7, f4.2)') 'tau = ', tau
+   end if   
 
-print*, 'Setting up ICS...'
+   call open_files()
+
+   print*, 'Setting up ICS...'
+end if
+
 call get_xzs()
-call ICS(unew, znew, pnew, bnew, jnew, p_start)
 
-if (.not. restart) then
-   inquire(file='end_state.dat', exist=state_exist)
-   if (state_exist) then
-      STOP 'restart=.false. but end_state.dat exists.'
+if (mycol == 0) then
+   call ICS(unew, znew, pnew, bnew, jnew, p_start)
+
+   if (.not. restart) then
+      inquire(file='end_state.dat', exist=state_exist)
+      if (state_exist) then
+         STOP 'restart=.false. but end_state.dat exists.'
+      end if
+      print*, 'Setting up BCS...'
+      call u_BCS(unew, 0d0)
+      call p_BCS(pnew)
+      call z_BCS(znew, pnew, 0d0)
+      call b_BCS(bnew)
+      call j_BCS(jnew)
    end if
-   print*, 'Setting up BCS...'
-   call u_BCS(unew, 0d0)
-   call p_BCS(pnew)
-   call z_BCS(znew, pnew, 0d0)
-   call b_BCS(bnew)
-   call j_BCS(jnew)
+   print*, 'Allocating matrix dimensions'
 end if
 
-print*, 'Allocating matrix dimensions'
+call SLTIMER(1)
 if (tau == 0d0) then
-   allocate(b_mat(2*nxp1+nxp1+1,0:nxp1*nz1-1)) 
-   allocate(j_mat(2*nx1+nx1+1,nx1*nzp1))
-   allocate(b_pivot(nxp1*nz1))
-   allocate(j_pivot(nx1*nzp1))
+   b_M = NUMROC(2*nxp1+1, 2*nxp1+1, myrow, 0, nprow)
+   b_N = NUMROC(nxp1*nz1, nb, mycol, 0, npcol)
+   j_M = NUMROC(2*nx1+1, 2*nx1+1, myrow, 0, nprow)
+   j_N = NUMROC(nx1*nzp1, nb, mycol, 0, npcol)
+   allocate(b_mat(b_M,b_N))
+   allocate(j_mat(j_M,j_N))
 else if (tau == 1d0) then 
-   allocate(b_mat(2*nxp1+nxp1+1,0:nxp1*nzp1-1)) 
-   allocate(j_mat(2*nx1+nx1+1,nx1*nz1))
-   allocate(b_pivot(nxp1*nzp1))
-   allocate(j_pivot(nx1*nz1))
+   b_M = NUMROC(2*nxp1+1, 2*nxp1+1, myrow, 0, nprow)
+   b_N = NUMROC(nxp1*nzp1, nb, mycol, 0, npcol)
+   j_M = NUMROC(2*nx1+1, 2*nx1+1, myrow, 0, nprow)
+   j_N = NUMROC(nx1*nz1, nb, mycol, 0, npcol)
+   allocate(b_mat(b_M,b_N)) 
+   allocate(j_mat(j_M,j_N))
 else if ((tau /= 0d0) .and. (tau /= 1d0)) then
-   allocate(b_mat(2*nxp1+nxp1+1,0:nxp1*nzp1-1)) 
-   allocate(j_mat(2*nx1+nx1+1,nx1*nzp1))
-   allocate(b_pivot(nxp1*nzp1))
-   allocate(j_pivot(nx1*nzp1))
+   b_M = NUMROC(2*nxp1+1, 2*nxp1+1, myrow, 0, nprow)
+   b_N = NUMROC(nxp1*nzp1, nb, mycol, 0, npcol)
+   j_M = NUMROC(2*nx1+1, 2*nx1+1, myrow, 0, nprow)
+   j_N = NUMROC(nx1*nzp1, nb, mycol, 0, npcol)
+   allocate(b_mat(b_M,b_N))
+   allocate(j_mat(j_M,j_N))
 end if
 
-print*, 'Setting up matrices...'
-call matrix_setup(Ux, Uz, Zx, Zz)
-call psi_mat_setup(p_mat, p_pivot)
+p_M = NUMROC(2*nx1+1, 2*nx1+1, myrow, 0, nprow)
+p_N = NUMROC(nx1*nz1, nb, mycol, 0, npcol)
+allocate(p_mat(p_M,p_N))
+call SLTIMER(1)
+
+if (mycol == 0) then
+   print*, 'Setting up matrices...'
+   call matrix_setup(Ux, Uz, Zx, Zz)
+end if
+
+call SLTIMER(2)
+call psi_mat_setup(p_mat, desc_p, p_fill)
 
 if (tau == 0d0) then
-   call b_mat_setup(b_mat, b_pivot)
-   call j_mat_setup(j_mat, j_pivot)
+   call b_mat_setup(b_mat, desc_b, b_fill)
+   call j_mat_setup(j_mat, desc_j, j_fill)
 else if (tau == 1d0) then
-   call fin_b_mat_setup(b_mat, b_pivot)
-   call fin_j_mat_setup(j_mat, j_pivot)
+   call fin_b_mat_setup(b_mat, desc_b, b_fill)
+   call fin_j_mat_setup(j_mat, desc_j, j_fill)
 else if ((tau /= 0d0) .and. (tau /= 1d0)) then
-   call fin_b_mat_setup(b_mat, b_pivot)
-   call j_mat_setup(j_mat, j_pivot)
+   call fin_b_mat_setup(b_mat, desc_b, b_fill)
+   call j_mat_setup(j_mat, desc_j, j_fill)
 end if
+call SLTIMER(2)
 
-uold = unew
-uold2 = unew
-u_int = unew
-zold = znew
-zold2 = znew
-z_int = znew
-pold = pnew
-pold2 = pnew
-bold = bnew
-bold2 = bnew
-jold = jnew
-jold2 = jnew
+if (mycol == 0) then
+   uold = unew
+   uold2 = unew
+   u_int = unew
+   zold = znew
+   zold2 = znew
+   z_int = znew
+   pold = pnew
+   pold2 = pnew
+   bold = bnew
+   bold2 = bnew
+   jold = jnew
+   jold2 = jnew
 
-print*, 'Entering time loop'
-
-!call get_timestep()
+   print*, 'Entering time loop'
+end if
 
 do p = p_start, Ntot
-   inquire(file='RUNNING', exist=run_exist)
-   if (.not. run_exist) then
-      print*, 'Stop requested'
-      print*, 'Saving end state'
-      call end_state(uold, zold, pold, bold, jold, p)
-      call save_xsect(vr, vz, pold, t, p)
-      call save_surface(pold, uold, zold, vr, vz, bold, jold, p, t)
-      exit
+   if (mycol == 0) then
+      inquire(file='RUNNING', exist=run_exist)
+      if (.not. run_exist) then
+         print*, 'Stop requested.  Ending process ', mycol
+         print*, 'Saving end state'
+         call end_state(uold, zold, pold, bold, jold, p)
+         call save_xsect(vr, vz, pold, t, p)
+         call save_surface(pold, uold, zold, vr, vz, bold, jold, p, t)
+         end_proc = 1
+      end if
    end if
 
-   inquire(file='SAVE', exist=save_exist)
-   if (save_exist) then
-      call save_xsect(vr, vz, pold, t, p)
-      call save_surface(pold, uold, zold, vr, vz, bold, jold, p, t)
-      open (98, file = 'SAVE')
-      close (98, status = 'delete')
+   call SLTIMER(3)
+   call IGEBR2D(ictxt, 'A', ' ', 1, 1, end_proc, 1, 0, 0)
+   call SLTIMER(3)
+
+   if (mycol == 0) then
+      if (end_proc == 1) exit
+   end if
+
+   if (mycol > 0) then
+      if (end_proc == 1) then
+         print*, 'Ending process ', mycol
+         exit
+      end if
+   end if
+
+   if (mycol == 0) then
+      inquire(file='SAVE', exist=save_exist)
+      if (save_exist) then
+         call save_xsect(vr, vz, pold, t, p)
+         call save_surface(pold, uold, zold, vr, vz, bold, jold, p, t)
+         open (98, file = 'SAVE')
+         close (98, status = 'delete')
+      end if
    end if
 
    t = p * dt
 
-   if (mod(p, save_rate) == 0) then
-      call r_vel(pold, vr, vz)
-      if (save_part) then
-         call particle(vr, vrold, vz, vzold, x_pos, z_pos)
-      end if
-      !if ((Re1 /= 0d0) .or. (Re2 /= 0d0)) then
-      !   call save_torque(t, unew)
-      !end if
-      if ((p /= p_start) .and. ((p - p_start) > save_rate)) then
-         call save_growth(t, vr, vrold, vz, pold, unew, znew, &
-                          bold, jold, growth_rate)
-         if ((Re1_mod == 0d0) .and. (Re2_mod == 0d0)) then
-            if ((dabs(growth_rate) < 1d-8) .and. &
-                (dabs(vr(nx/2, nz/2)) > 1d-3)) then
-                if ((.not. auto_tau) .or. (tau == tau_end)) then
-                   call save_time_tau(tau, t)
-                   call end_state(uold, zold, pold, bold, jold, p)
-                else if (tau < 1d0) then
-                   call save_time_tau(tau, t)
-                   tau = tau + tau_step
-                   print*, 'tau = ', tau
-                   call save_xsect(vr, vz, pold, t, p)
-                   call save_surface(pold, unew, znew, vr, vz, &
-                                     bold, jold, p, t)
-                end if
+   if (mycol == 0) then
+      if (mod(p, save_rate) == 0) then
+         call r_vel(pold, vr, vz)
+         if (save_part) then
+            call particle(vr, vrold, vz, vzold, x_pos, z_pos)
+         end if
+         !if ((Re1 /= 0d0) .or. (Re2 /= 0d0)) then
+         !   call save_torque(t, unew)
+         !end if
+         if ((p /= p_start) .and. ((p - p_start) > save_rate)) then
+            call save_growth(t, vr, vrold, vz, pold, unew, znew, &
+                             bold, jold, growth_rate)
+            if ((Re1_mod == 0d0) .and. (Re2_mod == 0d0)) then
+               if ((dabs(growth_rate) < 1d-8) .and. &
+                  (dabs(vr(nx/2, nz/2)) > 1d-3)) then
+                  if ((.not. auto_tau) .or. (tau == tau_end)) then
+                     call save_time_tau(tau, t)
+                     call end_state(uold, zold, pold, bold, jold, p)
+                  else if (tau < 1d0) then
+                     call save_time_tau(tau, t)
+                     tau = tau + tau_step
+                     print*, 'tau = ', tau
+                     call save_xsect(vr, vz, pold, t, p)
+                     call save_surface(pold, unew, znew, vr, vz, &
+                                       bold, jold, p, t)
+                  end if
+               end if
             end if
          end if
       end if
-   end if
 
-   vrold = vr
-   vzold = vz
+      vrold = vr
+      vzold = vz
 
-   if (xsect_save) then
-      if (mod(p, save_rate_2) == 0) then
-         call save_xsect(vr, vz, pold, t, p)
-         !call save_surface(pold, unew, znew, vr, vz, bold, jold, p, t)
+      if (xsect_save) then
+         if (mod(p, save_rate_2) == 0) then
+            call save_xsect(vr, vz, pold, t, p)
+            !call save_surface(pold, unew, znew, vr, vz, bold, jold, p, t)
+         end if
       end if
-   end if
 
-   uold = unew
-   zold = znew
+      uold = unew
+      zold = znew
 
 !*** Get RHS for v in x-direction ************
 
-   call get_rhs_ux(uold, unew)
+      call get_rhs_ux(uold, unew)
 
 !*********************************************
 
 !*** Get non-lin terms for v in x-direction **
 
-   call get_nlin_ux(uold, uold2, pold, pold2, bold, bold2, u_nlin_new)
+      call get_nlin_ux(uold, uold2, pold, pold2, bold, bold2, u_nlin_new)
 
 !*********************************************
 
 !*** Get RHS for Z in x-direction ************
 
-   call get_rhs_Zx(zold, znew)
+      call get_rhs_Zx(zold, znew)
 
 !*********************************************
 
 !*** Get non-lin terms for Z in x-direction **
 
-   call get_nlin_Zx(t, uold, uold2, pold, pold2, zold, &
+      call get_nlin_Zx(t, uold, uold2, pold, pold2, zold, &
                     zold2, jold, jold2, z_nlin_new)
 
 !*********************************************
 
 !*** Solve for v in x-direction **************
 
-   call solve_ux(uold, unew, u_nlin_new, t, Ux)
+      call solve_ux(uold, unew, u_nlin_new, t, Ux)
 
 !*********************************************
 
 !*** Solve for Z in x-direction **************
 
-   call solve_Zx(zold, znew, z_nlin_new, pold, t, Zx)
+      call solve_Zx(zold, znew, z_nlin_new, pold, t, Zx)
 
 !*********************************************
 
-   uold2 = u_int
-   zold2 = z_int
+      uold2 = u_int
+      zold2 = z_int
 
 !*** Solve for v in z-direction **************
 
-   call solve_uz(uold, unew, t, Uz)
+      call solve_uz(uold, unew, t, Uz)
 
 !*********************************************
 
 !*** Solve for Z in z-direction **************
 
-   call solve_Zz(zold, pold, znew, t, Zz)
+      call solve_Zz(zold, pold, znew, t, Zz)
 
 !*********************************************
 
-   u_int = unew
-   z_int = znew
-   pold2 = pold
-   bold2 = bold
-   jold2 = jold
-
+      u_int = unew
+      z_int = znew
+      pold2 = pold
+      bold2 = bold
+      jold2 = jold
 !   call get_poisson_test_znew(znew)
 
-   call p_BCS(pnew)
-   call b_BCS(bnew)
-   call j_BCS(jnew)
-   call p_poisson(znew, pnew, p_mat, p_pivot)
-   if (tau == 0d0) then
-      call b_poisson(unew, bnew, b_mat, b_pivot)
-      call j_poisson(pnew, jnew, j_mat, j_pivot)
-   else if (tau == 1d0) then
-      call fin_b_poisson(unew, bnew, b_mat, b_pivot)
-      call fin_j_poisson(pnew, jnew, j_mat, j_pivot)
-   else if ((tau /= 0d0) .and. (tau /= 1d0)) then
-      call fin_b_poisson(unew, bnew, b_mat, b_pivot)
-      call j_poisson(pnew, jnew, j_mat, j_pivot)
+      call p_BCS(pnew)
+      call b_BCS(bnew)
+      call j_BCS(jnew)
    end if
+
+   call SLTIMER(4)
+   call DGEBR2D(ictxt, 'A', ' ', nxp1, nzp1, znew, nxp1, 0, 0)
+   call DGEBR2D(ictxt, 'A', ' ', nxp1, nzp1, unew, nxp1, 0, 0)
+   call SLTIMER(4)
+
+   call SLTIMER(5)
+   call p_poisson(znew, pnew, p_mat, desc_p, p_fill)
+   if (tau == 0d0) then
+      call b_poisson(unew, bnew, b_mat, desc_b, b_fill)
+      call j_poisson(pnew, jnew, j_mat, desc_j, j_fill)
+   else if (tau == 1d0) then
+      call fin_b_poisson(unew, bnew, b_mat, desc_b, b_fill)
+      call fin_j_poisson(pnew, jnew, j_mat, desc_j, j_fill)
+   else if ((tau /= 0d0) .and. (tau /= 1d0)) then
+      call fin_b_poisson(unew, bnew, b_mat, desc_b, b_fill)
+      call j_poisson(pnew, jnew, j_mat, desc_j, j_fill)
+   end if
+   call SLTIMER(5)
 
    if (diag) then
       call calc_rhs_u(unew, uold2, pold, t, p)
@@ -251,20 +309,36 @@ do p = p_start, Ntot
       call calc_rhs_psi(pnew, znew, t, p)
    end if
 
-   pold = pnew
-   bold = bnew
-   jold = jnew
-
-   if (p == Ntot) then
-      call end_state(unew, znew, pold, bold, jold, p)
-      call save_xsect(vr, vz, pold, t, p)
-      call save_surface(pold, unew, znew, vr, vz, bold, jold, p, t)
+   if (mycol == 0) then
+      pold = pnew
+      bold = bnew
+      jold = jnew
+      if (p == Ntot) then
+         call end_state(unew, znew, pold, bold, jold, p)
+         call save_xsect(vr, vz, pold, t, p)
+         call save_surface(pold, unew, znew, vr, vz, bold, jold, p, t)
+      end if
    end if
 
 end do
 !*** END TIME LOOP***
 
-call close_files()
+if (mycol == 0) then
+   call close_files()
+end if
+
+if (mycol == 0) then
+   write(6,*) 'proc setup end_proc matrices solve p_sum j_sum j_copy b_sum'
+end if
+write(6,'(i3,8f9.4)') mycol, SLINQUIRE('W', 2), &
+                      SLINQUIRE('W', 3), SLINQUIRE('W', 4), &
+                      SLINQUIRE('W', 5), SLINQUIRE('W', 6), &
+                      SLINQUIRE('W', 7), SLINQUIRE('W', 9), &
+                      SLINQUIRE('W', 8)
+
+call BLACS_BARRIER(ictxt, 'A')
+call BLACS_GRIDEXIT(ictxt)
+call BLACS_EXIT(0)
 
 END PROGRAM couette_mod
 
@@ -284,25 +358,25 @@ call deriv_x(uo, du%x)
 call deriv_xx(uo, du%xx)
 call deriv_zz(uo, du%zz)
 
-do j = 1, nx1
-   u(j,1:nz1) = uo(j,1:nz1) + (0.5d0 * rxx * du%xx(j,1:nz1)) + &
-            (((1d0 - eta) * rx) / (4d0 * s(j))) * du%x(j,1:nz1) - &
-            (((1d0 - eta)**2 * dt) / (2d0 * s(j)**2)) * &
-            uo(j,1:nz1) + 0.5d0 * rzz * du%zz(j,1:nz1)
+do k = 1, nz1
+   u(1:nx1,k) = uo(1:nx1,k) + (0.5d0 * rxx * du%xx(1:nx1,k)) + &
+            (((1d0 - eta) * rx) / (4d0 * s(1:nx1))) * du%x(1:nx1,k) - &
+            (((1d0 - eta)**2 * dt) / (2d0 * s(1:nx1)**2)) * &
+            uo(1:nx1,k) + 0.5d0 * rzz * du%zz(1:nx1,k)
 end do
 
 if (tau /= 1) then
-   do j = 1, nx1
-      u(j,0) = uo(j,0) + (0.5d0 * rxx * du%xx(j,0)) + &
-               (((1d0 - eta) * rx) / (4d0 * s(j))) * du%x(j,0) - &
-               (((1d0 - eta)**2 * dt) / (2d0 * s(j)**2)) * &
-               uo(j,0) + 0.5d0 * rzz * du%zz(j,0)
+!   do j = 1, nx1
+      u(1:nx1,0) = uo(1:nx1,0) + (0.5d0 * rxx * du%xx(1:nx1,0)) + &
+               (((1d0 - eta) * rx) / (4d0 * s(1:nx1))) * du%x(1:nx1,0) - &
+               (((1d0 - eta)**2 * dt) / (2d0 * s(1:nx1)**2)) * &
+               uo(1:nx1,0) + 0.5d0 * rzz * du%zz(1:nx1,0)
 
-      u(j,nz) = uo(j,nz) + (0.5d0 * rxx * du%xx(j,nz)) + &
-               (((1d0 - eta) * rx) / (4d0 * s(j))) * du%x(j,nz) - &
-               (((1d0 - eta)**2 * dt) / (2d0 * s(j)**2)) * &
-               uo(j,nz) + 0.5d0 * rzz * du%zz(j,nz)
-   end do
+      u(1:nx1,nz) = uo(1:nx1,nz) + (0.5d0 * rxx * du%xx(1:nx1,nz)) + &
+               (((1d0 - eta) * rx) / (4d0 * s(1:nx1))) * du%x(1:nx1,nz) - &
+               (((1d0 - eta)**2 * dt) / (2d0 * s(1:nx1)**2)) * &
+               uo(1:nx1,nz) + 0.5d0 * rzz * du%zz(1:nx1,nz)
+!   end do
 end if
 
 return
@@ -333,37 +407,37 @@ call deriv_z(po2, dp2%z)
 call deriv_z(bo, db%z)
 call deriv_z(bo2, db2%z)
 
-do j = 1, nx1
-   u_nl_n(j,1:nz1) = (-rx / (8d0 * s(j) * delz)) * &
-                 (3d0 * (dp%x(j,1:nz1) * du%z(j,1:nz1) - &
-                 dp%z(j,1:nz1) * du%x(j,1:nz1)) - &
-                 (dp2%x(j,1:nz1) * du2%z(j,1:nz1) - &
-                 dp2%z(j,1:nz1) * du2%x(j,1:nz1))) + &
-                 ((1d0 - eta) * rz / (4d0 * s(j)**2)) * &
-                 (3d0 * uo(j,1:nz1) * dp%z(j,1:nz1) - &
-                 uo2(j,1:nz1) * dp2%z(j,1:nz1)) + &
-                 0.25d0 * rz * Q * (3d0 * db%z(j,1:nz1) - &
-                 db2%z(j,1:nz1))
+do k = 1, nz1
+   u_nl_n(1:nx1,k) = (-rx / (8d0 * s(1:nx1) * delz)) * &
+                 (3d0 * (dp%x(1:nx1,k) * du%z(1:nx1,k) - &
+                 dp%z(1:nx1,k) * du%x(1:nx1,k)) - &
+                 (dp2%x(1:nx1,k) * du2%z(1:nx1,k) - &
+                 dp2%z(1:nx1,k) * du2%x(1:nx1,k))) + &
+                 ((1d0 - eta) * rz / (4d0 * s(1:nx1)**2)) * &
+                 (3d0 * uo(1:nx1,k) * dp%z(1:nx1,k) - &
+                 uo2(1:nx1,k) * dp2%z(1:nx1,k)) + &
+                 0.25d0 * rz * Q * (3d0 * db%z(1:nx1,k) - &
+                 db2%z(1:nx1,k))
 end do
 
 if (tau /= 1) then
-   do j = 1, nx1
-      u_nl_n(j,0) = (-rx / (8d0 * s(j) * delz)) * &
-                 (-3d0 * dp%z(j,0) * du%x(j,0) + &
-                 dp2%z(j,0) * du2%x(j,0)) + &
-                 ((1d0 - eta) * rz / (4d0 * s(j)**2)) * &
-                 (3d0 * uo(j,0) * dp%z(j,0) - &
-                 uo2(j,0) * dp2%z(j,0)) + &
-                 0.25d0 * rz * Q * (3d0 * db%z(j,0) - db2%z(j,0))
+!   do j = 1, nx1
+   u_nl_n(1:nx1,0) = (-rx / (8d0 * s(1:nx1) * delz)) * &
+                 (-3d0 * dp%z(1:nx1,0) * du%x(1:nx1,0) + &
+                 dp2%z(1:nx1,0) * du2%x(1:nx1,0)) + &
+                 ((1d0 - eta) * rz / (4d0 * s(1:nx1)**2)) * &
+                 (3d0 * uo(1:nx1,0) * dp%z(1:nx1,0) - &
+                 uo2(1:nx1,0) * dp2%z(1:nx1,0)) + &
+                 0.25d0 * rz * Q * (3d0 * db%z(1:nx1,0) - db2%z(1:nx1,0))
 
-   u_nl_n(j,nz) = (-rx / (8d0 * s(j) * delz)) * &
-                  (-3d0 * dp%z(j,nz) * du%x(j,nz) + &
-                  dp2%z(j,nz) * du2%x(j,nz)) + &
-                  ((1d0 - eta) * rz / (4d0 * s(j)**2)) * &
-                  (3d0 * uo(j,nz) * dp%z(j,nz) - &
-                  uo2(j,nz) * dp2%z(j,nz)) + &
-                  0.25d0 * rz * Q * (3d0 * db%z(j,nz) - db2%z(j,nz))
-   end do
+   u_nl_n(1:nx1,nz) = (-rx / (8d0 * s(1:nx1) * delz)) * &
+                  (-3d0 * dp%z(1:nx1,nz) * du%x(1:nx1,nz) + &
+                  dp2%z(1:nx1,nz) * du2%x(1:nx1,nz)) + &
+                  ((1d0 - eta) * rz / (4d0 * s(1:nx1)**2)) * &
+                  (3d0 * uo(1:nx1,nz) * dp%z(1:nx1,nz) - &
+                  uo2(1:nx1,nz) * dp2%z(1:nx1,nz)) + &
+                  0.25d0 * rz * Q * (3d0 * db%z(1:nx1,nz) - db2%z(1:nx1,nz))
+!   end do
 end if
 
 return
@@ -384,11 +458,11 @@ call deriv_x(zo, dz%x)
 call deriv_xx(zo, dz%xx)
 call deriv_zz(zo, dz%zz)
 
-do j = 1, nx1
-   zn(j,1:nz1) = zo(j,1:nz1) + (0.5d0 * rxx * dz%xx(j,1:nz1)) + &
-                  (((1d0 - eta) * rx) / (4d0 * s(j))) * dz%x(j,1:nz1) - &
-                  (((1d0 - eta)**2 * dt) / (2d0 * s(j)**2)) * &
-                  zo(j,1:nz1) + 0.5d0 * rzz * dz%zz(j,1:nz1)
+do k = 1, nz1
+   zn(1:nx1,k) = zo(1:nx1,k) + (0.5d0 * rxx * dz%xx(1:nx1,k)) + &
+                  (((1d0 - eta) * rx) / (4d0 * s(1:nx1))) * dz%x(1:nx1,k) - &
+                  (((1d0 - eta)**2 * dt) / (2d0 * s(1:nx1)**2)) * &
+                  zo(1:nx1,k) + 0.5d0 * rzz * dz%zz(1:nx1,k)
 end do
 
 return
@@ -421,20 +495,36 @@ call deriv_z(zo2, dz_2%z)
 call deriv_z(jo, dj%z)
 call deriv_z(jo2, dj2%z)
 
-do j = 1, nx1
-   z_nl_n(j,1:nz1) = (((1d0 - eta) * rz) / (2d0 * s(j))) * &
-                 (3d0 * uo(j,1:nz1) * du%z(j,1:nz1) - &
-                 uo2(j,1:nz1) * du2%z(j,1:nz1)) - &
-                 ((1d0 - eta) * rz / (4d0 * s(j)**2)) * &
-                 (3d0 * zo(j,1:nz1) * dp%z(j,1:nz1) - &
-                 zo2(j,1:nz1) * dp2%z(j,1:nz1)) - &
-                 (rx / (8d0 * s(j) * delz)) * &
-                 ((3d0 * (dp%x(j,1:nz1) * dz%z(j,1:nz1) - &
-                 dp%z(j,1:nz1) * dz%x(j,1:nz1))) - &
-                 (dp2%x(j,1:nz1) * dz_2%z(j,1:nz1) - &
-                 dp2%z(j,1:nz1) * dz_2%x(j,1:nz1))) + &
-                 0.25d0 * rz * Q * (3d0 * dj%z(j,1:nz1) - &
-                 dj2%z(j,1:nz1))
+!do j = 1, nx1
+!   z_nl_n(j,1:nz1) = (((1d0 - eta) * rz) / (2d0 * s(j))) * &
+!                 (3d0 * uo(j,1:nz1) * du%z(j,1:nz1) - &
+!                 uo2(j,1:nz1) * du2%z(j,1:nz1)) - &
+!                 ((1d0 - eta) * rz / (4d0 * s(j)**2)) * &
+!                 (3d0 * zo(j,1:nz1) * dp%z(j,1:nz1) - &
+!                 zo2(j,1:nz1) * dp2%z(j,1:nz1)) - &
+!                 (rx / (8d0 * s(j) * delz)) * &
+!                 ((3d0 * (dp%x(j,1:nz1) * dz%z(j,1:nz1) - &
+!                 dp%z(j,1:nz1) * dz%x(j,1:nz1))) - &
+!                 (dp2%x(j,1:nz1) * dz_2%z(j,1:nz1) - &
+!                 dp2%z(j,1:nz1) * dz_2%x(j,1:nz1))) + &
+!                 0.25d0 * rz * Q * (3d0 * dj%z(j,1:nz1) - &
+!                 dj2%z(j,1:nz1))
+!end do
+
+do k = 1, nz1
+   z_nl_n(1:nx1,k) = (((1d0 - eta) * rz) / (2d0 * s(1:nx1))) * &
+                 (3d0 * uo(1:nx1,k) * du%z(1:nx1,k) - &
+                 uo2(1:nx1,k) * du2%z(1:nx1,k)) - &
+                 ((1d0 - eta) * rz / (4d0 * s(1:nx1)**2)) * &
+                 (3d0 * zo(1:nx1,k) * dp%z(1:nx1,k) - &
+                 zo2(1:nx1,k) * dp2%z(1:nx1,k)) - &
+                 (rx / (8d0 * s(1:nx1) * delz)) * &
+                 ((3d0 * (dp%x(1:nx1,k) * dz%z(1:nx1,k) - &
+                 dp%z(1:nx1,k) * dz%x(1:nx1,k))) - &
+                 (dp2%x(1:nx1,k) * dz_2%z(1:nx1,k) - &
+                 dp2%z(1:nx1,k) * dz_2%x(1:nx1,k))) + &
+                 0.25d0 * rz * Q * (3d0 * dj%z(1:nx1,k) - &
+                 dj2%z(1:nx1,k))
 end do
 
 return
@@ -596,17 +686,17 @@ double precision, intent(out) :: vr(0:nx,0:nz), vz(0:nx,0:nz)
 integer :: j, k
 
 do k = 1, nz1
-   do j = 0, nx
-      vr(j,k) = (-1d0 / (2d0 * s(j) * delz)) * (p(j,k+1) - p(j,k-1))
-   end do
+   !do j = 0, nx
+      vr(:,k) = (-1d0 / (2d0 * s(:) * delz)) * (p(:,k+1) - p(:,k-1))
+   !end do
 end do
 
-do j = 0, nx
-   vr(j,0) = (-1d0 / (2d0 * s(j) * delz)) * &
-              (-3d0 * p(j,0) + 4d0 * p(j,1) - p(j,2))
-   vr(j,nz) = (-1d0 / (2d0 * s(j) * delz)) * &
-              (3d0 * p(j,nz) - 4d0 * p(j,nz1) + p(j,nz-2))
-end do
+!do j = 0, nx
+   vr(:,0) = (-1d0 / (2d0 * s(:) * delz)) * &
+              (-3d0 * p(:,0) + 4d0 * p(:,1) - p(:,2))
+   vr(:,nz) = (-1d0 / (2d0 * s(:) * delz)) * &
+              (3d0 * p(:,nz) - 4d0 * p(:,nz1) + p(:,nz-2))
+!end do
 
 do k = 0, nz
    do j = 1, nx1
