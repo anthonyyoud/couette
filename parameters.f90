@@ -3,26 +3,26 @@ implicit none
 save
 
 double precision, parameter :: pi = 3.14159265358979d0
-double precision, parameter :: alpha = 3.163d0
+double precision, parameter :: alpha = 2.725d0
 double precision, parameter :: gamma = (2d0 * pi) / alpha
-double precision, parameter :: eta = 0.5d0
-double precision, parameter :: Re1 = 150d0
+double precision, parameter :: eta = 0.8d0
+double precision, parameter :: Re1 = 0d0
 double precision, parameter :: Re2 = 0d0
-double precision, parameter :: Re1_mod = 0d0
+double precision, parameter :: Re1_mod = 183.4d0
 double precision, parameter :: Re2_mod = 0d0
-double precision, parameter :: om1 = 0d0
+double precision, parameter :: om1 = 4d0
 double precision, parameter :: om2 = 0d0
 double precision, parameter :: dt = 0.0001d0
 double precision, parameter :: seed = 1d-1
 integer, parameter :: Ntot = 100000
 integer, parameter :: Nlim = 100000
 integer, parameter :: save_rate = 100
-integer, parameter :: save_rate_2 = 200
-integer, parameter :: nx = 40
-integer, parameter :: nz = 80
+integer, parameter :: save_rate_2 = 1000
+integer, parameter :: nx = 20
+integer, parameter :: nz = 40
 logical, parameter :: diag = .false.
-logical, parameter :: xsect_save = .false.
-logical, parameter :: restart = .false.
+logical, parameter :: xsect_save = .true.
+logical, parameter :: restart = .true.
 
 double precision, parameter :: delx = 1d0 / (nx+0)
 double precision, parameter :: delz = gamma / (nz+0)
