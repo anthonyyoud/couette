@@ -1,9 +1,12 @@
 MODULE pressure
+!Algorithms for the solution of the stream-function Poisson equation are as
+!for the current in current.f90
 implicit none
 
 contains
 
 SUBROUTINE p_poisson(Z_mat, psi, p_mat, desc_p, af)
+!Solve Poisson equation for the stream-function, psi for all tau
 use parameters
 use ic_bc
 implicit none
@@ -58,7 +61,9 @@ do j = 1, nx1*nz1, nb
 end do
 
 call SLTIMER(6)
-call DGSUM2D(ictxt, 'A', ' ', nxp1, nzp1, psi, nxp1, 0, 0)
+if (npcol > 1) then
+   call DGSUM2D(ictxt, 'A', ' ', nxp1, nzp1, psi, nxp1, 0, 0)
+end if
 call SLTIMER(6)
 
 if (mycol == 0) then

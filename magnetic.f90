@@ -1,9 +1,12 @@
 MODULE magnetic 
+!Algorithms for the solution of the magnetic Poisson equation are as
+!for the current in current.f90
 implicit none
 
 contains
 
 SUBROUTINE b_poisson(u_mat, bn, b_mat, desc_b, af)
+!Solve Poisson equation for azimuthal magnetic field when tau=0
 use parameters
 use ic_bc
 implicit none
@@ -59,7 +62,9 @@ do j = 0, nxp1*nz1-1, nb
 end do
 
 call SLTIMER(8)
-call DGSUM2D(ictxt, 'A', ' ', nxp1, nzp1, bn, nxp1, 0, 0)
+if (npcol > 1) then
+   call DGSUM2D(ictxt, 'A', ' ', nxp1, nzp1, bn, nxp1, 0, 0)
+end if
 call SLTIMER(8)
 
 if (mycol == 0) then
@@ -70,6 +75,7 @@ return
 END SUBROUTINE b_poisson
 
 SUBROUTINE fin_b_poisson(u_mat, bn, b_mat, desc_b, af)
+!Solve Poisson equation for azimuthal magnetic field when tau/=0
 use parameters
 use ic_bc
 use derivs
@@ -89,7 +95,9 @@ if (mycol == 0) then
    call deriv_z(u_mat, u_mat_z)
 end if
 
-call DGEBR2D(ictxt, 'A', ' ', nxp1, nzp1, u_mat_z, nxp1, 0, 0)
+if (npcol > 1) then
+   call DGEBR2D(ictxt, 'A', ' ', nxp1, nzp1, u_mat_z, nxp1, 0, 0)
+end if
 
 desc_u(1) = 502
 desc_u(2) = ictxt
@@ -131,7 +139,9 @@ do j = 0, nxp1*nzp1-1, nb
 end do
 
 call SLTIMER(8)
-call DGSUM2D(ictxt, 'A', ' ', nxp1, nzp1, bn, nxp1, 0, 0)
+if (npcol > 1) then
+   call DGSUM2D(ictxt, 'A', ' ', nxp1, nzp1, bn, nxp1, 0, 0)
+end if
 call SLTIMER(8)
 
 return

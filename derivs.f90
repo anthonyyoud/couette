@@ -4,6 +4,7 @@ implicit none
 contains
 
 SUBROUTINE deriv_x(f, fx)
+!First x derivative
 use parameters
 implicit none
 double precision, intent(in) :: f(0:nx,0:nz)
@@ -18,6 +19,7 @@ return
 END SUBROUTINE deriv_x
 
 SUBROUTINE deriv_xx(f, fxx)
+!Second x derivative
 use parameters
 implicit none
 double precision, intent(in) :: f(0:nx,0:nz)
@@ -32,6 +34,7 @@ return
 END SUBROUTINE deriv_xx
 
 SUBROUTINE deriv_z(f, fz)
+!First z derivative
 use parameters
 implicit none
 double precision, intent(in) :: f(0:nx,0:nz)
@@ -42,13 +45,14 @@ do k = 1, nz1
    fz(1:nx1,k) = f(1:nx1,k+1) - f(1:nx1,k-1)
    fz(1:nx1,0) = -f(1:nx1,2) + 4d0 * f(1:nx1,1) - 3d0 * f(1:nx1,0)
    fz(1:nx1,nz) = f(1:nx1,nz-2) - 4d0 * f(1:nx1,nz1) + 3d0 * &
-                   f(1:nx1,nz)
+                   f(1:nx1,nz)   !forward/backward difference at boundaries
 end do
 
 return
 END SUBROUTINE deriv_z
 
 SUBROUTINE deriv_zz(f, fzz)
+!Second z derivative
 use parameters
 implicit none
 double precision, intent(in) :: f(0:nx,0:nz)
@@ -58,9 +62,9 @@ integer :: j, k
 do k = 1, nz1
    fzz(1:nx1,k) = f(1:nx1,k+1) - 2d0 * f(1:nx1,k) + f(1:nx1,k-1)
    fzz(1:nx1,0) = -f(1:nx1,3) + 4d0 * f(1:nx1,2) - &
-                    5d0 * f(1:nx1,1) + 2d0 * f(1:nx1,0)
-   fzz(1:nx1,nz) = -f(1:nx1,nz-3) + 4d0 * f(1:nx1,nz-2) - &
-                     5d0 * f(1:nx1,nz1) + 2d0 * f(1:nx1,nz)
+                    5d0 * f(1:nx1,1) + 2d0 * f(1:nx1,0)      !forward/backward
+   fzz(1:nx1,nz) = -f(1:nx1,nz-3) + 4d0 * f(1:nx1,nz-2) - &  !difference at
+                     5d0 * f(1:nx1,nz1) + 2d0 * f(1:nx1,nz)  !boundaries
 end do
 
 return

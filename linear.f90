@@ -4,6 +4,7 @@ implicit none
 contains
 
 SUBROUTINE get_rhs_ux(uo, u)
+!Get the linear part for the right-hand side of the tridiagonal system for u
 use parameters
 use variables
 use derivs
@@ -16,7 +17,7 @@ type (deriv) :: du
 integer :: j, k
 
 call deriv_x(uo, du%x)
-call deriv_xx(uo, du%xx)
+call deriv_xx(uo, du%xx)   !get derivatives
 call deriv_zz(uo, du%zz)
 
 do k = 1, nz1
@@ -42,6 +43,7 @@ return
 END SUBROUTINE get_rhs_ux
 
 SUBROUTINE get_rhs_Zx(zo, zn)
+!Get linear part for the right-hand side of the tridiagonal system for Z
 use parameters
 use variables
 use derivs
@@ -53,7 +55,7 @@ type (deriv) :: dz
 integer :: j, k
 
 call deriv_x(zo, dz%x)
-call deriv_xx(zo, dz%xx)
+call deriv_xx(zo, dz%xx)   !get derivatives
 call deriv_zz(zo, dz%zz)
 
 do k = 1, nz1

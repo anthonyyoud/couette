@@ -3,6 +3,7 @@ use parameters
 implicit none
 
 type var
+!variables
    double precision :: new(0:nx,0:nz)
    double precision :: old(0:nx,0:nz)
    double precision :: old2(0:nx,0:nz)
@@ -12,6 +13,7 @@ type var
 end type var
 
 type deriv
+!derivatives
    double precision :: x(0:nx,0:nz)
    double precision :: xx(0:nx,0:nz)
    double precision :: z(0:nx,0:nz)
@@ -22,18 +24,21 @@ type deriv
 end type deriv
 
 type mat_comp
+!matrix components
    double precision :: lo(2:nx1)
    double precision :: di(nx1)
    double precision :: up(nx-2)
 end type mat_comp
 
 type uz_mat_comp
+!matrix components for u in the z-direction
    double precision :: lo(nz)
    double precision :: di(0:nz)
    double precision :: up(0:nz1)
 end type uz_mat_comp
 
 type zz_mat_comp
+!matrix components for Z in the z-direction
    double precision :: lo(2:nz1)
    double precision :: di(nz1)
    double precision :: up(nz-2)
@@ -46,6 +51,7 @@ double precision, save :: vr(0:nx,0:nz), vz(0:nx,0:nz), &
 contains
 
 SUBROUTINE copy_var(var_out, var_in)
+!Copy a variable
 use parameters
 implicit none
 
@@ -58,6 +64,7 @@ return
 END SUBROUTINE copy_var
 
 SUBROUTINE vr_vz(p, vr, vz)
+!Calculate radial and axial velocity components from the stream-function
 use parameters
 use ic_bc
 implicit none
@@ -74,18 +81,14 @@ vr(:,0) = (-1d0 / (2d0 * s(:) * delz)) * &
 vr(:,nz) = (-1d0 / (2d0 * s(:) * delz)) * &
            (3d0 * p(:,nz) - 4d0 * p(:,nz1) + p(:,nz-2))
 
-do k = 0, nz
-   do j = 1, nx1
-      vz(j,k) = (1d0 / (2d0 * s(j) * delx)) * (p(j+1,k) - p(j-1,k))
-   end do
+do j = 1, nx1
+   vz(j,:) = (1d0 / (2d0 * s(j) * delx)) * (p(j+1,:) - p(j-1,:))
 end do
 
-do k = 0, nz
-   vz(0,k) = 0d0 !(1d0 / (2d0 * s(0) * delx)) * &
+vz(0,:) = 0d0 !(1d0 / (2d0 * s(0) * delx)) * &
               !(-3d0 * p(0,k) + 4d0 * p(1,k) - p(2,k))
-   vz(nx,k) = 0d0 !(1d0 / (2d0 * s(nx) * delx)) * &
+vz(nx,:) = 0d0 !(1d0 / (2d0 * s(nx) * delx)) * &
               !(3d0 * p(nx,k) - 4d0 * p(nx1,k) + p(nx-2,k))
-end do
 
 return
 END SUBROUTINE vr_vz

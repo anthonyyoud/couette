@@ -4,6 +4,7 @@ implicit none
 contains
 
 SUBROUTINE get_nlin_ux(uo, uo2, po, po2, bo, bo2, u_nl_n)
+!Get the nonlinear part for the right-hand side of the tridiagonal system for u
 use parameters
 use variables
 use derivs
@@ -22,7 +23,7 @@ call deriv_x(uo2, du2%x)
 call deriv_z(uo, du%z)
 call deriv_z(uo2, du2%z)
 call deriv_x(po, dp%x)
-call deriv_x(po2, dp2%x)
+call deriv_x(po2, dp2%x)   !get derivatives
 call deriv_z(po, dp%z)
 call deriv_z(po2, dp2%z)
 call deriv_z(bo, db%z)
@@ -65,6 +66,7 @@ return
 END SUBROUTINE get_nlin_ux
 
 SUBROUTINE get_nlin_Zx(t, uo, uo2, po, po2, zo, zo2, jo, jo2, z_nl_n)
+!Get the nonlinear part for the right-hand side of the tridiagonal system for Z
 use parameters
 use variables
 use derivs
@@ -84,7 +86,7 @@ call deriv_x(po, dp%x)
 call deriv_x(po2, dp2%x)
 call deriv_z(po, dp%z)
 call deriv_z(po2, dp2%z)
-call deriv_x(zo, dz%x)
+call deriv_x(zo, dz%x)    !get derivatives
 call deriv_x(zo2, dz_2%x)
 call deriv_z(zo, dz%z)
 call deriv_z(zo2, dz_2%z)

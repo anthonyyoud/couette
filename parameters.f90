@@ -4,16 +4,16 @@ save
 
 integer, parameter :: nprow = 1
 integer, parameter :: npcol = 1
-integer, parameter :: nb = 1281
+integer, parameter :: nb = 1701
 
 double precision, parameter :: pi 	   = 3.14159265358979d0
-double precision, parameter :: alpha 	   = 0d0 !3.13d0 !3.75d0
-double precision, parameter :: gamma 	   = 3d0 !(2d0 * pi) / alpha
-double precision, parameter :: eta 	   = 0.75d0
-double precision, parameter :: Q	   = 0d0
-double precision, parameter :: Re1 	   = 0d0
+double precision, parameter :: alpha 	   = 0d0 !3.66d0
+double precision, parameter :: gamma 	   = 4d0 !(2d0 * pi) / alpha
+double precision, parameter :: eta 	   = 0.615d0
+double precision, parameter :: Q	   = 1d0
+double precision, parameter :: Re1 	   = 209d0
 double precision, parameter :: Re2 	   = 0d0 !-1d0*(1d0/eta)*Re1
-double precision, parameter :: Re1_mod 	   = 395d0
+double precision, parameter :: Re1_mod 	   = 0d0
 double precision, parameter :: Re2_mod 	   = 0d0
 double precision, parameter :: om1 	   = 0d0
 double precision, parameter :: om2 	   = 0d0
@@ -24,10 +24,9 @@ double precision, parameter :: tau_init	   = 1d0
 double precision, parameter :: tau_step    = 1d0
 double precision, parameter :: tau_end     = 1d0
 integer, 	  parameter :: nx 	   = 20
-integer, 	  parameter :: nz 	   = 60
+integer, 	  parameter :: nz 	   = 80
 integer, 	  parameter :: save_rate   = 10
-integer, 	  parameter :: save_rate_2 = 105
-logical, 	  parameter :: diag 	   = .false.
+integer, 	  parameter :: save_rate_2 = 210
 logical, 	  parameter :: xsect_save  = .false.
 logical, 	  parameter :: restart 	   = .true.
 logical,	  parameter :: auto_tau    = .false.

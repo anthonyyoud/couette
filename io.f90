@@ -4,13 +4,13 @@ implicit none
 contains
 
 FUNCTION itos(n)
+!Function to convert an integer into a string of length 7
 implicit none
 
 character(7) :: itos
 integer, intent(in) :: n
 integer   :: i, n_, d(7)
-character :: c(0:9) =  &
-   (/'0','1','2','3','4','5','6','7','8','9'/)
+character :: c(0:9) = (/'0','1','2','3','4','5','6','7','8','9'/)
 
 n_ = n
 do i = 7, 1, -1
@@ -24,18 +24,15 @@ return
 END FUNCTION itos
 
 SUBROUTINE open_files()
+!Open runtime files
 use parameters
 implicit none
+
 open (20, status = 'unknown', file = 'u_growth.dat')
 open (22, status = 'unknown', file = 'max_psi.dat')
 open (24, status = 'unknown', file = 'particle.dat')
 open (33, status = 'unknown', file = 'torque.dat')
 open (51, file = 'time_tau.dat')
-if (diag) then
-   open (90, status = 'unknown', file = 'lhs_u.dat')
-   open (91, status = 'unknown', file = 'lhs_Z.dat')
-   open (92, status = 'unknown', file = 'lhs_psi.dat')
-end if
 open (99, file = 'RUNNING')
 close (99)
 
@@ -43,25 +40,24 @@ return
 END SUBROUTINE open_files
 
 SUBROUTINE close_files()
+!Close runtime files
 use parameters
 implicit none
+
 close (20)
 close (22)
 close (24)
 close (33)
 close (51)
-if (diag) then
-   close (90)
-   close (91)
-   close (92)
-end if
 
 return
 END SUBROUTINE close_files
 
 SUBROUTINE save_growth(t, ur, ur_prev, uz, pn, v, zn, bn, jn, growth)
+!Save fields at particular points in (x,z)-plane
 use parameters
 implicit none
+
 double precision, intent(in) :: t, ur(0:nx,0:nz), uz(0:nx,0:nz), &
                                 pn(0:nx,0:nz), bn(0:nx,0:nz), &
                                 jn(0:nx,0:nz), v(0:nx,0:nz), &
@@ -70,10 +66,11 @@ double precision, intent(out) :: growth
 double precision, save :: min_p, max_p, min_ur, max_ur, min_uz, max_uz
 integer :: zpos, xpos
 
+!growth rate of vortices
 growth = log(abs(ur(nx/2,nz/2)/ur_prev(nx/2,nz/2))) / (dt * save_rate)
 
 xpos = nx/2
-zpos = nz/2
+zpos = nz/2   !position at which to save fields
 
 write(20, '(11e17.9)') t, ur(nx/2,nz/2), ur(nx/2,0), growth, &
                       uz(xpos,zpos), &
@@ -88,8 +85,8 @@ if (minval(ur) < min_ur) then
    min_ur = minval(ur)
 end if
 
-if (maxval(uz) > max_uz) then
-   max_uz = maxval(uz)
+if (maxval(uz) > max_uz) then        !calculate maximum/minimum
+   max_uz = maxval(uz)               !values of fields
 end if
 if (minval(uz) < min_uz) then
    min_uz = minval(uz)
@@ -108,8 +105,10 @@ return
 END SUBROUTINE save_growth
 
 SUBROUTINE save_torque(t, v)
+!Save torques
 use parameters
 implicit none
+
 double precision, intent(in) :: t, v(0:nx,0:nz)
 integer :: k
 double precision :: xi, C1, C2, G1(0:nz), G2(0:nz), G1_, G2_
@@ -134,6 +133,7 @@ return
 END SUBROUTINE save_torque
 
 SUBROUTINE save_xsect(ur, uz, pn, t, p)
+!Save cross-sections of fields for use in IDL
 use parameters
 use ic_bc
 implicit none
@@ -159,6 +159,7 @@ return
 END SUBROUTINE
 
 SUBROUTINE save_surface(pn, v, zn, ur, uz, bn, jn, p, t)
+!Save surfaces of fields for use in gnuplot
 use parameters
 use ic_bc
 implicit none
@@ -220,6 +221,7 @@ return
 END SUBROUTINE save_surface
 
 SUBROUTINE write_data(p, p_start, t)
+!Calculations of various quantities; save fields
 use parameters
 use variables
 implicit none
@@ -228,23 +230,23 @@ integer, intent(in) :: p, p_start
 double precision, intent(in) :: t
 double precision :: growth_rate
 
-call vr_vz(psi%old, vr, vz)
-if (save_part) call particle(vr, vrold, vz, vzold, x_pos, z_pos)
-!if ((Re1 /= 0d0) .or. (Re2 /= 0d0)) then
+call vr_vz(psi%old, vr, vz)   !get radial, axial velocities
+if (save_part) call particle(vr, vrold, vz, vzold, x_pos, z_pos) !save particle
+!if ((Re1 /= 0d0) .or. (Re2 /= 0d0)) then                        !path
 !   call save_torque(t, unew)
 !end if
 if ((p /= p_start) .and. ((p - p_start) > save_rate)) then
    call save_growth(t, vr, vrold, vz, psi%old, ut%new, zt%new, &
                     bt%old, jt%old, growth_rate)
    if ((om1 == 0d0) .and. (om2 == 0d0)) then
-      if ((dabs(growth_rate) < 1d-8) .and. &
+      if ((dabs(growth_rate) < 1d-8) .and. &  !if vr saturated
           (dabs(vr(nx/2, nz/2)) > 1d-3)) then
-         if ((.not. auto_tau) .or. (tau == tau_end)) then
-            call save_time_tau(tau, t)
-            call end_state(ut%old, zt%old, psi%old, bt%old, jt%old, p)
+         if ((.not. auto_tau) .or. (tau == tau_end)) then  !if tau not auto
+            call save_time_tau(tau, t)                     !or tau at end
+            call end_state(ut%old, zt%old, psi%old, bt%old, jt%old, p) !finish
          else if (tau < 1d0) then
             call save_time_tau(tau, t)
-            tau = tau + tau_step
+            tau = tau + tau_step   !increment tau
             print*, 'tau = ', tau
             call save_xsect(vr, vz, psi%old, t, p)
             call save_surface(psi%old, ut%new, zt%new, vr, vz, &
@@ -258,6 +260,7 @@ return
 END SUBROUTINE write_data
 
 SUBROUTINE terminate(p, t)
+!Terminate run if file 'RUNNING' does not exist in run directory
 use parameters
 use variables
 implicit none
@@ -267,26 +270,27 @@ double precision, intent(in) :: t
 logical :: run_exist
 
 if (mycol == 0) then
-   inquire(file='RUNNING', exist=run_exist)
-   if (.not. run_exist) then
+   inquire(file='RUNNING', exist=run_exist)  !does 'RUNNING' exist?
+   if (.not. run_exist) then  !if not then finish
       print*, 'Stop requested.  Ending process ', mycol
       print*, 'Saving end state'
       call end_state(ut%old, zt%old, psi%old, bt%old, jt%old, p)
       call save_xsect(vr, vz, psi%old, t, p)
       call save_surface(psi%old, ut%old, zt%old, &
                         vr, vz, bt%old, jt%old, p, t)
-      end_proc = 1
+      end_proc = 1  !flag to send to all processes
    end if
 end if
 
-call SLTIMER(3)
-call IGEBR2D(ictxt, 'A', ' ', 1, 1, end_proc, 1, 0, 0)
-call SLTIMER(3)
+call SLTIMER(3)                                          !tell all other
+call IGEBR2D(ictxt, 'A', ' ', 1, 1, end_proc, 1, 0, 0)   !processes to finish
+call SLTIMER(3)                                          !if end_proc=1
 
 return
 END SUBROUTINE terminate
 
 SUBROUTINE save_run(p, t)
+!Save cross-sections, surfaces if file 'SAVE' exists in run directory
 use parameters
 use variables
 implicit none
@@ -295,8 +299,8 @@ integer, intent(in) :: p
 double precision, intent(in) :: t
 logical :: save_exist
 
-inquire(file='SAVE', exist=save_exist)
-if (save_exist) then
+inquire(file='SAVE', exist=save_exist)   !does 'SAVE' exist?
+if (save_exist) then   !if so then save fields
    call save_xsect(vr, vz, psi%old, t, p)
    call save_surface(psi%old, ut%old, zt%old, &
                      vr, vz, bt%old, jt%old, p, t)
@@ -308,9 +312,10 @@ return
 END SUBROUTINE save_run
 
 SUBROUTINE end_state(u, zn, pn, bn, jn, p)
+!Save variables for use in a restarted run
 use parameters
-
 implicit none
+
 double precision, intent(in) :: u(0:nx,0:nz), zn(0:nx,0:nz), &
                                 pn(0:nx,0:nz), bn(0:nx,0:nz), &
                                 jn(0:nx,0:nz)
@@ -328,14 +333,16 @@ write(50, '(e19.7)') ((bn(j,k), k = 0, nz), j = 0, nx)
 write(50, '(e19.7)') ((jn(j,k), k = 0, nz), j = 0, nx)
 
 close (50)
-open (99, file = 'RUNNING')
+open (99, file = 'RUNNING')  !delete 'RUNNING' to finish run
 close (99, status = 'delete')
 
 return
 END SUBROUTINE end_state
 
 SUBROUTINE save_time_tau (tau, t)
+!Save the times at which tau is incremented
 implicit none
+
 double precision, intent(in) :: tau, t
 
 write(51, '(2e17.9)') t, tau
@@ -343,6 +350,7 @@ write(51, '(2e17.9)') t, tau
 END SUBROUTINE save_time_tau
 
 SUBROUTINE particle (vr, vrold, vz, vzold, xold, zold)
+!Calculate and save a particle path
 use parameters
 implicit none
 
