@@ -12,7 +12,16 @@ FILES
 -----
 ccf.f90				- Routines to do with Circular Couette 
 				  flow.
-couette_mod_implicit.f90	- Main program.
+couette_mod_implicit.f90	- Main program file.  Calculates 
+				  azimuthal velocity on top of CCF.
+couette_mod_perturb.f90		- As _implicit.f90 except azimuthal 
+				  velocity not calculated as a 
+				  perturbation on top of CCF.  Hence 
+				  does not use ccf.f90.  Faster, 
+				  especially for modulation.
+couette_mod_explicit.f90	- Explicit Euler time-stepping for the 
+				  infinite case only.  Used mainly for 
+				  debugging.
 derivs.f90			- Routines to calculate derivatives.
 ifc_makefile_couette		- Makefile for use with Intel Fortran 
 				  Compiler (ifc).
@@ -42,8 +51,8 @@ OUTPUT FILES
 ------------
 end_state.dat	- Saves time index, p, time-step, dt, and fields u, Z, 
 		  and psi, for restart.
-max_psi.dat	- Saves maximum value of psi over whole field.  Mainly 
-		  for use with IDL plots.
+max_psi.dat	- Saves maximum value of psi (and vr, vz over whole 
+		  field.  Mainly for use with IDL plots.
 particle.dat	- Saves the radial and axial position of a particle at 
 		  each time.
 script		- For use on batch queues.
@@ -51,19 +60,21 @@ time_tau.dat	- If auto_tau=.true. saves time at which each step in
 		  tau occured.
 torque.dat	- For steady case saves torque on inner and outer 
 		  cylinder.  Needs more work.
-u_growth.dat	- Saves time, radial velocity, growth rate, axial 
-		  velocity, stream function, azimuthal velocity, 
-		  vorticity, and Reynolds number.  Velocities are saved 
-		  at the points defined in io.f90 - subroutine 
+u_growth.dat	- Saves time, radial velocity (outflow, inflow), growth 
+		  rate, axial velocity, stream function, azimuthal 
+		  velocity, vorticity, and Reynolds number.  Velocities 
+		  are saved at the points defined in io.f90 - subroutine 
 		  'save_growth'.
 p*******.dat	- Stream function field saved at the time defined by 
-		  (time-step)*(number following 'p') in filename.
+		  (time-step)*(number following 'p') in filename.  (Only 
+		  if xsect_save == .true.).
 u*******.dat	- As above but for azimuthal velocity field.
 z*******.dat	- As above but for vorticity field.
 vr*******.dat	- As above but for radial velocity field.
 vz*******.dat	- As above but for axial velocity field.
 xsect*******.dat- Cross-section of vr, vz and psi saved at the time 
-		  defined as above for use in IDL 'jpeg' routine.
+		  defined as above for use in IDL 'jpeg' routine.  (Only 
+		  if xsect_save == .true.).
 
 PARAMETERS
 ----------
@@ -95,7 +106,7 @@ save_rate	- After how many time-steps should velocities be saved?
 save_rate_2	- After how many time-steps should cross-sections be 
 		  saved?
 diag		- (Obsolete, needs updating).  Diagnostic subroutines.
-xsect_save	- Should cross-sections of fields be saved?
+xsect_save	- Should cross-sections (surfaces) of fields be saved?
 restart		- Should we restart from a previous run.  If .true., 
 		  file 'end_state.dat' should be copied to restart 
 		  directory.
@@ -107,4 +118,4 @@ x_par_pos	- Initial radial position of a particle in the fluid as
 z_par_pos	- Initial axial position of a particle in the fluid as a 
 		  fraction of gamma (finite) or alpha (infinite).
 
-05/11/2003
+20/11/2003

@@ -3,13 +3,14 @@ use parameters
 use pressure
 use matrices
 use io
+use ccf
 implicit none
 type (mat_comp) :: Ux, Zx
 type (uz_mat_comp) :: Uz
 type (zz_mat_comp) :: Zz
 double precision :: growth_rate, &
-                    x(0:nx), z(0:nz), s(0:nx), t = 0d0, &
-                    u_nlin_new(0:nx,0:nz), &
+                    x(0:nx), z(0:nz), s(0:nx), t = 0d0, A = 0d0, &
+                    A_ = 0d0, B = 0d0, B_ = 0d0, u_nlin_new(0:nx,0:nz), &
                     u_nlin_old(0:nx,0:nz), z_nlin_new(0:nx,0:nz), &
                     z_nlin_old(0:nx,0:nz), unew(0:nx,0:nz), &
                     uold(0:nx,0:nz), uold2(0:nx,0:nz), &
@@ -17,8 +18,9 @@ double precision :: growth_rate, &
                     zold(0:nx,0:nz), zold2(0:nx,0:nz), &
                     z_int(0:nx,0:nz), pnew(0:nx,0:nz), pold(0:nx,0:nz), &
                     pold2(0:nx,0:nz), vr(0:nx,0:nz), vz(0:nx,0:nz), &
-                    vrold(0:nx,0:nz) = 0d0, &
-                    vzold(0:nx,0:nz) = 0d0, AB(2*nx1+nx1+1,nx1*nz1) 
+                    vc(0:nx), vc_(0:nx), vrold(0:nx,0:nz) = 0d0, &
+                    vzold(0:nx,0:nz) = 0d0, AB(2*nx1+nx1+1,nx1*nz1), &
+                    F(0:nx) 
 integer :: pivot(nx1*nz1), j, k, p = 0, p_start = 0
 logical :: file_exist, file_exist2
 
@@ -38,7 +40,7 @@ call ICS(unew, znew, pnew, x, z, s, p_start)
 
 if (.not. restart) then
    print*, 'Setting up BCS...'
-   call u_BCS(unew, 0d0)
+   call u_BCS(unew, vc, 0d0)
    call p_BCS(pnew)
    call z_BCS(znew, pnew, s, 0d0)
 end if
@@ -110,18 +112,24 @@ do p = p_start, Ntot
       end if
    end if
 
+   call get_A(t, A, A_)
+   call get_B(t, B, B_)
+   call get_vc(A, A_, B_, B_, vc, vc_, s)
+   call get_F(t, s, F)
+!F=0d0
    uold = unew
    zold = znew
 
 !*** Get RHS for v in x-direction ************
 
-   call get_rhs_ux(uold, unew, s)
+   call get_rhs_ux(uold, unew, s, vc)
 
 !*********************************************
 
 !*** Get non-lin terms for v in x-direction **
 
-   call get_nlin_ux(s, uold, uold2, pold, pold2, u_nlin_new)
+   call get_nlin_ux(s, A, A_, F, &
+                    uold, uold2, pold, pold2, u_nlin_new)
 
 !*********************************************
 
@@ -133,14 +141,14 @@ do p = p_start, Ntot
 
 !*** Get non-lin terms for Z in x-direction **
 
-   call get_nlin_Zx(s, t, uold, uold2, pold, pold2, zold, &
-                    zold2, z_nlin_new)
+   call get_nlin_Zx(s, t, A, A_, vc, vc_, &
+                    uold, uold2, pold, pold2, zold, zold2, z_nlin_new)
 
 !*********************************************
 
 !*** Solve for v in x-direction **************
 
-   call solve_ux(uold, unew, u_nlin_new, s, t, Ux)
+   call solve_ux(uold, unew, u_nlin_new, s, vc, t, Ux)
 
 !*********************************************
 
@@ -155,7 +163,7 @@ do p = p_start, Ntot
 
 !*** Solve for v in z-direction **************
 
-   call solve_uz(uold, unew, t, Uz)
+   call solve_uz(uold, unew, vc, t, Uz)
 
 !*********************************************
 
@@ -167,16 +175,15 @@ do p = p_start, Ntot
 
    u_int = unew
    z_int = znew
+
    pold2 = pold
-
 !   call get_poisson_test_znew(znew, x, z, s)
-
    call p_BCS(pnew)
    call poisson(znew, pnew, AB, pivot, s)
 
    if (diag) then
-      call calc_rhs_u(unew, uold2, pold, s, t, p)
-      call calc_rhs_Z(znew, zold2, uold2, pold, s, t, p)
+      call calc_rhs_u(unew, uold2, pold, s, t, A, p)
+      call calc_rhs_Z(znew, zold2, uold2, pold, s, t, A, vc, p)
       call calc_rhs_psi(pnew, znew, s, t, p)
    end if
 
@@ -230,8 +237,8 @@ else
       !zn(:,:) = seed
    else
       do k = 0, nz
-         u(:,k) = seed * dsin(pi*x(:)) * dcos(2d0*pi*z(k)/gamma)
-         pn(:,k) = seed * dsin(pi*x(:)) * dsin(2d0*pi**z(k)/gamma)
+         u(:,k) = seed * dsin(pi*x(:)) * dcos(alpha*z(k))
+         pn(:,k) = seed * dsin(pi*x(:)) * dsin(alpha*z(k))
       end do
      
       do k = 1, nz1
@@ -251,19 +258,22 @@ end if
 return
 END SUBROUTINE ICS
 
-SUBROUTINE u_BCS(u, t)
+SUBROUTINE u_BCS(u, vc, t)
 use parameters
 implicit none
 double precision, intent(out) :: u(0:nx,0:nz)
-double precision, intent(in) :: t
+double precision, intent(in) :: vc(0:nx), t
 integer :: k
 
-u(0,:) = Re1 + Re1_mod * dcos(om1 * t)
-u(nx,:) = Re2 + Re2_mod * dcos(om2 * t)
+u(0,:) = 0d0
+u(nx,:) = 0d0
+
+!u(0,:) = Re1 + Re1_mod * dcos(om1 * t)
+!u(nx,:) = Re2 + Re2_mod * dcos(om2 * t)
 
 if (tau == 1) then
-   u(:,0) = 0d0
-   u(:,nz) = 0d0
+   u(:,0) = -vc(:)
+   u(:,nz) = -vc(:)
 end if
 
 return
@@ -293,12 +303,12 @@ end if
 return
 END SUBROUTINE z_BCS
 
-SUBROUTINE get_rhs_ux(uo, u, s)
+SUBROUTINE get_rhs_ux(uo, u, s, vc)
 use parameters
 use derivs
 implicit none
 
-double precision, intent(in) :: s(0:nx), uo(0:nx,0:nz)
+double precision, intent(in) :: s(0:nx), vc(0:nx), uo(0:nx,0:nz)
 double precision, intent(out) :: u(0:nx,0:nz)
 double precision :: uo_x(0:nx,0:nz), uo_0x(0:nx,0:nz), &
                     uo_1x(0:nx,0:nz),  uo_xx(0:nx,0:nz), &
@@ -310,6 +320,11 @@ integer :: j, k
 call deriv_x(uo, uo_x, uo_0x, uo_1x)
 call deriv_xx(uo, uo_xx, uo_0xx, uo_1xx)
 call deriv_zz(uo, uo_zz, uo_0zz, uo_1zz)
+
+!uo_0zz(1:nx1,0) = 2d0 * (uo(1:nx1,1) - uo(1:nx1,0) - &
+!                  (delz * tau * vc(1:nx1)) / (1d0 - tau))
+!uo_1zz(1:nx1,nz) = 2d0 * (uo(1:nx1,nz1) - uo(1:nx1,nz) - &
+!                  (delz * tau * vc(1:nx1)) / (1d0 - tau))
 
 do j = 1, nx1
    u(j,1:nz1) = uo(j,1:nz1) + (0.5d0 * rxx * uo_xx(j,1:nz1)) + &
@@ -335,11 +350,14 @@ end if
 return
 END SUBROUTINE get_rhs_ux
 
-SUBROUTINE get_nlin_ux(s, uo, uo2, po, po2, u_nl_n)
+SUBROUTINE get_nlin_ux(s, A, A_, F, &
+                       uo, uo2, po, po2, u_nl_n)
 use parameters
 use derivs
+use ccf
 implicit none
-double precision, intent(in) :: uo(0:nx,0:nz), uo2(0:nx,0:nz), &
+double precision, intent(in) :: A, A_, F(0:nx), &
+                                uo(0:nx,0:nz), uo2(0:nx,0:nz), &
                                 po(0:nx,0:nz), po2(0:nx,0:nz), &
                                 s(0:nx)
 double precision, intent(out) :: u_nl_n(0:nx,0:nz)
@@ -363,32 +381,53 @@ call deriv_x(po2, po2_x)
 call deriv_z(po, po_z, po_0z, po_1z)
 call deriv_z(po2, po2_z, po2_0z, po2_1z)
 
+!po_0z(1:nx1,0) = po(1:nx1,1) - ((tau * delz - (1d0 - tau)) / &
+!                               ((1d0 - tau) + tau * delz)) * po(1:nx1,1)
+!po_1z(1:nx1,nz) = ((tau * delz - (1d0 - tau)) / &
+!                  ((1d0 - tau) + tau * delz)) * po(1:nx1,nz1) - &
+!                  po(1:nx1,nz1)
+
+!po2_0z(1:nx1,0) = po2(1:nx1,1) - ((tau * delz - (1d0 - tau)) / &
+!                               ((1d0 - tau) + tau * delz)) * po2(1:nx1,1)
+!po2_1z(1:nx1,nz) = ((tau * delz - (1d0 - tau)) / &
+!                  ((1d0 - tau) + tau * delz)) * po2(1:nx1,nz1) - &
+!                  po2(1:nx1,nz1)
+
 do j = 1, nx1
-   u_nl_n(j,1:nz1) = (-rx / (8d0 * s(j) * delz)) * &
+   u_nl_n(j,1:nz1) = 1d0*( (-rx / (8d0 * s(j) * delz)) * &
                  (3d0 * (po_x(j,1:nz1) * uo_z(j,1:nz1) - &
                  po_z(j,1:nz1) * uo_x(j,1:nz1)) - &
                  (po2_x(j,1:nz1) * uo2_z(j,1:nz1) - &
                  po2_z(j,1:nz1) * uo2_x(j,1:nz1))) + &
                  ((1d0 - eta) * rz / (4d0 * s(j)**2)) * &
                  (3d0 * uo(j,1:nz1) * po_z(j,1:nz1) - &
-                 uo2(j,1:nz1) * po2_z(j,1:nz1))
+                 uo2(j,1:nz1) * po2_z(j,1:nz1)) )+ &
+                 ((1d0 - eta) * rz / (2d0 * s(j))) * &
+                 (3d0 * 1d0*A * po_z(j,1:nz1) - &
+                 1d0*A_ * po2_z(j,1:nz1)) - F(j)
 end do
 
 if (tau /= 1) then
    do j = 1, nx1
-      u_nl_n(j,0) = (-rx / (8d0 * s(j) * delz)) * &
+      u_nl_n(j,0) = 1d0*( (-rx / (8d0 * s(j) * delz)) * &
                  (-3d0 * po_0z(j,0) * uo_0x(j,0) + &
                  po2_0z(j,0) * uo2_0x(j,0)) + &
                  ((1d0 - eta) * rz / (4d0 * s(j)**2)) * &
                  (3d0 * uo(j,0) * po_0z(j,0) - &
-                 uo2(j,0) * po2_0z(j,0))
+                 uo2(j,0) * po2_0z(j,0)) )+ &
+                 ((1d0 - eta) * rz / (2d0 * s(j))) * &
+                 (3d0 * 1d0*A * po_0z(j,0) - &
+                 1d0*A_ * po2_0z(j,0)) - F(j)
 
-   u_nl_n(j,nz) = (-rx / (8d0 * s(j) * delz)) * &
+   u_nl_n(j,nz) = 1d0*( (-rx / (8d0 * s(j) * delz)) * &
                   (-3d0 * po_1z(j,nz) * uo_1x(j,nz) + &
                   po2_1z(j,nz) * uo2_1x(j,nz)) + &
                   ((1d0 - eta) * rz / (4d0 * s(j)**2)) * &
                   (3d0 * uo(j,nz) * po_1z(j,nz) - &
-                  uo2(j,nz) * po2_1z(j,nz))
+                  uo2(j,nz) * po2_1z(j,nz)) )+ &
+                  ((1d0 - eta) * rz / (2d0 * s(j))) * &
+                  (3d0 * 1d0*A * po_1z(j,nz) - &
+                  1d0*A_ * po2_1z(j,nz)) - F(j)
    end do
 end if
 
@@ -417,14 +456,17 @@ end do
 return
 END SUBROUTINE get_rhs_Zx
 
-SUBROUTINE get_nlin_Zx(s, t, uo, uo2, po, po2, zo, zo2, z_nl_n)
+SUBROUTINE get_nlin_Zx(s, t, A, A_, vc, vc_, &
+                       uo, uo2, po, po2, zo, zo2, z_nl_n)
 use parameters
 use derivs
+use ccf
 implicit none
-double precision, intent(in) :: t, uo(0:nx,0:nz), uo2(0:nx,0:nz), &
+double precision, intent(in) :: t, A, A_,&
+                                uo(0:nx,0:nz), uo2(0:nx,0:nz), &
                                 po(0:nx,0:nz), po2(0:nx,0:nz), &
                                 zo(0:nx,0:nz), zo2(0:nx,0:nz), &
-                                s(0:nx)
+                                s(0:nx), vc(0:nx), vc_(0:nx)
 double precision, intent(out) :: z_nl_n(0:nx,0:nz)
 double precision :: uo_z(0:nx,0:nz), uo2_z(0:nx,0:nz), &
                     po_x(0:nx,0:nz), po2_x(0:nx,0:nz), &
@@ -447,10 +489,10 @@ call deriv_z(zo2, zo2_z)
 
 do j = 1, nx1
    z_nl_n(j,1:nz1) = (((1d0 - eta) * rz) / (2d0 * s(j)**2)) * &
-                 (3d0 * uo(j,1:nz1) * uo_z(j,1:nz1) - &
-                 uo2(j,1:nz1) * uo2_z(j,1:nz1)) - &
+                 (3d0 * (1d0*vc(j) + 1d0*uo(j,1:nz1)) * uo_z(j,1:nz1) - &
+                 (1d0*vc_(j) + 1d0*uo2(j,1:nz1)) * uo2_z(j,1:nz1)) - &
                  (rx / (8d0 * s(j) * delz)) * &
-                 ((3d0 * (po_x(j,1:nz1) * zo_z(j,1:nz1) - &
+                 1d0*((3d0 * (po_x(j,1:nz1) * zo_z(j,1:nz1) - &
                  po_z(j,1:nz1) * zo_x(j,1:nz1))) - &
                  (po2_x(j,1:nz1) * zo2_z(j,1:nz1) - &
                  po2_z(j,1:nz1) * zo2_x(j,1:nz1)))
@@ -459,19 +501,19 @@ end do
 return
 END SUBROUTINE get_nlin_Zx
 
-SUBROUTINE solve_ux(uo, u, u_nl, s, t, ux)
+SUBROUTINE solve_ux(uo, u, u_nl, s, vc, t, ux)
 use parameters
 use io
 implicit none
 double precision, intent(in) :: t
 double precision, intent(in) :: u(0:nx,0:nz), u_nl(0:nx,0:nz), &
-                                s(0:nx)
+                                s(0:nx), vc(0:nx)
 type (mat_comp), intent(in) :: ux
 double precision, intent(inout) :: uo(0:nx,0:nz)
 double precision :: ux_rhs(nx1)
 integer :: j, k
 
-call u_BCS(uo, t)
+call u_BCS(uo, vc, t)
 
 do k = 1, nz1
    ux_rhs(:) = u(1:nx1,k) + u_nl(1:nx1,k)
@@ -534,19 +576,19 @@ end do
 return
 END SUBROUTINE solve_Zx
 
-SUBROUTINE solve_uz(uo, u, t, uz)
+SUBROUTINE solve_uz(uo, u, vc, t, uz)
 use parameters
 use io
 implicit none
 double precision, intent(in) :: t
-double precision, intent(in) :: uo(0:nx,0:nz)
+double precision, intent(in) :: uo(0:nx,0:nz), vc(0:nx)
 type (uz_mat_comp), intent(in) :: uz
 double precision, intent(inout) :: u(0:nx,0:nz)
 double precision :: uz_rhs(0:nz), uz_rhs_t1(nz1), &
                     up(nz-2), di(nz1), lo(2:nz1)
 integer :: j, k
 
-call u_BCS(u, t)
+call u_BCS(u, vc, t)
 
 if (tau == 1) then
    up(:) = uz%up(1:nz-2)
@@ -566,6 +608,9 @@ if (tau == 1) then
 else
    do j = 1, nx1
       uz_rhs(:) = uo(j,:)
+
+      uz_rhs(0) = uz_rhs(0) - ((rz * tau * vc(j)) / (1d0 - tau))   
+      uz_rhs(nz) = uz_rhs(nz) - ((rz * tau * vc(j)) / (1d0 - tau))   
 
       call thomas(zlb, nz, uz%up, uz%di, uz%lo, uz_rhs)
 
@@ -639,13 +684,14 @@ end do
 return
 END SUBROUTINE r_vel
 
-SUBROUTINE calc_rhs_u(up1, u, psi, s, t, p)
+SUBROUTINE calc_rhs_u(up1, u, psi, s, t, A, p)
 use parameters
 use derivs
+use ccf
 implicit none
 integer, intent(in) :: p
 double precision, intent(in) :: t, up1(0:nx,0:nz), u(0:nx,0:nz), &
-                                s(0:nx), &
+                                s(0:nx), A, &
                                 psi(0:nx,0:nz)
 double precision :: u_x(0:nx,0:nz), u_xx(0:nx,0:nz), &
                     u_z(0:nx,0:nz), u_zz(0:nx,0:nz), &
@@ -672,7 +718,7 @@ do j = 1, nx1
                  ((psi_x(j,k) * u_z(j,k)) - &
                  (psi_z(j,k) * u_x(j,k))) + &
                  (((1d0 - eta) * rz) / (2d0 * s(j))) * &
-                 ((u(j,k) / s(j))) !- &
+                 ((u(j,k) / s(j)) + (2d0 * A) * psi_z(j,k)) !- &
 !                 up1(j,k) + u(j,k)
    end do
 end do
@@ -684,16 +730,17 @@ end if
 return
 END SUBROUTINE calc_rhs_u
 
-SUBROUTINE calc_rhs_Z(zp1, z, u, psi, s, t, p)
+SUBROUTINE calc_rhs_Z(zp1, z, u, psi, s, t, A, vc, p)
 use parameters
 use derivs
+use ccf
 implicit none
 
 integer, intent(in) :: p
-double precision, intent(in) :: t, zp1(0:nx,0:nz), z(0:nx,0:nz), &
+double precision, intent(in) :: t, A, zp1(0:nx,0:nz), z(0:nx,0:nz), &
                                 u(0:nx,0:nz), &
                                 psi(0:nx,0:nz), &
-                                s(0:nx)
+                                s(0:nx), vc(0:nx)
 
 double precision :: u_z(0:nx,0:nz), &
                     psi_x(0:nx,0:nz), psi_z(0:nx,0:nz), &
@@ -718,7 +765,7 @@ do j = 1, nx1
                    (z_x(j,k)) + &
                    rzz * (z_zz(j,k)) + &
                    (((1d0 - eta) * rz) / (s(j)**2)) * &
-                   ((u(j,k)) * u_z(j,k)) - &
+                   ((vc(j) + u(j,k)) * u_z(j,k)) - &
                    (rx / (4d0 * s(j) * delz)) * &
                    ((psi_x(j,k) * z_z(j,k) - &
                    psi_z(j,k) * z_x(j,k))) + &
@@ -736,6 +783,7 @@ END SUBROUTINE calc_rhs_Z
 SUBROUTINE calc_rhs_psi(psip1, zp1, s, t, p)
 use parameters
 use derivs
+use ccf
 implicit none
 
 integer, intent(in) :: p

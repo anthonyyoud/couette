@@ -120,8 +120,9 @@ growth = log(abs(ur(nx/2,nz/2)/ur_prev(nx/2,nz/2))) / (dt * save_rate)
 xpos = nx/4 !nx/10
 zpos = 3*nz/4 !nz - (nz / (2 * gamma)) !(nz * (gamma - 1)) / (2 * gamma)
 
-write(20, '(8e17.9)') t, ur(nx/2,nz/2), growth, uz(xpos,zpos), &
-                      pn(nx/2,3*nz/4), v(nx/2,nz/2), &
+write(20, '(9e17.9)') t, ur(nx/2,nz/2), ur(nx/2,0), growth, &
+                      uz(xpos,zpos), &
+                      pn(nx/4,3*nz/4), v(nx/2,nz/2), &
                       z(nx/2,nz/4), Re1 + Re1_mod * dcos(om1 * t)
 
 if (maxval(ur) > max_ur) then
@@ -209,6 +210,7 @@ double precision, intent(in) :: t, pn(0:nx,0:nz), v(0:nx,0:nz), &
 integer :: j, k
 
 open (19, status = 'unknown', file = 'p'//itos(p)//'.dat')
+!open (70, status = 'unknown', file = 'sin.dat')
 open (21, status = 'unknown', file = 'z'//itos(p)//'.dat')
 open (23, status = 'unknown', file = 'u'//itos(p)//'.dat')
 open (30, status = 'unknown', file = 'vr'//itos(p)//'.dat')
@@ -219,6 +221,7 @@ write(31, '(2A, i10, e19.7)') '#', 'p=', p, t
 write(23, '(2A, i10, e19.7)') '#', 'p=', p, t
 write(19, '(2A, i10, e19.7)') '#', 'p=', p, t
 write(21, '(2A, i10, e19.7)') '#', 'p=', p, t
+!write(70, '(2A, i10, e19.7)') '#', 'p=', p, t
 
 do j = 0, nx
    write(30, '(3e19.7)') (x(j), z(k), ur(j,k), k = 0, nz)
@@ -231,6 +234,9 @@ do j = 0, nx
    write(19, *)
    write(21, '(3e19.7)') (x(j), z(k), zn(j,k), k = 0, nz)
    write(21, *)
+!   write(70, '(3e19.7)') (x(j), z(k), dsin(pi*x(j))*&
+!                          dsin(alpha*z(k)), k = 0, nz)
+!   write(70, *)
 end do
 
 close (19)
@@ -238,6 +244,7 @@ close (21)
 close (23)
 close (30)
 close (31)
+!close (70)
 
 return
 END SUBROUTINE save_surface

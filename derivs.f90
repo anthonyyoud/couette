@@ -79,7 +79,8 @@ if (present(f0z)) then
 end if
 
 if (present(f1z)) then
-   f1z(1:nx-1,nz) = f(1:nx1,nz-2) - 4d0 * f(1:nx1,nz1) + 3d0 * f(1:nx1,nz)
+   f1z(1:nx-1,nz) = f(1:nx1,nz-2) - 4d0 * f(1:nx1,nz1) + 3d0 * &
+                    f(1:nx1,nz)
 end if
 
 return

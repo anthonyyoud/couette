@@ -13,11 +13,15 @@ double precision :: t_
 
 t_ = t - dt
 
-A = (1d0 / (1d0 - eta**2)) * ((Re2 + Re2_mod * cos(om2 * t)) - &
-    eta * (Re1 + Re1_mod * cos(om1 * t)))
+A = (1d0 / (1d0 - eta**2)) * ((Re2 + Re2_mod * dcos(om2 * t)) - &
+    eta * (Re1 + Re1_mod * dcos(om1 * t)))
 
-A_ = (1d0 / (1d0 - eta**2)) * ((Re2 + Re2_mod * cos(om2 * t_)) - &
-    eta * (Re1 + Re1_mod * cos(om1 * t_)))
+if (t == 0d0) then
+   A_ = A
+else
+   A_ = (1d0 / (1d0 - eta**2)) * ((Re2 + Re2_mod * dcos(om2 * t_)) - &
+       eta * (Re1 + Re1_mod * dcos(om1 * t_)))
+end if
 
 !A = -171.4285714d0
 !A_ = -171.4285714d0
@@ -34,11 +38,15 @@ double precision :: t_
 
 t_ = t - dt
 
-B = (eta / (1d0 - eta**2)) * ((Re1 + Re1_mod * cos(om1 * t)) - &
-    eta * (Re2 + Re2_mod * cos(om2 * t)))
+B = (eta / (1d0 - eta**2)) * ((Re1 + Re1_mod * dcos(om1 * t)) - &
+    eta * (Re2 + Re2_mod * dcos(om2 * t)))
 
-B_ = (eta / (1d0 - eta**2)) * ((Re1 + Re1_mod * cos(om1 * t_)) - &
-    eta * (Re2 + Re2_mod * cos(om2 * t_)))
+if (t == 0d0) then
+   B_ = B
+else
+   B_ = (eta / (1d0 - eta**2)) * ((Re1 + Re1_mod * dcos(om1 * t_)) - &
+       eta * (Re2 + Re2_mod * dcos(om2 * t_)))
+end if
 
 !B = 171.4285714d0
 !B_ = 171.4285714d0
