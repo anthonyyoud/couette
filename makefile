@@ -5,7 +5,6 @@ OBJECTS		= parameters.o ic_bc.o variables.o derivs.o stream.o \
 FFLAGS	        = -O2 -w95 -tpp7 -xW -unroll -vec_report0 #-parallel
 #FFLAGS	        = -d0 -CA -CB -CS -CU -CV
 LINKFLAGS	= -static
-TYPE            = implicit
 COMPILER	= mpif77
 LDBLAS          = -L$(BLASHOME)/lib -lblas 
 LDSCALA         = -L$(SCALAPACKHOME)/lib -lscalapack
@@ -33,7 +32,7 @@ variables.o : variables.f90
 
 #-----------------------------------------------------------------------
 io.o : io.f90
-	$(COMPILER) $(COMPFLAGS) -c variables.f90 io.f90
+	$(COMPILER) $(COMPFLAGS) -c io.f90
 
 #-----------------------------------------------------------------------
 derivs.o : derivs.f90
@@ -41,15 +40,15 @@ derivs.o : derivs.f90
 
 #-----------------------------------------------------------------------
 stream.o : stream.f90
-	$(COMPILER) $(COMPFLAGS) -c variables.f90 io.f90 stream.f90
+	$(COMPILER) $(COMPFLAGS) -c stream.f90
 
 #-----------------------------------------------------------------------
 magnetic.o : magnetic.f90
-	$(COMPILER) $(COMPFLAGS) -c io.f90 magnetic.f90
+	$(COMPILER) $(COMPFLAGS) -c magnetic.f90
 
 #-----------------------------------------------------------------------
 current.o : current.f90
-	$(COMPILER) $(COMPFLAGS) -c derivs.f90 io.f90 current.f90
+	$(COMPILER) $(COMPFLAGS) -c current.f90
 
 #-----------------------------------------------------------------------
 matrices.o : matrices.f90
@@ -68,9 +67,8 @@ solve.o : solve.f90
 	$(COMPILER) $(COMPFLAGS) -c solve.f90
 
 #-----------------------------------------------------------------------
-couette_mod.o : couette_mod_$(TYPE).f90
-	$(COMPILER) $(COMPFLAGS) -c -o couette_mod.o \
-                                    couette_mod_$(TYPE).f90
+couette_mod.o : couette_mod.f90
+	$(COMPILER) $(COMPFLAGS) -c -o couette_mod.o couette_mod.f90
 #-----------------------------------------------------------------------
 clean :
 	rm -f *.o *.mod *.d *.out *.pc *.pcl *.il
