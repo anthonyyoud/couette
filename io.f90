@@ -112,16 +112,40 @@ double precision, intent(in) :: t, ur(0:nx,0:nz), uz(0:nx,0:nz), &
                                 pn(0:nx,0:nz), v(0:nx,0:nz), &
                                 z(0:nx,0:nz), ur_prev(0:nx,0:nz)
 double precision, intent(out) :: growth
+double precision, save :: min_p, max_p, min_ur, max_ur, min_uz, max_uz
 integer :: zpos, xpos
 
 growth = log(abs(ur(nx/2,nz/2)/ur_prev(nx/2,nz/2))) / (dt * save_rate)
 
-xpos = nx/2 !nx/10
-zpos = nz/2 !nz - (nz / (2 * gamma)) !(nz * (gamma - 1)) / (2 * gamma)
+xpos = nx/4 !nx/10
+zpos = 3*nz/4 !nz - (nz / (2 * gamma)) !(nz * (gamma - 1)) / (2 * gamma)
 
 write(20, '(8e17.9)') t, ur(nx/2,nz/2), growth, uz(xpos,zpos), &
                       pn(nx/2,3*nz/4), v(nx/2,nz/2), &
                       z(nx/2,nz/4), Re1 + Re1_mod * dcos(om1 * t)
+
+if (maxval(ur) > max_ur) then
+   max_ur = maxval(ur)
+end if
+if (minval(ur) < min_ur) then
+   min_ur = minval(ur)
+end if
+
+if (maxval(uz) > max_uz) then
+   max_uz = maxval(uz)
+end if
+if (minval(uz) < min_uz) then
+   min_uz = minval(uz)
+end if
+
+if (maxval(pn) > max_p) then
+   max_p = maxval(pn)
+end if
+if (minval(pn) < min_p) then
+   min_p = minval(pn)
+end if
+
+write (22, '(7e17.9)') t, max_p, min_p, max_ur, min_ur, max_uz, min_uz
 
 return
 END SUBROUTINE save_growth
@@ -152,24 +176,16 @@ write (33, '(3e17.9)') t, G1_, G2_ !G1(nz/4), G2(nz/4)
 return
 END SUBROUTINE save_torque
 
-SUBROUTINE save_xsect(ur, uz, pn, x, z, p, max_p, min_p)
+SUBROUTINE save_xsect(ur, uz, pn, x, z, p)
 use parameters
 implicit none
 
 integer, intent(in) :: p
 double precision, intent(in) :: ur(0:nx,0:nz), uz(0:nx,0:nz), &
                                 pn(0:nx,0:nz), x(0:nx), z(0:nz)
-double precision :: min_p, max_p
 integer :: j, k
 
 open (32, status = 'unknown', file = 'xsect'//itos(p)//'.dat')
-
-if (maxval(pn) > max_p) then
-   max_p = maxval(pn)
-end if
-if (minval(pn) < min_p) then
-   min_p = minval(pn)
-end if
 
 write (32, '(2i5)') nx, nz
 write (32, '(e17.9)') ((ur(j,k), j = 0, nx), k = 0, nz)
