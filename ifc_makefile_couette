@@ -1,7 +1,7 @@
 OUTDIR		= ./
 OBJECTS		= parameters.o ic_bc.o derivs.o pressure.o magnetic.o \
                   current.o matrices.o io.o couette_mod.o
-COMPFLAGS	= -O3 -c -w95 -tpp7 -xW -ipo -unroll #-parallel
+COMPFLAGS	= -O3 -w95 -tpp7 -xW -ipo -unroll #-parallel
 #COMPFLAGS	= -c -g -d0 -CA -CB -CS -CU -CV
 TYPE            = implicit
 LIBS            = -L/home/pg/n8049290/Utilities/LAPACK \
@@ -10,45 +10,45 @@ COMPILER	= ifc
 
 #-----------------------------------------------------------------------
 all:	$(OBJECTS)
-	$(COMPILER) -i_dynamic -O3 -w95 -tpp7 -xW -ipo -unroll -o\
+	$(COMPILER) $(COMPFLAGS) -i_dynamic -o\
         $(OUTDIR)couette_mod.out \
         $(OBJECTS) $(LIBS)
 
 #-----------------------------------------------------------------------
 parameters.o : parameters.f90
-	$(COMPILER) $(COMPFLAGS) parameters.f90
+	$(COMPILER) $(COMPFLAGS) -c parameters.f90
 
 #-----------------------------------------------------------------------
 ic_bc.o : ic_bc.f90
-	$(COMPILER) $(COMPFLAGS) ic_bc.f90
+	$(COMPILER) $(COMPFLAGS) -c ic_bc.f90
 
 #-----------------------------------------------------------------------
 io.o : io.f90
-	$(COMPILER) $(COMPFLAGS) io.f90
+	$(COMPILER) $(COMPFLAGS) -c io.f90
 
 #-----------------------------------------------------------------------
 derivs.o : derivs.f90
-	$(COMPILER) $(COMPFLAGS) derivs.f90
+	$(COMPILER) $(COMPFLAGS) -c derivs.f90
 
 #-----------------------------------------------------------------------
 pressure.o : pressure.f90
-	$(COMPILER) $(COMPFLAGS) io.f90 pressure.f90
+	$(COMPILER) $(COMPFLAGS) -c io.f90 pressure.f90
 
 #-----------------------------------------------------------------------
 magnetic.o : magnetic.f90
-	$(COMPILER) $(COMPFLAGS) io.f90 magnetic.f90
+	$(COMPILER) $(COMPFLAGS) -c io.f90 magnetic.f90
 
 #-----------------------------------------------------------------------
 current.o : current.f90
-	$(COMPILER) $(COMPFLAGS) derivs.f90 io.f90 current.f90
+	$(COMPILER) $(COMPFLAGS) -c derivs.f90 io.f90 current.f90
 
 #-----------------------------------------------------------------------
 matrices.o : matrices.f90
-	$(COMPILER) $(COMPFLAGS) matrices.f90
+	$(COMPILER) $(COMPFLAGS) -c matrices.f90
 
 #-----------------------------------------------------------------------
 couette_mod.o : couette_mod_$(TYPE).f90
-	$(COMPILER) $(COMPFLAGS) -o couette_mod.o \
+	$(COMPILER) $(COMPFLAGS) -c -o couette_mod.o \
                                     couette_mod_$(TYPE).f90
 #-----------------------------------------------------------------------
 clean :

@@ -267,7 +267,7 @@ integer :: j, k
 
 open (50, file = 'end_state.dat')
 
-write(50, '(i7)') p
+write(50, '(i8)') p
 write(50, '(e19.7)') dt
 write(50, '(e19.7)') ((u(j,k), k = 0, nz), j = 0, nx)
 write(50, '(e19.7)') ((zn(j,k), k = 0, nz), j = 0, nx)
