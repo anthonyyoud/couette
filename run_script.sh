@@ -49,7 +49,18 @@ else
 fi
 rm $EXE
 bzip2 -9 `find $RUN_DIR/ -type f ! -iname "end_state.dat" \
-                                 ! -iname "parameters.f90"`
+                                 ! -iname "parameters.f90" \
+                                 ! -iname "xsect*.dat"`
+
+NXSECT=`ls | grep "xsect" | wc -l`
+if [ $NXSECT -gt 1 ]; then
+  tar cvvf xsect.tar xsect*
+  bzip2 -9 xsect.tar
+  rm xsect*.dat
+elif [ $NXSECT == 1 ]; then
+  bzip2 -9 xsect*.dat
+fi
+
 cp -r $RUN_DIR/* $DATA_DIR/$JOB_ID/
 mv $DATA_DIR/run$JOB_ID.log $DATA_DIR/$JOB_ID/
 if [ $SERIAL == 0 ]; then

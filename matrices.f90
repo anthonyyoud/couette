@@ -19,8 +19,8 @@ MODULE matrices
     TYPE (UZ_MAT_COMP), INTENT(OUT) :: uz
     TYPE (ZZ_MAT_COMP), INTENT(OUT) :: zz
 
-    ux%di(:) = 1.0_r2 + rxx + one_eta**2 * dt * 0.5_r2 / s(1:nx-1)**2
-    ux%lo(:) = -0.5_r2 * rxx + one_eta * rx * 0.25_r2 / s(2:nx-1)
+    ux%di(:) = 1.0_r2 + rxx + one_eta**2 * dt * 0.5_r2 / s(1:nx1)**2
+    ux%lo(:) = -0.5_r2 * rxx + one_eta * rx * 0.25_r2 / s(2:nx1)
     ux%up(:) = -0.5_r2 * rxx - one_eta * rx * 0.25_r2 / s(1:nx-2)
 
     uz%di(:) = 1.0_r2 + rzz
@@ -34,8 +34,8 @@ MODULE matrices
       uz%up(0) = -rzz
     END IF
 
-    zx%di(:) = 1.0_r2 + rxx + one_eta**2 * dt * 0.5_r2 / s(1:nx-1)**2
-    zx%lo(:) = -0.5_r2 * rxx + one_eta * rx * 0.25_r2 / s(2:nx-1)
+    zx%di(:) = 1.0_r2 + rxx + one_eta**2 * dt * 0.5_r2 / s(1:nx1)**2
+    zx%lo(:) = -0.5_r2 * rxx + one_eta * rx * 0.25_r2 / s(2:nx1)
     zx%up(:) = -0.5_r2 * rxx - one_eta * rx * 0.25_r2 / s(1:nx-2)
 
     zz%di(:) = 1.0_r2 + rzz

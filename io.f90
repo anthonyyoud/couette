@@ -135,7 +135,7 @@ MODULE io
 
     G1(:) = C1 + C2 * (0.5_r2 * (4.0_r2 * v(1,:) - v(2,:))) / delx
     G2(:) = C1 + (C2 / eta**2) * (0.5_r2 * (v(nx-2,:) - 4.0_r2 * &
-            v(nx-1,:))) / delx
+            v(nx1,:))) / delx
 
     G1_ = sum(G1(:))
     G2_ = sum(G2(:))
@@ -334,21 +334,27 @@ MODULE io
     IF ((p /= p_start) .AND. ((p - p_start) > save_rate)) THEN
       CALL save_growth(t, vr, vrold, vz, vzold, psi%old, ut%new, zt%new, &
                        bt%old, jt%old, growth_rate, growth_rate_vz)
-      IF ((om1 == 0.0_r2) .AND. (om2 == 0.0_r2)) THEN
+      IF ((ABS(om1 - 0.0_r2) < EPSILON(om1)) .AND. &
+          (ABS(om2 - 0.0_r2) < EPSILON(om2))) THEN
         IF ((ABS(growth_rate_vz) < 1e-8_r2) .AND. &  !if vr saturated
             (ABS(vr(nx/2, nz/2)) > 1e-3_r2)) THEN
-          IF ((.NOT. auto_tau) .OR. (tau == tau_end)) THEN  !if tau not auto
-            CALL save_time_tau(tau, t)                     !or tau at end
-            CALL end_state(ut%old, zt%old, psi%old, bt%old, jt%old, p) !finish
-          ELSE IF (tau < 1.0_r2) THEN
-            CALL save_time_tau(tau, t)
-            tau = tau + tau_step   !increment tau
-            PRINT*, 'tau = ', tau
-            CALL save_xsect(vr, vz, psi%old, ut%new, zt%new, &
-                            bt%old, jt%old, t, p)
-            CALL save_surface(psi%old, ut%new, zt%new, vr, vz, &
-                              bt%old, jt%old, p, t)
+          saturated = saturated + 1
+          IF (saturated > 4) THEN
+            IF ((.NOT. auto_tau) .OR. (tau == tau_end)) THEN  !if tau not auto
+              CALL save_time_tau(tau, t)                     !or tau at end
+              CALL end_state(ut%old, zt%old, psi%old, bt%old, jt%old, p) !finish
+            ELSE IF (tau < 1.0_r2) THEN
+              CALL save_time_tau(tau, t)
+              tau = tau + tau_step   !increment tau
+              PRINT*, 'tau = ', tau
+              CALL save_xsect(vr, vz, psi%old, ut%new, zt%new, &
+                              bt%old, jt%old, t, p)
+              CALL save_surface(psi%old, ut%new, zt%new, vr, vz, &
+                                bt%old, jt%old, p, t)
+            END IF
           END IF
+        ELSE
+          saturated = 0
         END IF
       END IF
     END IF
