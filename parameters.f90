@@ -6,8 +6,8 @@ MODULE parameters
   !Data types by kind
   !****************************************************************************
   INTEGER, PARAMETER :: i1 = SELECTED_INT_KIND(9)       !4-byte integer
-  !INTEGER (i1), PARAMETER :: r2 = SELECTED_REAL_KIND(6,37)   !4-byte real
-  INTEGER (i1), PARAMETER :: r2 = SELECTED_REAL_KIND(15,307) !8-byte real
+  INTEGER (i1), PARAMETER :: r2 = SELECTED_REAL_KIND(6,37)   !4-byte real
+  !INTEGER (i1), PARAMETER :: r2 = SELECTED_REAL_KIND(15,307) !8-byte real
   !****************************************************************************
 
   !****************************************************************************
@@ -22,31 +22,31 @@ MODULE parameters
   !Parameters to set
   !****************************************************************************
   REAL (r2),    PARAMETER :: pi          = 3.14159265358979_r2
-  REAL (r2),    PARAMETER :: alpha       = 3.73_r2
-  REAL (r2),    PARAMETER :: gamma       = (2.0_r2 * pi) / alpha
-  REAL (r2),    PARAMETER :: eta         = 0.75_r2
+  REAL (r2),    PARAMETER :: alpha       = 0.0_r2 !3.73_r2
+  REAL (r2),    PARAMETER :: gamma       = 0.70_r2 !(2.0_r2 * pi) / alpha
+  REAL (r2),    PARAMETER :: eta         = 0.5_r2
   REAL (r2),    PARAMETER :: Q           = 0.0_r2
   REAL (r2),    PARAMETER :: Re1         = 0.0_r2
   REAL (r2),    PARAMETER :: Re2         = 0.0_r2 !-1.0_r2*(1.0_r2/eta)*Re1
-  REAL (r2),    PARAMETER :: Re1_mod     = 170.41_r2
+  REAL (r2),    PARAMETER :: Re1_mod     = 1500.0_r2
   REAL (r2),    PARAMETER :: Re2_mod     = 0.0_r2
-  REAL (r2),    PARAMETER :: om1         = 5.0_r2
+  REAL (r2),    PARAMETER :: om1         = 50.0_r2
   REAL (r2),    PARAMETER :: om2         = 0.0_r2
-  REAL (r2),    PARAMETER :: dt          = 0.0001_r2
+  REAL (r2),    PARAMETER :: dt          = 0.00001_r2
   REAL (r2),    PARAMETER :: seed        = 1e-1_r2
-  REAL (r2),    PARAMETER :: end_time    = 1.084_r2
-  REAL (r2),    PARAMETER :: tau_init    = 0.0_r2
+  REAL (r2),    PARAMETER :: end_time    = 4.2427_r2
+  REAL (r2),    PARAMETER :: tau_init    = 1.0_r2
   REAL (r2),    PARAMETER :: tau_step    = 1.0_r2
   REAL (r2),    PARAMETER :: tau_end     = 1.0_r2
-  INTEGER (i1), PARAMETER :: nx          = 50
+  INTEGER (i1), PARAMETER :: nx          = 80
   INTEGER (i1), PARAMETER :: nt          = 20
-  INTEGER (i1), PARAMETER :: nz          = 100
+  INTEGER (i1), PARAMETER :: nz          = 56
   INTEGER (i1), PARAMETER :: save_rate   = 10
-  INTEGER (i1), PARAMETER :: save_rate_2 = 6
-  LOGICAL,      PARAMETER :: xsect_save  = .FALSE.
+  INTEGER (i1), PARAMETER :: save_rate_2 = 125
+  LOGICAL,      PARAMETER :: xsect_save  = .TRUE.
   LOGICAL,      PARAMETER :: save3d      = .FALSE.
   LOGICAL,      PARAMETER :: iso_hel     = .FALSE.
-  LOGICAL,      PARAMETER :: restart     = .FALSE.
+  LOGICAL,      PARAMETER :: restart     = .TRUE.
   LOGICAL,      PARAMETER :: auto_tau    = .FALSE.
   !****************************************************************************
 

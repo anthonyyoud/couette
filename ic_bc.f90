@@ -55,7 +55,8 @@ MODULE ic_bc
       PRINT*, 'Getting restart conditions'
       CALL state_restart(u, zn, pn, bn, jn, p)  !get saved data if restart
     ELSE                   !put in estimate of eigen-function shape
-      IF (tau == 1) THEN  !which satisfies BCS multiplied by small seed
+      IF (ABS(tau - 1.0_r2) < EPSILON(tau)) THEN !which satisfies BCS
+                                                 !multiplied by small seed
         DO k = 0, nz
           u(:,k) = seed * SIN(2.0_r2*pi*z(k)/gamma) * SIN(pi*x(:))
           pn(:,k) = seed * SIN(2.0_r2*pi*z(k)/gamma) * SIN(pi*x(:))
@@ -98,7 +99,7 @@ MODULE ic_bc
                                  b_prev(:,:), j_prev(:,:)
     INTEGER (i1), INTENT(OUT) :: p
     REAL (r2)                 :: dt_prev
-    INTEGER (i1)              :: j, k, nx_prev, nz_prev
+    INTEGER (i1)              :: j, k, nx_prev, nz_prev, alloc_err
 
     OPEN (50, FILE = 'end_state.dat')
 
@@ -111,7 +112,8 @@ MODULE ic_bc
       PRINT*, 'Interpolating onto new grid...'
       ALLOCATE(u_prev(0:nx_prev,0:nz_prev), z_prev(0:nx_prev,0:nz_prev), &
                p_prev(0:nx_prev,0:nz_prev), b_prev(0:nx_prev,0:nz_prev) , &
-               j_prev(0:nx_prev,0:nz_prev)) 
+               j_prev(0:nx_prev,0:nz_prev), STAT=alloc_err)
+      IF (alloc_err /= 0) STOP 'ERROR: Interpolating allocation error' 
       READ(50, *) ((u_prev(j,k), k = 0, nz_prev), j = 0, nx_prev)
       READ(50, *) ((z_prev(j,k), k = 0, nz_prev), j = 0, nx_prev)
       READ(50, *) ((p_prev(j,k), k = 0, nz_prev), j = 0, nx_prev)
@@ -119,7 +121,16 @@ MODULE ic_bc
       READ(50, *) ((j_prev(j,k), k = 0, nz_prev), j = 0, nx_prev)
       CALL inter(u_prev, z_prev, p_prev, b_prev, j_prev, nx_prev, nz_prev, &
                  u, zn, pn, bn, jn)
-      DEALLOCATE(u_prev, z_prev, p_prev, b_prev, j_prev) !free up used memory
+      IF (ALLOCATED(u_prev)) DEALLOCATE(u_prev, STAT=alloc_err)
+      IF (alloc_err /= 0) STOP 'ERROR: Interpolating deallocation error'
+      IF (ALLOCATED(z_prev)) DEALLOCATE(z_prev, STAT=alloc_err)
+      IF (alloc_err /= 0) STOP 'ERROR: Interpolating deallocation error'
+      IF (ALLOCATED(p_prev)) DEALLOCATE(p_prev, STAT=alloc_err)
+      IF (alloc_err /= 0) STOP 'ERROR: Interpolating deallocation error'
+      IF (ALLOCATED(b_prev)) DEALLOCATE(b_prev, STAT=alloc_err)
+      IF (alloc_err /= 0) STOP 'ERROR: Interpolating deallocation error'
+      IF (ALLOCATED(j_prev)) DEALLOCATE(j_prev, STAT=alloc_err)
+      IF (alloc_err /= 0) STOP 'ERROR: Interpolating deallocation error'
     ELSE     !just read the data
       READ(50, *) ((u(j,k), k = 0, nz), j = 0, nx)
       READ(50, *) ((zn(j,k), k = 0, nz), j = 0, nx)
@@ -222,7 +233,7 @@ MODULE ic_bc
     u(nx,:) = Re2 + Re2_mod * COS(om2 * t) - &
              eps2 * COS(freq2 * z(:))
 
-    IF (tau == 1) THEN
+    IF (ABS(tau - 1.0_r2) < EPSILON(tau)) THEN
       u(:,0) = 0.0_r2
       u(:,nz) = 0.0_r2
     END IF
@@ -241,7 +252,7 @@ MODULE ic_bc
     zn(0,:) = -(8.0_r2 * pn(1,:) - pn(2,:)) / (2.0_r2 * s(0) * dx2)
     zn(nx,:) = -(8.0_r2 * pn(nx1,:) - pn(nx-2,:)) / (2.0_r2 * s(nx) * dx2)
 
-    IF (tau == 1) THEN
+    IF (ABS(tau - 1.0_r2) < EPSILON(tau)) THEN
       zn(:,0) = -(8.0_r2 * pn(:,1) - pn(:,2)) / &
                  (2.0_r2 * (s(:)) * dz2)
       zn(:,nz) = -(8.0_r2 * pn(:,nz1) - pn(:,nz-2)) / &
@@ -279,7 +290,7 @@ MODULE ic_bc
 
     REAL (r2), INTENT(OUT) :: bn(0:nx,0:nz)
 
-    IF (tau == 0) THEN
+    IF (ABS(tau - 0.0_r2) < EPSILON(tau)) THEN
       bn(:,0) = 0.0_r2
       bn(:,nz) = 0.0_r2
     END IF
@@ -297,7 +308,7 @@ MODULE ic_bc
     jn(0,:) = 0.0_r2
     jn(nx,:) = 0.0_r2
 
-    IF (tau == 1) THEN
+    IF (ABS(tau - 1.0_r2) < EPSILON(tau)) THEN
       jn(:,0) = 0.0_r2
       jn(:,nz) = 0.0_r2
     END IF

@@ -34,7 +34,7 @@ MODULE solve
       uo(1:nx1,k) = ux_rhs(:)   !intermediate solution
     END DO
 
-    IF (tau /= 1) THEN   !if tau /= 1 extra entries due to BCS
+    IF (ABS(tau - 1.0_r2) > EPSILON(tau)) THEN !extra entries due to BCS
       DO k = 0, nz, nz
         ux_rhs(:) = u(1:nx1,k) + u_nl(1:nx1,k)
 
@@ -100,7 +100,7 @@ MODULE solve
 
     CALL u_BCS(u, t)
 
-    IF (tau == 1) THEN
+    IF (ABS(tau - 1.0_r2) < EPSILON(tau)) THEN
       up(:) = uz%up(1:nz-2)
       di(:) = uz%di(1:nz1)   !dimensions of upper, lower, diagonal change
       lo(:) = uz%lo(2:nz1)   !for tau=1

@@ -81,7 +81,7 @@ MODULE variables
       vr(:,k) = (-1.0_r2 / (2.0_r2 * s(:) * delz)) * (p(:,k+1) - p(:,k-1))
     END DO
 
-    IF (tau /= 1) THEN
+    IF (ABS(tau - 1.0_r2) > EPSILON(tau)) THEN
       vr(:,0) = (-1.0_r2 / (2.0_r2 * s(:) * delz)) * &
                 (-3.0_r2 * p(:,0) + 4.0_r2 * p(:,1) - p(:,2))
       vr(:,nz) = (-1.0_r2 / (2.0_r2 * s(:) * delz)) * &

@@ -45,7 +45,7 @@ MODULE nonlinear
                         db2%z(1:nx1,k))
     END DO
 
-    IF (tau /= 1) THEN
+    IF (ABS(tau - 1.0_r2) > EPSILON(tau)) THEN
       u_nl_n(1:nx1,0) = (-0.125_r2 * rx / (s(1:nx1) * delz)) * &
                         (-3.0_r2 * dp%z(1:nx1,0) * du%x(1:nx1,0) + &
                         dp2%z(1:nx1,0) * du2%x(1:nx1,0)) + &

@@ -20,7 +20,7 @@ PROGRAM couette_mod
   REAL (r2),    ALLOCATABLE :: p_mat(:,:), b_mat(:,:), j_mat(:,:)
   REAL (r2),    EXTERNAL    :: SLINQUIRE
   INTEGER (i1), EXTERNAL    :: NUMROC
-  INTEGER (i1)              :: j, k, p=0, p_start=0, &
+  INTEGER (i1)              :: j, k, p=0, p_start=0, alloc_err=0, &
                                desc_p(7), desc_b(7), desc_j(7)
   LOGICAL                   :: state_exist
  
@@ -36,11 +36,12 @@ PROGRAM couette_mod
   IF ((myrow < 0) .OR. (mycol < 0)) STOP   !if process not in grid then exit
 
   IF (mycol == 0) THEN
-    IF (tau == 0.0_r2) THEN
+    IF (ABS(tau - 0.0_r2) < EPSILON(tau)) THEN
       WRITE(6, '(A7, f4.2, A20)') 'tau = ', tau, '- Infinite cylinder'
-    ELSE IF (tau == 1.0_r2) THEN
+    ELSE IF (ABS(tau - 1.0_r2) < EPSILON(tau)) THEN
       WRITE(6, '(A7, f4.2, A22)') 'tau = ', tau, '- Finite aspect ratio'
-    ELSE IF ((tau > 0.0_r2) .AND. (tau < 1.0_r2)) THEN
+    ELSE IF ((ABS(tau - 0.0_r2) > EPSILON(tau)) .AND. &
+             (ABS(tau - 1.0_r2) > EPSILON(tau))) THEN
       WRITE(6, '(A7, f4.2, A15)') 'tau = ', tau, '- Variable tau'
     ELSE
       WRITE(6, '(A7, f4.2)'), 'tau = ', tau
@@ -80,32 +81,42 @@ PROGRAM couette_mod
   !CALL BLACS_BARRIER(ictxt, 'A')  !wait until all processes get here
 
   CALL SLTIMER(1)
-  IF (tau == 0.0_r2) THEN
+  IF (ABS(tau - 0.0_r2) < EPSILON(tau)) THEN
     b_M = NUMROC(2*nxp1+1, 2*nxp1+1, myrow, 0, nprow)
     b_N = NUMROC(nxp1*nz1, nb, mycol, 0, npcol)
     j_M = NUMROC(2*nx1+1, 2*nx1+1, myrow, 0, nprow) !allocate
     j_N = NUMROC(nx1*nzp1, nb, mycol, 0, npcol)     !matrix dimensions local
-    ALLOCATE(b_mat(b_M,b_N))                        !to each process
-    ALLOCATE(j_mat(j_M,j_N))                        !depending on finite
-  ELSE IF (tau == 1.0_r2) THEN                       !or infinite cylinders
+    ALLOCATE(b_mat(b_M,b_N), STAT=alloc_err)        !to each process
+    IF (alloc_err /= 0) STOP 'ERROR: b_mat allocation error'
+    ALLOCATE(j_mat(j_M,j_N), STAT=alloc_err)        !depending on finite
+    IF (alloc_err /= 0) STOP 'ERROR: j_mat allocation error'
+  ELSE IF (ABS(tau - 1.0_r2) < EPSILON(tau)) THEN   !or infinite cylinders
     b_M = NUMROC(2*nxp1+1, 2*nxp1+1, myrow, 0, nprow)
     b_N = NUMROC(nxp1*nzp1, nb, mycol, 0, npcol)
     j_M = NUMROC(2*nx1+1, 2*nx1+1, myrow, 0, nprow)
     j_N = NUMROC(nx1*nz1, nb, mycol, 0, npcol)
-    ALLOCATE(b_mat(b_M,b_N)) 
-    ALLOCATE(j_mat(j_M,j_N))
-  ELSE IF ((tau /= 0.0_r2) .AND. (tau /= 1.0_r2)) THEN
+    ALLOCATE(b_mat(b_M,b_N), STAT=alloc_err) 
+    IF (alloc_err /= 0) STOP 'ERROR: b_mat allocation error'
+    ALLOCATE(j_mat(j_M,j_N), STAT=alloc_err)
+    IF (alloc_err /= 0) STOP 'ERROR: j_mat allocation error'
+  ELSE IF ((ABS(tau - 0.0_r2) > EPSILON(tau)) .AND. &
+           (ABS(tau - 1.0_r2) > EPSILON(tau))) THEN
     b_M = NUMROC(2*nxp1+1, 2*nxp1+1, myrow, 0, nprow)
     b_N = NUMROC(nxp1*nzp1, nb, mycol, 0, npcol)
     j_M = NUMROC(2*nx1+1, 2*nx1+1, myrow, 0, nprow)
     j_N = NUMROC(nx1*nzp1, nb, mycol, 0, npcol)
-    ALLOCATE(b_mat(b_M,b_N))
-    ALLOCATE(j_mat(j_M,j_N))
+    ALLOCATE(b_mat(b_M,b_N), STAT=alloc_err)
+    IF (alloc_err /= 0) STOP 'ERROR: b_mat allocation error'
+    ALLOCATE(j_mat(j_M,j_N), STAT=alloc_err)
+    IF (alloc_err /= 0) STOP 'ERROR: j_mat allocation error'
+  ELSE
+    STOP 'ERROR: Allocation error due to value of tau'
   END IF
 
   p_M = NUMROC(2*nx1+1, 2*nx1+1, myrow, 0, nprow)
   p_N = NUMROC(nx1*nz1, nb, mycol, 0, npcol)
-  ALLOCATE(p_mat(p_M,p_N))
+  ALLOCATE(p_mat(p_M,p_N), STAT=alloc_err)
+    IF (alloc_err /= 0) STOP 'ERROR: p_mat allocation error'
   CALL SLTIMER(1)
 
   IF (mycol == 0) THEN
@@ -116,15 +127,18 @@ PROGRAM couette_mod
   CALL SLTIMER(2)
   CALL psi_mat_setup(p_mat, desc_p, p_fill)
 
-  IF (tau == 0.0_r2) THEN
+  IF (ABS(tau - 0.0_r2) < EPSILON(tau)) THEN
     CALL b_mat_setup(b_mat, desc_b, b_fill)
     CALL j_mat_setup(j_mat, desc_j, j_fill)
-  ELSE IF (tau == 1.0_r2) THEN                         !left-hand side matrices
-    CALL fin_b_mat_setup(b_mat, desc_b, b_fill)    !for stream-function,
-    CALL fin_j_mat_setup(j_mat, desc_j, j_fill)    !current and magnetic
-  ELSE IF ((tau /= 0.0_r2) .AND. (tau /= 1.0_r2)) THEN    !Poisson equations
+  ELSE IF (ABS(tau - 1.0_r2) < EPSILON(tau)) THEN     !left-hand side matrices
+    CALL fin_b_mat_setup(b_mat, desc_b, b_fill)       !for stream-function,
+    CALL fin_j_mat_setup(j_mat, desc_j, j_fill)       !current and magnetic
+  ELSE IF ((ABS(tau - 0.0_r2) > EPSILON(tau)) .AND. & !Poisson equations
+           (ABS(tau - 1.0_r2) > EPSILON(tau))) THEN
     CALL fin_b_mat_setup(b_mat, desc_b, b_fill)
     CALL j_mat_setup(j_mat, desc_j, j_fill)
+  ELSE
+    STOP 'ERROR: Matrix setup subroutine call error due to value of tau'
   END IF
   CALL SLTIMER(2)
 
@@ -241,15 +255,18 @@ PROGRAM couette_mod
     CALL SLTIMER(5)
     !solve Poisson equations depending on tau
     CALL p_poisson(zt%new, psi%new, p_mat, desc_p, p_fill)
-    IF (tau == 0.0_r2) THEN
+    IF (ABS(tau - 0.0_r2) < EPSILON(tau)) THEN
       CALL b_poisson(ut%new, bt%new, b_mat, desc_b, b_fill)
       CALL j_poisson(psi%new, jt%new, j_mat, desc_j, j_fill)
-    ELSE IF (tau == 1.0_r2) THEN
+    ELSE IF (ABS(tau - 1.0_r2) < EPSILON(tau)) THEN
       CALL fin_b_poisson(ut%new, bt%new, b_mat, desc_b, b_fill)
       CALL fin_j_poisson(psi%new, jt%new, j_mat, desc_j, j_fill)
-    ELSE IF ((tau /= 0.0_r2) .AND. (tau /= 1.0_r2)) THEN
+    ELSE IF ((ABS(tau - 0.0_r2) > EPSILON(tau)) .AND. &
+             (ABS(tau - 1.0_r2) > EPSILON(tau))) THEN
       CALL fin_b_poisson(ut%new, bt%new, b_mat, desc_b, b_fill)
       CALL j_poisson(psi%new, jt%new, j_mat, desc_j, j_fill)
+    ELSE
+      STOP 'ERROR: Poisson solver subroutine call error due to value of tau'
     END IF
     CALL SLTIMER(5)
 
@@ -269,7 +286,12 @@ PROGRAM couette_mod
 
   IF (mycol == 0) PRINT*, 'Deallocating allocated arrays...'
 
-  DEALLOCATE(p_mat, b_mat, j_mat)   !deallocate allocated arrays
+  IF (ALLOCATED(p_mat)) DEALLOCATE(p_mat, STAT=alloc_err)
+  IF (alloc_err /= 0) STOP 'ERROR: p_mat deallocation error'
+  IF (ALLOCATED(b_mat)) DEALLOCATE(b_mat, STAT=alloc_err) !deallocate arrays
+  IF (alloc_err /= 0) STOP 'ERROR: b_mat deallocation error'
+  IF (ALLOCATED(j_mat)) DEALLOCATE(j_mat, STAT=alloc_err)
+  IF (alloc_err /= 0) STOP 'ERROR: j_mat deallocation error'
 
   IF (mycol == 0) THEN
     PRINT*, 'Closing runtime files...'

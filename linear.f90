@@ -30,7 +30,7 @@ MODULE linear
                    0.5_r2 * rzz * du%zz(1:nx1,k)
     END DO
 
-    IF (tau /= 1) THEN
+    IF (ABS(tau - 1.0_r2) > EPSILON(tau)) THEN
       u(1:nx1,0) = uo(1:nx1,0) + 0.5_r2 * rxx * du%xx(1:nx1,0) + &
                    one_eta * rx * 0.25_r2 * du%x(1:nx1,0) / s(1:nx1) - &
                    one_eta**2 * dt * 0.5_r2 * uo(1:nx1,0) / s(1:nx1)**2 + &

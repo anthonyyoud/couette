@@ -27,7 +27,7 @@ MODULE matrices
     uz%lo(:) = -0.5_r2 * rzz
     uz%up(:) = -0.5_r2 * rzz
 
-    IF (tau /= 1) THEN
+    IF (ABS(tau - 1.0_r2) > EPSILON(tau)) THEN
       uz%di(0) = 1.0_r2 + rzz + (rz * tau / (1.0_r2 - tau))  !extra entries -
       uz%di(nz) = 1.0_r2 + rzz + (rz * tau / (1.0_r2 - tau)) !Neumann BCS ends
       uz%lo(nz) = -rzz
