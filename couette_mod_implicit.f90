@@ -53,8 +53,6 @@ z_int = znew
 pold = pnew
 pold2 = pnew
 
-!call save_surface(pold, uold, zold, vr, vz, x, z, p, t)
-
 print*, 'Entering time loop'
 
 if (restart) then
@@ -178,11 +176,11 @@ vr2 = vr
 if (xsect_save) then
    if (mod(p, save_rate_2) == 0) then
       call save_xsect(vr, vz, x, z, p)
+      call save_surface(pold, uold, zold, vr, vz, x, z, p, t)
    end if
 end if
 
 if (p == Ntot) then
-   call save_surface(pold, uold, zold, vr, vz, x, z, p, t)
    call end_state(uold, zold, pold, p)
 end if
 

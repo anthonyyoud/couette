@@ -72,12 +72,12 @@ END FUNCTION itos
 SUBROUTINE open_files()
 use parameters
 implicit none
-open (19, status = 'unknown', file = 'p.dat')
+!open (19, status = 'unknown', file = 'p.dat')
 open (20, status = 'unknown', file = 'u_growth.dat')
-open (21, status = 'unknown', file = 'z.dat')
-open (23, status = 'unknown', file = 'u.dat')
-open (30, status = 'unknown', file = 'vr_field.dat')
-open (31, status = 'unknown', file = 'vz_field.dat')
+!open (21, status = 'unknown', file = 'z.dat')
+!open (23, status = 'unknown', file = 'u.dat')
+!open (30, status = 'unknown', file = 'vr_field.dat')
+!open (31, status = 'unknown', file = 'vz_field.dat')
 open (32, status = 'unknown', file = 'torque.dat')
 open (50, file = 'ans.dat')
 if (diag) then
@@ -94,12 +94,12 @@ END SUBROUTINE open_files
 SUBROUTINE close_files()
 use parameters
 implicit none
-close (19)
+!close (19)
 close (20)
-close (21)
-close (23)
-close (30)
-close (31)
+!close (21)
+!close (23)
+!close (30)
+!close (31)
 close (32)
 close (50)
 if (diag) then
@@ -185,6 +185,12 @@ double precision, intent(in) :: t, pn(0:nx,0:nz), v(0:nx,0:nz), &
                                 uz(0:nx,0:nz), x(0:nx), z(0:nz)
 integer :: j, k
 
+open (19, status = 'unknown', file = 'p'//itos(p)//'.dat')
+open (21, status = 'unknown', file = 'z'//itos(p)//'.dat')
+open (23, status = 'unknown', file = 'u'//itos(p)//'.dat')
+open (30, status = 'unknown', file = 'vr'//itos(p)//'.dat')
+open (31, status = 'unknown', file = 'vz'//itos(p)//'.dat')
+
 write(30, '(2A, i10, e19.7)') '#', 'p=', p, t
 write(31, '(2A, i10, e19.7)') '#', 'p=', p, t
 write(23, '(2A, i10, e19.7)') '#', 'p=', p, t
@@ -196,9 +202,6 @@ do j = 0, nx
    write(30, *)
    write(31, '(3e19.7)') (x(j), z(k), uz(j,k), k = 0, nz)
    write(31, *)
-end do
-
-do j = 0, nx
    write(23, '(3e19.7)') (x(j), z(k), v(j,k), k = 0, nz)
    write(23, *)
    write(19, '(3e19.7)') (x(j), z(k), pn(j,k), k = 0, nz)
@@ -207,11 +210,11 @@ do j = 0, nx
    write(21, *)
 end do
 
-write(30, *)
-write(31, *)
-write(23, *)
-write(19, *)
-write(21, *)
+close (19)
+close (21)
+close (23)
+close (30)
+close (31)
 
 return
 END SUBROUTINE save_surface
