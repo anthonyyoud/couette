@@ -322,7 +322,6 @@ do j = 1, nx1
                  (3d0 * uo(j,1:nz1) * po_z(j,1:nz1) - &
                  uo2(j,1:nz1) * po2_z(j,1:nz1)) )+ &
                  ((1d0 - eta) * rz / (2d0 * s(j))) * &
-                 !(A * (po_z(j,1:nz1) - po2_z(j,1:nz1)))
                  (3d0 * A * po_z(j,1:nz1) - &
                  A_ * po2_z(j,1:nz1)) - F(j)
 
@@ -333,7 +332,6 @@ u_nl_n(j,0) = 1d0*( (-rx / (8d0 * s(j) * delz)) * &
               (3d0 * uo(j,0) * po_0z(j,0) - &
               uo2(j,0) * po2_0z(j,0)) )+ &
               ((1d0 - eta) * rz / (2d0 * s(j))) * &
-              !(A * (po_z(j,0) - po2_z(j,0)))
               (3d0 * A * po_0z(j,0) - &
               A_ * po2_0z(j,0)) - F(j)
 
@@ -344,7 +342,6 @@ u_nl_n(j,nz) = 1d0*( (-rx / (8d0 * s(j) * delz)) * &
                (3d0 * uo(j,nz) * po_1z(j,nz) - &
                uo2(j,nz) * po2_1z(j,nz)) )+ &
                ((1d0 - eta) * rz / (2d0 * s(j))) * &
-               !(A * (po_z(j,nz) - po2_z(j,nz)))
                (3d0 * A * po_1z(j,nz) - &
                A_ * po2_1z(j,nz)) - F(j)
 end do
