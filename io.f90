@@ -223,61 +223,34 @@ double precision, intent(in) :: u(0:nx,0:nz), zn(0:nx,0:nz), &
 integer, intent(in) :: p
 integer :: j, k
 
-open (50, file = 'u_end.dat')
-open (51, file = 'z_end.dat')
-open (52, file = 'p_end.dat')
-open (53, file = 't.dat')
+open (50, file = 'end_state.dat')
 
-do j = 0, nx
-      write(50, '(21e19.7)') (u(j,k), k = 0, nz)
-      write(51, '(21e19.7)') (zn(j,k), k = 0, nz)
-      write(52, '(21e19.7)') (pn(j,k), k = 0, nz)
-end do
-
-write(53, '(i7)') p
+write(50, '(i7)') p
+write(50, '(e19.7)') ((u(j,k), k = 0, nz), j = 0, nx)
+write(50, '(e19.7)') ((zn(j,k), k = 0, nz), j = 0, nx)
+write(50, '(e19.7)') ((pn(j,k), k = 0, nz), j = 0, nx)
 
 close (50)
-close (51)
-close (52)
-close (53)
 
 return
 END SUBROUTINE end_state
 
-SUBROUTINE get_p(p_start)
-implicit none
-integer, intent(out) :: p_start
-
-open (53, file = 't.dat')
-
-read(53, *) p_start
-
-close (53)
-
-return
-END SUBROUTINE get_p
-
-SUBROUTINE state_restart(u, zn, pn)
+SUBROUTINE state_restart(u, zn, pn, p)
 use parameters
 implicit none
 double precision, intent(out) :: u(0:nx,0:nz), zn(0:nx,0:nz), &
                                  pn(0:nx,0:nz)
+integer, intent(out) :: p
 integer :: j, k
 
-open (50, file = 'u_end.dat')
-open (51, file = 'z_end.dat')
-open (52, file = 'p_end.dat')
+open (50, file = 'end_state.dat')
 
-
-do j = 0, nx
-      read(50, *) (u(j,k), k = 0, nz)
-      read(51, *) (zn(j,k), k = 0, nz)
-      read(52, *) (pn(j,k), k = 0, nz)
-end do
+read(50, *) p
+read(50, *) ((u(j,k), k = 0, nz), j = 0, nx)
+read(50, *) ((zn(j,k), k = 0, nz), j = 0, nx)
+read(50, *) ((pn(j,k), k = 0, nz), j = 0, nx)
 
 close (50)
-close (51)
-close (52)
 
 return
 END SUBROUTINE state_restart

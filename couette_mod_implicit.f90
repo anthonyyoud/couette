@@ -39,7 +39,7 @@ end if
 call open_files()
 
 print*, 'Setting up ICS...'
-call ICS(unew, znew, pnew, x, z, s)
+call ICS(unew, znew, pnew, x, z, s, p_start)
 
 if (.not. restart) then
    print*, 'Setting up BCS...'
@@ -62,10 +62,6 @@ pold = pnew
 pold2 = pnew
 
 print*, 'Entering time loop'
-
-if (restart) then
-   call get_p(p_start)
-end if
 
 !call get_timestep()
 
@@ -190,13 +186,14 @@ call close_files()
 
 END PROGRAM couette_mod
 
-SUBROUTINE ICS(u, zn, pn, x, z, s)
+SUBROUTINE ICS(u, zn, pn, x, z, s, p)
 use parameters
 use io
 implicit none
 double precision, intent(inout) :: u(0:nx,0:nz), zn(0:nx,0:nz), &
                                    pn(0:nx,0:nz)
 double precision, intent(out) :: x(0:nx), z(0:nz), s(0:nx)
+integer, intent(out) :: p
 integer :: j, k
 
 do j = 0, nx
@@ -210,7 +207,7 @@ s = eta + ((1d0 - eta) * x)
 
 if (restart) then
    print*, 'Getting restart conditions'
-   call state_restart(u, zn, pn)
+   call state_restart(u, zn, pn, p)
 
 else
    if (tau == 1) then
