@@ -24,19 +24,19 @@ s = eta + ((1d0 - eta) * x)
 return
 END SUBROUTINE get_xzs
 
-SUBROUTINE ICS(u, zn, pn, p)
+SUBROUTINE ICS(u, zn, pn, bn, jn, p)
 use parameters
 implicit none
 double precision, intent(inout) :: u(0:nx,0:nz), zn(0:nx,0:nz), &
-                                   pn(0:nx,0:nz)
+                                   pn(0:nx,0:nz), bn(0:nx,0:nz), &
+                                   jn(0:nx,0:nz)
 integer, intent(out) :: p
 real :: rand
 integer :: j, k
 
 if (restart) then
    print*, 'Getting restart conditions'
-   call state_restart(u, zn, pn, p)
-
+   call state_restart(u, zn, pn, bn, jn, p)
 else
    if (tau == 1) then
       do k = 0, nz
@@ -63,17 +63,21 @@ else
         end do
       end do
 
+      bn(:,:) = seed
+      jn(:,:) = seed
+
    end if
 end if
 
 return
 END SUBROUTINE ICS
 
-SUBROUTINE state_restart(u, zn, pn, p)
+SUBROUTINE state_restart(u, zn, pn, bn, jn, p)
 use parameters
 implicit none
 double precision, intent(out) :: u(0:nx,0:nz), zn(0:nx,0:nz), &
-                                 pn(0:nx,0:nz)
+                                 pn(0:nx,0:nz), bn(0:nx,0:nz), &
+                                 jn(0:nx,0:nz)
 double precision :: dt_prev
 integer, intent(out) :: p
 integer :: j, k
@@ -85,6 +89,8 @@ read(50, *) dt_prev
 read(50, *) ((u(j,k), k = 0, nz), j = 0, nx)
 read(50, *) ((zn(j,k), k = 0, nz), j = 0, nx)
 read(50, *) ((pn(j,k), k = 0, nz), j = 0, nx)
+read(50, *) ((bn(j,k), k = 0, nz), j = 0, nx)
+read(50, *) ((jn(j,k), k = 0, nz), j = 0, nx)
 
 close (50)   
 
@@ -152,6 +158,28 @@ p(:,nz) = 0d0
 
 return
 END SUBROUTINE p_BCS
+
+SUBROUTINE b_BCS(bn)
+use parameters
+implicit none
+double precision, intent(out) :: bn(0:nx,0:nz)
+
+bn(:,0) = 0d0
+bn(:,nz) = 0d0
+
+return
+END SUBROUTINE b_BCS
+
+SUBROUTINE j_BCS(jn)
+use parameters
+implicit none
+double precision, intent(out) :: jn(0:nx,0:nz)
+
+jn(0,:) = 0d0
+jn(nx,:) = 0d0
+
+return
+END SUBROUTINE j_BCS
 
 FUNCTION f1(index)
 use parameters

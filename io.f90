@@ -16,6 +16,9 @@ type deriv
    double precision :: xx(0:nx, 0:nz)
    double precision :: z(0:nx, 0:nz)
    double precision :: zz(0:nx, 0:nz)
+   double precision :: zx(0:nx, 0:nz)
+   double precision :: zxx(0:nx, 0:nz)
+   double precision :: zzz(0:nx, 0:nz)
 end type deriv
 
 type mat_comp
@@ -93,11 +96,12 @@ end if
 return
 END SUBROUTINE close_files
 
-SUBROUTINE save_growth(t, ur, ur_prev, uz, pn, v, zn, growth)
+SUBROUTINE save_growth(t, ur, ur_prev, uz, pn, v, zn, bn, jn, growth)
 use parameters
 implicit none
 double precision, intent(in) :: t, ur(0:nx,0:nz), uz(0:nx,0:nz), &
-                                pn(0:nx,0:nz), v(0:nx,0:nz), &
+                                pn(0:nx,0:nz), bn(0:nx,0:nz), &
+                                jn(0:nx,0:nz), v(0:nx,0:nz), &
                                 zn(0:nx,0:nz), ur_prev(0:nx,0:nz)
 double precision, intent(out) :: growth
 double precision, save :: min_p, max_p, min_ur, max_ur, min_uz, max_uz
@@ -108,10 +112,11 @@ growth = log(abs(ur(nx/2,nz/2)/ur_prev(nx/2,nz/2))) / (dt * save_rate)
 xpos = nx/2
 zpos = nz/2
 
-write(20, '(9e17.9)') t, ur(nx/2,nz/2), ur(nx/2,0), growth, &
+write(20, '(11e17.9)') t, ur(nx/2,nz/2), ur(nx/2,0), growth, &
                       uz(xpos,zpos), &
                       pn(nx/4,3*nz/4), v(nx/2,nz/2), &
-                      zn(nx/2,nz/4), Re1 + Re1_mod * dcos(om1 * t)
+                      zn(nx/2,nz/4), bn(nx/2,nz/2), jn(nx/2,nz/2), &
+                      Re1 + Re1_mod * dcos(om1 * t)
 
 if (maxval(ur) > max_ur) then
    max_ur = maxval(ur)
@@ -190,13 +195,14 @@ close (32)
 return
 END SUBROUTINE
 
-SUBROUTINE save_surface(pn, v, zn, ur, uz, p, t)
+SUBROUTINE save_surface(pn, v, zn, ur, uz, bn, jn, p, t)
 use parameters
 use ic_bc
 implicit none
 integer, intent(in) :: p
 double precision, intent(in) :: t, pn(0:nx,0:nz), v(0:nx,0:nz), &
-                                zn(0:nx,0:nz), ur(0:nx,0:nz), &
+                                zn(0:nx,0:nz), bn(0:nx,0:nz), &
+                                jn(0:nx,0:nz), ur(0:nx,0:nz), &
                                 uz(0:nx,0:nz)
 integer :: j, k
 
@@ -206,9 +212,13 @@ open (21, status = 'unknown', file = 'z'//itos(p)//'.dat')
 open (23, status = 'unknown', file = 'u'//itos(p)//'.dat')
 open (30, status = 'unknown', file = 'vr'//itos(p)//'.dat')
 open (31, status = 'unknown', file = 'vz'//itos(p)//'.dat')
+open (34, status = 'unknown', file = 'b'//itos(p)//'.dat')
+open (35, status = 'unknown', file = 'j'//itos(p)//'.dat')
 
 write(30, '(2A, i10, e19.7)') '#', 'p=', p, t
 write(31, '(2A, i10, e19.7)') '#', 'p=', p, t
+write(34, '(2A, i10, e19.7)') '#', 'p=', p, t
+write(35, '(2A, i10, e19.7)') '#', 'p=', p, t
 write(23, '(2A, i10, e19.7)') '#', 'p=', p, t
 write(19, '(2A, i10, e19.7)') '#', 'p=', p, t
 write(21, '(2A, i10, e19.7)') '#', 'p=', p, t
@@ -219,6 +229,10 @@ do j = 0, nx
    write(30, *)
    write(31, '(3e19.7)') (x(j), z(k), uz(j,k), k = 0, nz)
    write(31, *)
+   write(34, '(3e19.7)') (x(j), z(k), bn(j,k), k = 0, nz)
+   write(34, *)
+   write(35, '(3e19.7)') (x(j), z(k), jn(j,k), k = 0, nz)
+   write(35, *)
    write(23, '(3e19.7)') (x(j), z(k), v(j,k), k = 0, nz)
    write(23, *)
    write(19, '(3e19.7)') (x(j), z(k), pn(j,k), k = 0, nz)
@@ -235,16 +249,19 @@ close (21)
 close (23)
 close (30)
 close (31)
+close (34)
+close (35)
 !close (70)
 
 return
 END SUBROUTINE save_surface
 
-SUBROUTINE end_state(u, zn, pn, p)
+SUBROUTINE end_state(u, zn, pn, bn, jn, p)
 use parameters
 implicit none
 double precision, intent(in) :: u(0:nx,0:nz), zn(0:nx,0:nz), &
-                                pn(0:nx,0:nz)
+                                pn(0:nx,0:nz), bn(0:nx,0:nz), &
+                                jn(0:nx,0:nz)
 integer, intent(in) :: p
 integer :: j, k
 
@@ -255,6 +272,8 @@ write(50, '(e19.7)') dt
 write(50, '(e19.7)') ((u(j,k), k = 0, nz), j = 0, nx)
 write(50, '(e19.7)') ((zn(j,k), k = 0, nz), j = 0, nx)
 write(50, '(e19.7)') ((pn(j,k), k = 0, nz), j = 0, nx)
+write(50, '(e19.7)') ((bn(j,k), k = 0, nz), j = 0, nx)
+write(50, '(e19.7)') ((jn(j,k), k = 0, nz), j = 0, nx)
 
 close (50)
 open (99, file = 'RUNNING')

@@ -4,23 +4,29 @@ use pressure
 use matrices
 use io
 use ic_bc
+use magnetic
+use current
 implicit none
 type (mat_comp) :: Ux, Zx
 type (uz_mat_comp) :: Uz
 type (zz_mat_comp) :: Zz
-double precision :: growth_rate, &
-                    t = 0d0, &
-                    u_nlin_new(0:nx,0:nz), &
-                    u_nlin_old(0:nx,0:nz), z_nlin_new(0:nx,0:nz), &
-                    z_nlin_old(0:nx,0:nz), unew(0:nx,0:nz), &
-                    uold(0:nx,0:nz), uold2(0:nx,0:nz), &
-                    u_int(0:nx,0:nz), znew(0:nx,0:nz), & 
-                    zold(0:nx,0:nz), zold2(0:nx,0:nz), &
-                    z_int(0:nx,0:nz), pnew(0:nx,0:nz), pold(0:nx,0:nz), &
-                    pold2(0:nx,0:nz), vr(0:nx,0:nz), vz(0:nx,0:nz), &
-                    vrold(0:nx,0:nz) = 0d0, &
-                    vzold(0:nx,0:nz) = 0d0, AB(2*nx1+nx1+1,nx1*nz1) 
-integer :: pivot(nx1*nz1), j, k, p = 0, p_start = 0
+double precision :: growth_rate, t = 0d0, &
+                    u_nlin_new(0:nx,0:nz), u_nlin_old(0:nx,0:nz), &
+                    z_nlin_new(0:nx,0:nz), z_nlin_old(0:nx,0:nz), &
+                    unew(0:nx,0:nz), uold(0:nx,0:nz), uold2(0:nx,0:nz), &
+                    u_int(0:nx,0:nz), &
+                    znew(0:nx,0:nz), zold(0:nx,0:nz), zold2(0:nx,0:nz), &
+                    z_int(0:nx,0:nz), &
+                    pnew(0:nx,0:nz), pold(0:nx,0:nz), pold2(0:nx,0:nz), &
+                    bnew(0:nx,0:nz), bold(0:nx,0:nz), bold2(0:nx,0:nz), &
+                    jnew(0:nx,0:nz), jold(0:nx,0:nz), jold2(0:nx,0:nz), &
+                    vr(0:nx,0:nz), vrold(0:nx,0:nz) = 0d0, &
+                    vz(0:nx,0:nz), vzold(0:nx,0:nz) = 0d0, &
+                    p_mat(2*nx1+nx1+1,nx1*nz1), & 
+                    b_mat(2*nxp1+nxp1+1,0:nxp1*nz1-1), & 
+                    j_mat(2*nx1+nx1+1,nx1*nz1) 
+integer :: p_pivot(nx1*nz1), b_pivot(nxp1*nz1), j_pivot(nx1*nz1), &
+           j, k, p = 0, p_start = 0
 logical :: run_exist, state_exist, save_exist
 
 print*
@@ -36,7 +42,7 @@ call open_files()
 
 print*, 'Setting up ICS...'
 call get_xzs()
-call ICS(unew, znew, pnew, p_start)
+call ICS(unew, znew, pnew, bnew, jnew, p_start)
 
 if (.not. restart) then
    inquire(file='end_state.dat', exist=state_exist)
@@ -47,11 +53,15 @@ if (.not. restart) then
    call u_BCS(unew, 0d0)
    call p_BCS(pnew)
    call z_BCS(znew, pnew, 0d0)
+   call b_BCS(bnew)
+   call j_BCS(jnew)
 end if
 
 print*, 'Setting up matrices...'
 call matrix_setup(Ux, Uz, Zx, Zz)
-call ABC_mat_setup(AB, pivot)
+call psi_mat_setup(p_mat, p_pivot)
+call b_mat_setup(b_mat, b_pivot)
+call j_mat_setup(j_mat, j_pivot)
 
 uold = unew
 uold2 = unew
@@ -61,6 +71,10 @@ zold2 = znew
 z_int = znew
 pold = pnew
 pold2 = pnew
+bold = bnew
+bold2 = bnew
+jold = jnew
+jold2 = jnew
 
 print*, 'Entering time loop'
 
@@ -71,16 +85,16 @@ do p = p_start, Ntot
    if (.not. run_exist) then
       print*, 'Stop requested'
       print*, 'Saving end state'
-      call end_state(uold, zold, pold, p)
+      call end_state(uold, zold, pold, bold, jold, p)
       call save_xsect(vr, vz, pold, t, p)
-      call save_surface(pold, uold, zold, vr, vz, p, t)
+      call save_surface(pold, uold, zold, vr, vz, bold, jold, p, t)
       exit
    end if
 
    inquire(file='SAVE', exist=save_exist)
    if (save_exist) then
       call save_xsect(vr, vz, pold, t, p)
-      call save_surface(pold, uold, zold, vr, vz, p, t)
+      call save_surface(pold, uold, zold, vr, vz, bold, jold, p, t)
       open (98, file = 'SAVE')
       close (98, status = 'delete')
    end if
@@ -96,19 +110,21 @@ do p = p_start, Ntot
          call save_torque(t, unew)
       end if
       if ((p /= p_start) .and. ((p - p_start) > save_rate)) then
-         call save_growth(t, vr, vrold, vz, pold, unew, znew, growth_rate)
+         call save_growth(t, vr, vrold, vz, pold, unew, znew, &
+                          bold, jold, growth_rate)
          if ((Re1_mod == 0d0) .and. (Re2_mod == 0d0)) then
             if ((dabs(growth_rate) < 1d-8) .and. &
                 (dabs(vr(nx/2, nz/2)) > 1d-3)) then
                 if ((.not. auto_tau) .or. (tau == tau_end)) then
                    call save_time_tau(tau, t)
-                   call end_state(uold, zold, pold, p)
+                   call end_state(uold, zold, pold, bold, jold, p)
                 else if (tau < 1d0) then
                    call save_time_tau(tau, t)
                    tau = tau + tau_step
                    print*, 'tau = ', tau
                    call save_xsect(vr, vz, pold, t, p)
-                   call save_surface(pold, unew, znew, vr, vz, p, t)
+                   call save_surface(pold, unew, znew, vr, vz, &
+                                     bold, jold, p, t)
                 end if
             end if
          end if
@@ -121,7 +137,7 @@ do p = p_start, Ntot
    if (xsect_save) then
       if (mod(p, save_rate_2) == 0) then
          call save_xsect(vr, vz, pold, t, p)
-         call save_surface(pold, unew, znew, vr, vz, p, t)
+         call save_surface(pold, unew, znew, vr, vz, bold, jold, p, t)
       end if
    end if
 
@@ -136,7 +152,7 @@ do p = p_start, Ntot
 
 !*** Get non-lin terms for v in x-direction **
 
-   call get_nlin_ux(uold, uold2, pold, pold2, u_nlin_new)
+   call get_nlin_ux(uold, uold2, pold, pold2, bold, bold2, u_nlin_new)
 
 !*********************************************
 
@@ -149,7 +165,7 @@ do p = p_start, Ntot
 !*** Get non-lin terms for Z in x-direction **
 
    call get_nlin_Zx(t, uold, uold2, pold, pold2, zold, &
-                    zold2, z_nlin_new)
+                    zold2, jold, jold2, z_nlin_new)
 
 !*********************************************
 
@@ -183,11 +199,17 @@ do p = p_start, Ntot
    u_int = unew
    z_int = znew
    pold2 = pold
+   bold2 = bold
+   jold2 = jold
 
 !   call get_poisson_test_znew(znew)
 
    call p_BCS(pnew)
-   call poisson(znew, pnew, AB, pivot)
+   call b_BCS(bnew)
+   call j_BCS(jnew)
+   call p_poisson(znew, pnew, p_mat, p_pivot)
+   call b_poisson(unew, bnew, b_mat, b_pivot)
+   call j_poisson(pnew, jnew, j_mat, j_pivot)
 
    if (diag) then
       call calc_rhs_u(unew, uold2, pold, t, p)
@@ -196,11 +218,13 @@ do p = p_start, Ntot
    end if
 
    pold = pnew
+   bold = bnew
+   jold = jnew
 
    if (p == Ntot) then
-      call end_state(unew, znew, pold, p)
+      call end_state(unew, znew, pold, bold, jold, p)
       call save_xsect(vr, vz, pold, t, p)
-      call save_surface(pold, unew, znew, vr, vz, p, t)
+      call save_surface(pold, unew, znew, vr, vz, bold, jold, p, t)
    end if
 
 end do
@@ -250,17 +274,18 @@ end if
 return
 END SUBROUTINE get_rhs_ux
 
-SUBROUTINE get_nlin_ux(uo, uo2, po, po2, u_nl_n)
+SUBROUTINE get_nlin_ux(uo, uo2, po, po2, bo, bo2, u_nl_n)
 use parameters
 use derivs
 use io
 use ic_bc
 implicit none
 double precision, intent(in) :: uo(0:nx,0:nz), uo2(0:nx,0:nz), &
-                                po(0:nx,0:nz), po2(0:nx,0:nz)
+                                po(0:nx,0:nz), po2(0:nx,0:nz), &
+                                bo(0:nx,0:nz), bo2(0:nx,0:nz)
 double precision, intent(out) :: u_nl_n(0:nx,0:nz)
 
-type (deriv) :: du, du2, dp, dp2                   
+type (deriv) :: du, du2, dp, dp2, db, db2
 integer :: j, k
 
 call deriv_x(uo, du%x)
@@ -271,6 +296,8 @@ call deriv_x(po, dp%x)
 call deriv_x(po2, dp2%x)
 call deriv_z(po, dp%z)
 call deriv_z(po2, dp2%z)
+call deriv_z(bo, db%z)
+call deriv_z(bo2, db2%z)
 
 do j = 1, nx1
    u_nl_n(j,1:nz1) = (-rx / (8d0 * s(j) * delz)) * &
@@ -280,7 +307,9 @@ do j = 1, nx1
                  dp2%z(j,1:nz1) * du2%x(j,1:nz1))) + &
                  ((1d0 - eta) * rz / (4d0 * s(j)**2)) * &
                  (3d0 * uo(j,1:nz1) * dp%z(j,1:nz1) - &
-                 uo2(j,1:nz1) * dp2%z(j,1:nz1))
+                 uo2(j,1:nz1) * dp2%z(j,1:nz1)) + &
+                 0.25d0 * Q * (3d0 * db%z(j,1:nz1) - &
+                 db2%z(j,1:nz1)) / delz
 end do
 
 if (tau /= 1) then
@@ -290,14 +319,16 @@ if (tau /= 1) then
                  dp2%z(j,0) * du2%x(j,0)) + &
                  ((1d0 - eta) * rz / (4d0 * s(j)**2)) * &
                  (3d0 * uo(j,0) * dp%z(j,0) - &
-                 uo2(j,0) * dp2%z(j,0))
+                 uo2(j,0) * dp2%z(j,0)) + &
+                 0.25d0 * Q * (3d0 * db%z(j,0) - db2%z(j,0)) / delz
 
    u_nl_n(j,nz) = (-rx / (8d0 * s(j) * delz)) * &
                   (-3d0 * dp%z(j,nz) * du%x(j,nz) + &
                   dp2%z(j,nz) * du2%x(j,nz)) + &
                   ((1d0 - eta) * rz / (4d0 * s(j)**2)) * &
                   (3d0 * uo(j,nz) * dp%z(j,nz) - &
-                  uo2(j,nz) * dp2%z(j,nz))
+                  uo2(j,nz) * dp2%z(j,nz)) + &
+                  0.25d0 * Q * (3d0 * db%z(j,nz) - db2%z(j,nz)) / delz
    end do
 end if
 
@@ -329,7 +360,7 @@ end do
 return
 END SUBROUTINE get_rhs_Zx
 
-SUBROUTINE get_nlin_Zx(t, uo, uo2, po, po2, zo, zo2, z_nl_n)
+SUBROUTINE get_nlin_Zx(t, uo, uo2, po, po2, zo, zo2, jo, jo2, z_nl_n)
 use parameters
 use derivs
 use io
@@ -337,9 +368,10 @@ use ic_bc
 implicit none
 double precision, intent(in) :: t, uo(0:nx,0:nz), uo2(0:nx,0:nz), &
                                 po(0:nx,0:nz), po2(0:nx,0:nz), &
-                                zo(0:nx,0:nz), zo2(0:nx,0:nz)
+                                zo(0:nx,0:nz), zo2(0:nx,0:nz), &
+                                jo(0:nx,0:nz), jo2(0:nx,0:nz)
 double precision, intent(out) :: z_nl_n(0:nx,0:nz)
-type (deriv) :: du, du2, dp, dp2, dz, dz_2
+type (deriv) :: du, du2, dp, dp2, dz, dz_2, dj, dj2
 integer :: j, k
 
 call deriv_z(uo, du%z)
@@ -352,6 +384,8 @@ call deriv_x(zo, dz%x)
 call deriv_x(zo2, dz_2%x)
 call deriv_z(zo, dz%z)
 call deriv_z(zo2, dz_2%z)
+call deriv_z(jo, dj%z)
+call deriv_z(jo2, dj2%z)
 
 do j = 1, nx1
    z_nl_n(j,1:nz1) = (((1d0 - eta) * rz) / (2d0 * s(j))) * &
@@ -364,7 +398,9 @@ do j = 1, nx1
                  ((3d0 * (dp%x(j,1:nz1) * dz%z(j,1:nz1) - &
                  dp%z(j,1:nz1) * dz%x(j,1:nz1))) - &
                  (dp2%x(j,1:nz1) * dz_2%z(j,1:nz1) - &
-                 dp2%z(j,1:nz1) * dz_2%x(j,1:nz1)))
+                 dp2%z(j,1:nz1) * dz_2%x(j,1:nz1))) + &
+                 0.25d0 * Q * (3d0 * dj%z(j,1:nz1) - &
+                 dj2%z(j,1:nz1)) / delz
 end do
 
 return

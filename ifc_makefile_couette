@@ -1,6 +1,6 @@
 OUTDIR		= ./
-OBJECTS		= parameters.o ic_bc.o pressure.o matrices.o \
-                  derivs.o io.o couette_mod.o
+OBJECTS		= parameters.o ic_bc.o derivs.o pressure.o magnetic.o \
+                  current.o matrices.o io.o couette_mod.o
 COMPFLAGS	= -O3 -c -w95 -tpp7 -xW #-parallel
 #COMPFLAGS	= -c -g -d0 -CA -CB -CS -CU -CV
 TYPE            = implicit
@@ -27,16 +27,24 @@ io.o : io.f90
 	$(COMPILER) $(COMPFLAGS) io.f90
 
 #-----------------------------------------------------------------------
+derivs.o : derivs.f90
+	$(COMPILER) $(COMPFLAGS) derivs.f90
+
+#-----------------------------------------------------------------------
 pressure.o : pressure.f90
 	$(COMPILER) $(COMPFLAGS) io.f90 pressure.f90
 
 #-----------------------------------------------------------------------
-matrices.o : matrices.f90
-	$(COMPILER) $(COMPFLAGS) matrices.f90
+magnetic.o : magnetic.f90
+	$(COMPILER) $(COMPFLAGS) io.f90 magnetic.f90
 
 #-----------------------------------------------------------------------
-derivs.o : derivs.f90
-	$(COMPILER) $(COMPFLAGS) derivs.f90
+current.o : current.f90
+	$(COMPILER) $(COMPFLAGS) derivs.f90 io.f90 current.f90
+
+#-----------------------------------------------------------------------
+matrices.o : matrices.f90
+	$(COMPILER) $(COMPFLAGS) matrices.f90
 
 #-----------------------------------------------------------------------
 couette_mod.o : couette_mod_$(TYPE).f90
