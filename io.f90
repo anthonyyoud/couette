@@ -231,6 +231,8 @@ write(50, '(e19.7)') ((zn(j,k), k = 0, nz), j = 0, nx)
 write(50, '(e19.7)') ((pn(j,k), k = 0, nz), j = 0, nx)
 
 close (50)
+open (99, file = 'RUNNING')
+close (99, status = 'delete')
 
 return
 END SUBROUTINE end_state
