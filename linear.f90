@@ -14,10 +14,10 @@ use derivs
 use ic_bc, only : s
 implicit none
 
-double precision, intent(in) :: uo(0:nx,0:nz)
-double precision, intent(out) :: u(0:nx,0:nz)
-type (deriv) :: du
-integer :: j, k
+real (r2), intent(in)  :: uo(0:nx,0:nz)
+real (r2), intent(out) :: u(0:nx,0:nz)
+type (deriv)           :: du
+integer (i1)           :: j, k
 
 call deriv_x(uo, du%x)
 call deriv_xx(uo, du%xx)   !get derivatives
@@ -52,10 +52,11 @@ use variables
 use derivs
 use ic_bc, only : s
 implicit none
-double precision, intent(in) :: zo(0:nx,0:nz)
-double precision, intent(out) :: zn(0:nx,0:nz)
-type (deriv) :: dz
-integer :: j, k
+
+real (r2), intent(in)  :: zo(0:nx,0:nz)
+real (r2), intent(out) :: zn(0:nx,0:nz)
+type (deriv)           :: dz
+integer (i1)           :: j, k
 
 call deriv_x(zo, dz%x)
 call deriv_xx(zo, dz%xx)   !get derivatives

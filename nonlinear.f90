@@ -13,13 +13,13 @@ use variables
 use derivs
 use ic_bc, only : s 
 implicit none
-double precision, intent(in) :: uo(0:nx,0:nz), uo2(0:nx,0:nz), &
-                                po(0:nx,0:nz), po2(0:nx,0:nz), &
-                                bo(0:nx,0:nz), bo2(0:nx,0:nz)
-double precision, intent(out) :: u_nl_n(0:nx,0:nz) 
-                 
-type (deriv) :: du, du2, dp, dp2, db, db2
-integer :: j, k  
+
+real (r2), intent(in)  :: uo(0:nx,0:nz), uo2(0:nx,0:nz), &
+                          po(0:nx,0:nz), po2(0:nx,0:nz), &
+                          bo(0:nx,0:nz), bo2(0:nx,0:nz)
+real (r2), intent(out) :: u_nl_n(0:nx,0:nz) 
+type (deriv)           :: du, du2, dp, dp2, db, db2
+integer (i1)           :: j, k  
                  
 call deriv_x(uo, du%x)
 call deriv_x(uo2, du2%x)
@@ -75,13 +75,14 @@ use variables
 use derivs
 use ic_bc, only : s
 implicit none
-double precision, intent(in) :: t, uo(0:nx,0:nz), uo2(0:nx,0:nz), &
-                                po(0:nx,0:nz), po2(0:nx,0:nz), &
-                                zo(0:nx,0:nz), zo2(0:nx,0:nz), &
-                                jo(0:nx,0:nz), jo2(0:nx,0:nz)
-double precision, intent(out) :: z_nl_n(0:nx,0:nz)
-type (deriv) :: du, du2, dp, dp2, dz, dz_2, dj, dj2
-integer :: j, k
+
+real (r2), intent(in)  :: t, uo(0:nx,0:nz), uo2(0:nx,0:nz), &
+                          po(0:nx,0:nz), po2(0:nx,0:nz), &
+                          zo(0:nx,0:nz), zo2(0:nx,0:nz), &
+                          jo(0:nx,0:nz), jo2(0:nx,0:nz)
+real (r2), intent(out) :: z_nl_n(0:nx,0:nz)
+type (deriv)           :: du, du2, dp, dp2, dz, dz_2, dj, dj2
+integer (i1)           :: j, k
 
 call deriv_z(uo, du%z)
 call deriv_z(uo2, du2%z)

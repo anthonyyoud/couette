@@ -5,7 +5,7 @@ implicit none
 private
 public :: get_xzs, ICS, u_BCS, z_BCS, p_BCS, b_BCS, j_BCS
 
-double precision, public :: x(0:nx), x_(0:nx), th(0:nt), z(0:nz), s(0:nx) 
+real (r2), public :: x(0:nx), x_(0:nx), th(0:nt), z(0:nz), s(0:nx) 
                                                 !finite-difference mesh
                                                 !s=eta+(1-eta)*x
 contains
@@ -15,16 +15,16 @@ SUBROUTINE get_xzs()
 use parameters
 implicit none
 
-integer :: j, k, l
+integer (i1) :: j, k, l
 
 do k = 0, nz
-   z(k) = dble(k) * delz
+   z(k) = real(k,r2) * delz
 end do
 do l = 0, nt
-   th(l) = dble(l) * delt
+   th(l) = real(l,r2) * delt
 end do
 do j = 0, nx
-   x(j) = dble(j) * delx
+   x(j) = real(j,r2) * delx
 end do
 
 x_ = x + 1d0                 !shift radial coordinate for OpenDX
@@ -37,12 +37,13 @@ SUBROUTINE ICS(u, zn, pn, bn, jn, p)
 !Initial conditions
 use parameters
 implicit none
-double precision, intent(inout) :: u(0:nx,0:nz), zn(0:nx,0:nz), &
-                                   pn(0:nx,0:nz), bn(0:nx,0:nz), &
-                                   jn(0:nx,0:nz)
-integer, intent(out) :: p
-integer :: j, k
-logical :: state_exist
+
+real (r2),    intent(inout) :: u(0:nx,0:nz), zn(0:nx,0:nz), &
+                               pn(0:nx,0:nz), bn(0:nx,0:nz), &
+                               jn(0:nx,0:nz)
+integer (i1), intent(out)   :: p
+integer (i1)                :: j, k
+logical                     :: state_exist
 
 if (restart) then
    inquire(file='end_state.dat', exist=state_exist)
@@ -86,14 +87,15 @@ SUBROUTINE state_restart(u, zn, pn, bn, jn, p)
 !Get restart data
 use parameters
 implicit none
-double precision, intent(out) :: u(0:nx,0:nz), zn(0:nx,0:nz), &
-                                 pn(0:nx,0:nz), bn(0:nx,0:nz), &
-                                 jn(0:nx,0:nz)
-double precision, allocatable :: u_prev(:,:), z_prev(:,:), p_prev(:,:), &
-                                 b_prev(:,:), j_prev(:,:)
-double precision :: dt_prev
-integer, intent(out) :: p
-integer :: j, k, nx_prev, nz_prev
+
+real (r2),    intent(out) :: u(0:nx,0:nz), zn(0:nx,0:nz), &
+                             pn(0:nx,0:nz), bn(0:nx,0:nz), &
+                             jn(0:nx,0:nz)
+real (r2),    allocatable :: u_prev(:,:), z_prev(:,:), p_prev(:,:), &
+                             b_prev(:,:), j_prev(:,:)
+integer (i1), intent(out) :: p
+real (r2)                 :: dt_prev
+integer (i1)              :: j, k, nx_prev, nz_prev
 
 open (50, file = 'end_state.dat')
 
@@ -143,25 +145,25 @@ SUBROUTINE inter(u_, z_, p_, b_, j_, nxp, nzp, &
 use parameters
 implicit none
 
-integer, intent(in) :: nxp, nzp
-double precision, intent(in) :: u_(0:nxp,0:nzp), z_(0:nxp,0:nzp), &
-                                p_(0:nxp,0:nzp), b_(0:nxp,0:nzp), &
-                                j_(0:nxp,0:nzp)
-double precision, intent(out) :: u(0:nx,0:nz), zn(0:nx,0:nz), &
-                                 pn(0:nx,0:nz), bn(0:nx,0:nz), &
-                                 jn(0:nx,0:nz)
-double precision :: dx_prev, dz_prev, x_prev(0:nxp), z_prev(0:nzp)
-integer :: j, k
+integer (i1), intent(in)  :: nxp, nzp
+real (r2),    intent(in)  :: u_(0:nxp,0:nzp), z_(0:nxp,0:nzp), &
+                             p_(0:nxp,0:nzp), b_(0:nxp,0:nzp), &
+                             j_(0:nxp,0:nzp)
+real (r2),    intent(out) :: u(0:nx,0:nz), zn(0:nx,0:nz), &
+                             pn(0:nx,0:nz), bn(0:nx,0:nz), &
+                             jn(0:nx,0:nz)
+real (r2)                 :: dx_prev, dz_prev, x_prev(0:nxp), z_prev(0:nzp)
+integer (i1)              :: j, k
 
 dx_prev = 1d0 / nxp       !previous space mesh
 dz_prev = gamma / nzp
 
 do j = 0, nxp
-   x_prev(j) = dble(j) * dx_prev
+   x_prev(j) = real(j,r2) * dx_prev
 end do
                                   !previous coordinates
 do k = 0, nzp
-   z_prev(k) = dble(k) * dz_prev
+   z_prev(k) = real(k,r2) * dz_prev
 end do
 
 call inter_var(u_, x_prev, z_prev, nxp, nzp, u)
@@ -179,17 +181,17 @@ SUBROUTINE inter_var(in_var, x_prev, z_prev, nxp, nzp, out_var)
 use parameters
 implicit none
 
-integer, intent(in) :: nxp, nzp
-double precision, intent(in) :: in_var(0:nxp,0:nzp), x_prev(0:nxp), &
-                                z_prev(0:nzp)
-double precision, intent(out) :: out_var(0:nx,0:nz)
-double precision :: int1, int2
-integer :: j, k, j2, k2
+integer (i1), intent(in)  :: nxp, nzp
+real (r2),    intent(in)  :: in_var(0:nxp,0:nzp), x_prev(0:nxp), &
+                             z_prev(0:nzp)
+real (r2),    intent(out) :: out_var(0:nx,0:nz)
+real (r2)                 :: int1, int2
+integer (i1)              :: j, k, j2, k2
 
 do k = 0, nz   !new 'z' index
-   k2 = int(nzp*k/nz)   !old 'z' index
+   k2 = int(nzp*k/nz,i1)   !old 'z' index
    do j = 0, nx   !new 'x' index
-      j2 = int(nxp*j/nx)   !old 'x' index
+      j2 = int(nxp*j/nx,i1)   !old 'x' index
       int1 = (x(j) - x_prev(j2)) / (x_prev(j2+1) - x_prev(j2))   !interpolating
       int2 = (z(k) - z_prev(k2)) / (z_prev(k2+1) - z_prev(k2))   !constants
       out_var(j,k) = (1d0 - int1) * (1d0 - int2) * in_var(j2,k2) + &
@@ -206,9 +208,10 @@ SUBROUTINE u_BCS(u, t)
 !Boundary conditions for total azimuthal velocity (including CCF)
 use parameters
 implicit none
-double precision, intent(out) :: u(0:nx,0:nz)
-double precision, intent(in) :: t
-integer :: k
+
+real (r2), intent(out) :: u(0:nx,0:nz)
+real (r2), intent(in)  :: t
+integer (i1)           :: k
 
 u(0,:) = Re1 + Re1_mod * dcos(om1 * t) + &
          eps1 * Re1 * (1d0 / eta - 1d0) * dcos(freq1 * z(:))
@@ -227,8 +230,9 @@ SUBROUTINE z_BCS(zn, pn, t)
 !Boundary conditions for azimuthal vorticity
 use parameters
 implicit none
-double precision, intent(out) :: zn(0:nx,0:nz)
-double precision, intent(in) :: t, pn(0:nx,0:nz)
+
+real (r2), intent(out) :: zn(0:nx,0:nz)
+real (r2), intent(in)  :: t, pn(0:nx,0:nz)
 
 zn(0,:) = -(8d0 * pn(1,:) - pn(2,:)) / (2d0 * s(0) * dx2)
 zn(nx,:) = -(8d0 * pn(nx1,:) - pn(nx-2,:)) / (2d0 * s(nx) * dx2)
@@ -252,7 +256,8 @@ SUBROUTINE p_BCS(p)
 !Boundary conditions for stream-function, psi
 use parameters
 implicit none
-double precision, intent(out) :: p(0:nx,0:nz)
+
+real (r2), intent(out) :: p(0:nx,0:nz)
 
 p(0,:) = 0d0
 p(nx,:) = 0d0
@@ -267,7 +272,8 @@ SUBROUTINE b_BCS(bn)
 !Boundary conditions for azimuthal magnetic field
 use parameters
 implicit none
-double precision, intent(out) :: bn(0:nx,0:nz)
+
+real (r2), intent(out) :: bn(0:nx,0:nz)
 
 if (tau == 0) then
    bn(:,0) = 0d0
@@ -281,7 +287,8 @@ SUBROUTINE j_BCS(jn)
 !Boundary conditions for azimuthal current
 use parameters
 implicit none
-double precision, intent(out) :: jn(0:nx,0:nz)
+
+real (r2), intent(out) :: jn(0:nx,0:nz)
 
 jn(0,:) = 0d0
 jn(nx,:) = 0d0
@@ -298,8 +305,8 @@ FUNCTION f1(index)
 use parameters
 implicit none
 
-integer, intent(in) :: index
-double precision :: f1
+integer (i1), intent(in) :: index
+real (r2)                :: f1
 
 f1 = eps1 * dcos(freq1*z(index))
 
@@ -310,8 +317,8 @@ FUNCTION f2(index)
 use parameters
 implicit none
 
-integer, intent(in) :: index
-double precision :: f2
+integer (i1), intent(in) :: index
+real (r2)                :: f2
 
 f2 = eps2 * dcos(freq2*z(index)-pi)
 

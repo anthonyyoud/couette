@@ -14,15 +14,11 @@ use parameters
 use ic_bc, only : b_BCS
 implicit none
 
-integer :: desc_u(7)
-integer, intent(in) :: desc_b(7)
-double precision, intent(in) :: af(b_laf)
-double precision, intent(in) :: u_mat(0:nx,0:nz)
-double precision, intent(in) :: b_mat(b_M,b_N)
-double precision, intent(out) :: bn(0:nx,0:nz)
-double precision :: u_vec(nb)
-integer :: i, j, k, info, cpcol
-double precision :: work(lwork_b_sol)
+integer (i1), intent(in)  :: desc_b(7)
+real (r2),    intent(in)  :: af(b_laf), u_mat(0:nx,0:nz), b_mat(b_M,b_N)
+real (r2),    intent(out) :: bn(0:nx,0:nz)
+real (r2)                 :: u_vec(nb), work(lwork_b_sol)
+integer (i1)              :: i, j, k, info, cpcol, desc_u(7)
 
 desc_u(1) = 502
 desc_u(2) = ictxt
@@ -83,15 +79,11 @@ use parameters
 use derivs, only : deriv_z
 implicit none
 
-integer :: desc_u(7)
-integer, intent(in) :: desc_b(7)
-double precision, intent(in) :: af(b_laf)
-double precision, intent(in) :: u_mat(0:nx,0:nz)
-double precision, intent(in) :: b_mat(b_M,b_N)
-double precision, intent(out) :: bn(0:nx,0:nz)
-double precision :: u_vec(nb), u_mat_z(0:nx,0:nz)
-integer :: i, j, k, info, cpcol
-double precision :: work(lwork_b_sol)
+integer (i1), intent(in)  :: desc_b(7)
+real (r2),    intent(in)  :: af(b_laf), u_mat(0:nx,0:nz), b_mat(b_M,b_N)
+real (r2),    intent(out) :: bn(0:nx,0:nz)
+real (r2)                 :: u_vec(nb), u_mat_z(0:nx,0:nz), work(lwork_b_sol)
+integer (i1)              :: i, j, k, info, cpcol, desc_u(7)
 
 if (mycol == 0) then
    call deriv_z(u_mat, u_mat_z)

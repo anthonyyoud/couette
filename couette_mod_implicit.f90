@@ -12,16 +12,17 @@ use magnetic
 use current
 implicit none
 
-type (mat_comp) :: Ux, Zx
-type (uz_mat_comp) :: Uz
-type (zz_mat_comp) :: Zz
-double precision :: p_fill(laf), b_fill(b_laf), j_fill(laf), &
-                    wtime(10), t = 0d0
-double precision, allocatable :: p_mat(:,:), b_mat(:,:), j_mat(:,:)
-double precision, external :: SLINQUIRE
-integer, external :: NUMROC
-integer :: j, k, p = 0, p_start = 0, desc_p(7), desc_b(7), desc_j(7)
-logical :: state_exist
+type (mat_comp)           :: Ux, Zx
+type (uz_mat_comp)        :: Uz
+type (zz_mat_comp)        :: Zz
+real (r2)                 :: p_fill(laf), b_fill(b_laf), j_fill(laf), &
+                             wtime(10), t = 0d0
+real (r2),    allocatable :: p_mat(:,:), b_mat(:,:), j_mat(:,:)
+real (r2),    external    :: SLINQUIRE
+integer (i1), external    :: NUMROC
+integer (i1)              :: j, k, p=0, p_start=0, &
+                             desc_p(7), desc_b(7), desc_j(7)
+logical                   :: state_exist
 
 call SLBOOT()   !initialise ScaLAPACK timer
 call SL_INIT(ictxt, nprow, npcol)   !initialise process grid

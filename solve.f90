@@ -12,12 +12,12 @@ use parameters
 use variables
 use ic_bc, only : u_BCS, s
 implicit none
-double precision, intent(in) :: t
-double precision, intent(in) :: u(0:nx,0:nz), u_nl(0:nx,0:nz)
-type (mat_comp), intent(in) :: ux
-double precision, intent(inout) :: uo(0:nx,0:nz)
-double precision :: ux_rhs(nx1)
-integer :: j, k
+
+real (r2),       intent(in)    :: t, u(0:nx,0:nz), u_nl(0:nx,0:nz)
+type (mat_comp), intent(in)    :: ux
+real (r2),       intent(inout) :: uo(0:nx,0:nz)
+real (r2)                      :: ux_rhs(nx1)
+integer (i1)                   :: j, k
 
 call u_BCS(uo, t)
 
@@ -58,13 +58,13 @@ use parameters
 use variables
 use ic_bc, only : z_BCS, s
 implicit none
-double precision, intent(in) :: t
-double precision, intent(in) :: zn(0:nx,0:nz), po(0:nx,0:nz), &
-                                z_nl(0:nx,0:nz)
-type (mat_comp), intent(in) :: zx
-double precision, intent(inout) :: zo(0:nx,0:nz)
-double precision :: zx_rhs(nx1)
-integer :: j, k
+
+real (r2),       intent(in)    :: t, zn(0:nx,0:nz), po(0:nx,0:nz), &
+                                  z_nl(0:nx,0:nz)
+type (mat_comp), intent(in)    :: zx
+real (r2),       intent(inout) :: zo(0:nx,0:nz)
+real (r2)                      :: zx_rhs(nx1)
+integer (i1)                   :: j, k
 
 call z_BCS(zo, po, t)
 
@@ -90,13 +90,13 @@ use parameters
 use variables
 use ic_bc, only : u_BCS, s
 implicit none
-double precision, intent(in) :: t
-double precision, intent(in) :: uo(0:nx,0:nz)
-type (uz_mat_comp), intent(in) :: uz
-double precision, intent(inout) :: u(0:nx,0:nz)
-double precision :: uz_rhs(0:nz), uz_rhs_t1(nz1), &
-                    up(nz-2), di(nz1), lo(2:nz1)
-integer :: j, k
+
+real (r2),          intent(in)    :: t, uo(0:nx,0:nz)
+type (uz_mat_comp), intent(in)    :: uz
+real (r2),          intent(inout) :: u(0:nx,0:nz)
+real (r2)                         :: uz_rhs(0:nz), uz_rhs_t1(nz1), &
+                                     up(nz-2), di(nz1), lo(2:nz1)
+integer (i1)                      :: j, k
 
 call u_BCS(u, t)
 
@@ -134,12 +134,12 @@ use parameters
 use variables
 use ic_bc, only : z_BCS, s
 implicit none
-double precision, intent(in) :: t
-double precision, intent(in) :: zo(0:nx,0:nz), po(0:nx,0:nz)
-type (zz_mat_comp), intent(in) :: zz
-double precision, intent(inout) :: zn(0:nx,0:nz)
-double precision :: Zz_rhs(nz1)
-integer :: j, k
+
+real (r2),          intent(in)    :: t, zo(0:nx,0:nz), po(0:nx,0:nz)
+type (zz_mat_comp), intent(in)    :: zz
+real (r2),          intent(inout) :: zn(0:nx,0:nz)
+real (r2)                         :: Zz_rhs(nz1)
+integer (i1)                      :: j, k
 
 call z_BCS(zn, po, t)
 
@@ -159,12 +159,14 @@ END SUBROUTINE solve_Zz
 
 SUBROUTINE thomas (lb, m, up, di, lo, r)
 !Thomas algorithm for solving a tridiagonal system of equations
+use parameters, only : i1, r2
 implicit none
-integer :: j
-integer, intent(in) :: m, lb  !lb is the vector lower-bound
-double precision, intent(in) :: up(lb:m-1), di(lb:m), lo(lb+1:m)
-double precision, intent(inout) :: r(lb:m)
-double precision :: dnew(lb:m), aa = 0d0
+
+integer (i1)                :: j
+integer (i1), intent(in)    :: m, lb  !lb is the vector lower-bound
+real (r2),    intent(in)    :: up(lb:m-1), di(lb:m), lo(lb+1:m)
+real (r2),    intent(inout) :: r(lb:m)
+real (r2)                   :: dnew(lb:m), aa = 0d0
 
 dnew = di   !create new diagonal so as not to destroy original
 do j = lb+1, m

@@ -14,16 +14,12 @@ use ic_bc, only : j_BCS, s
 use derivs
 implicit none
 
-integer :: desc_rp(7)
-integer, intent(in) :: desc_j(7)
-double precision, intent(in) :: af(laf)
-double precision, intent(in) :: p_mat(0:nx,0:nz)
-double precision, intent(in) :: j_mat(j_M,j_N)
-double precision, intent(out) :: jn(0:nx,0:nz)
-double precision :: p_vec(nb)
-integer :: h, i, j, k, l, info, cpcol
-double precision :: work(lwork_sol)
-type (deriv) :: dp
+integer (i1), intent(in)  :: desc_j(7)
+real (r2),    intent(in)  :: af(laf), p_mat(0:nx,0:nz), j_mat(j_M,j_N)
+real (r2),    intent(out) :: jn(0:nx,0:nz)
+real (r2)                 :: p_vec(nb), work(lwork_sol)
+integer (i1)              :: h, i, j, k, l, info, cpcol, desc_rp(7)
+type (deriv)              :: dp
 
 desc_rp(1) = 502
 desc_rp(2) = ictxt
@@ -109,16 +105,13 @@ use ic_bc, only : j_BCS, s
 use derivs
 implicit none
 
-integer :: desc_rp(7)
-integer, intent(in) :: desc_j(7)
-double precision, intent(in) :: af(laf)
-double precision, intent(in) :: p_mat(0:nx,0:nz)
-double precision, intent(in) :: j_mat(j_M,j_N)
-double precision, intent(out) :: jn(0:nx,0:nz)
-double precision :: p_vec(nb)
-integer :: h, i, j, k, l, info, cpcol
-double precision :: work(lwork_sol)
-type (deriv) :: dp
+integer (i1), intent(in)  :: desc_j(7)
+real (r2),    intent(in)  :: af(laf), p_mat(0:nx,0:nz), j_mat(j_M,j_N)
+real (r2),    intent(out) :: jn(0:nx,0:nz)
+real (r2)                 :: p_vec(nb)
+integer (i1)              :: h, i, j, k, l, info, cpcol, desc_rp(7)
+real (r2)                 :: work(lwork_sol)
+type (deriv)              :: dp
 
 desc_rp(1) = 502
 desc_rp(2) = ictxt

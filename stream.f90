@@ -14,15 +14,11 @@ use parameters
 use ic_bc, only : p_BCS, s
 implicit none
 
-integer :: desc_z(7)
-integer, intent(in) :: desc_p(7)
-double precision, intent(in) :: af(laf)
-double precision, intent(in) :: Z_mat(0:nx,0:nz)
-double precision, intent(in) :: p_mat(p_M,p_N)
-double precision, intent(out) :: psi(0:nx,0:nz)
-double precision :: zvec(nb)
-integer :: i, j, k, info, cpcol
-double precision :: work(lwork_sol)
+integer (i1), intent(in)  :: desc_p(7)
+real (r2),    intent(in)  :: af(laf), Z_mat(0:nx,0:nz), p_mat(p_M,p_N)
+real (r2),    intent(out) :: psi(0:nx,0:nz)
+real (r2)                 :: zvec(nb), work(lwork_sol)
+integer (i1)              :: i, j, k, info, cpcol, desc_z(7)
 
 desc_z(1) = 502
 desc_z(2) = ictxt

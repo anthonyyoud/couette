@@ -15,7 +15,7 @@ use variables
 use ic_bc, only : s
 implicit none
 
-type (mat_comp), intent(out) :: ux, zx
+type (mat_comp),    intent(out) :: ux, zx
 type (uz_mat_comp), intent(out) :: uz
 type (zz_mat_comp), intent(out) :: zz
 
@@ -51,13 +51,10 @@ use parameters
 use ic_bc, only : s
 implicit none
 
-double precision :: alp(0:nx), gam(0:nx)
-double precision :: beta, delta
-integer, intent(out) :: desc_p(7)
-double precision, intent(out) :: p_mat(p_M,p_N)
-integer :: i, j, k, info, cpcol
-double precision :: work(lwork_fac)
-double precision, intent(out) :: af(laf)
+integer (i1), intent(out) :: desc_p(7)
+real (r2),    intent(out) :: p_mat(p_M,p_N), af(laf)
+real (r2)                 :: alp(0:nx), gam(0:nx), beta, delta, work(lwork_fac)
+integer (i1)              :: i, j, k, info, cpcol
 
 alp(:) = dz2 + 0.5d0 * delx * dz2 * (1d0 - eta) / s(:)   !coefficients
 gam(:) = dz2 - 0.5d0 * delx * dz2 * (1d0 - eta) / s(:)   !in matrix
@@ -119,12 +116,11 @@ use parameters
 use ic_bc, only : s
 implicit none
 
-double precision :: alp(0:nx), beta(0:nx), gam(0:nx), delta
-integer, intent(out) :: desc_b(7)
-double precision, intent(out) :: b_mat(b_M,b_N)
-integer :: i, j, k, info, cpcol
-double precision :: work(lwork_b_fac)
-double precision, intent(out) :: af(b_laf)
+integer (i1), intent(out) :: desc_b(7)
+real (r2),    intent(out) :: b_mat(b_M,b_N), af(b_laf)
+real (r2)                 :: alp(0:nx), beta(0:nx), gam(0:nx), delta, &
+                             work(lwork_b_fac)
+integer (i1)              :: i, j, k, info, cpcol
 
 alp(:) = dz2 - 0.5d0 * delx * dz2 * (1d0 - eta) / s(:)
 beta(:) = -2d0 * (dz2 + dx2) - dx2 * dz2 * (1d0 - eta)**2 / s(:)**2
@@ -197,12 +193,11 @@ use parameters
 use ic_bc, only : s
 implicit none
 
-double precision :: alp(0:nx), beta(0:nx), gam(0:nx), delta
-integer, intent(out) :: desc_b(7)
-double precision, intent(out) :: b_mat(b_M,b_N)
-integer :: i, j, k, info, cpcol
-double precision :: work(lwork_b_fac)
-double precision, intent(out) :: af(b_laf)
+integer (i1), intent(out) :: desc_b(7)
+real (r2),    intent(out) :: b_mat(b_M,b_N), af(b_laf)
+real (r2)                 :: alp(0:nx), beta(0:nx), gam(0:nx), delta, &
+                             work(lwork_b_fac)
+integer (i1)              :: i, j, k, info, cpcol
 
 alp(:) = dz2 - 0.5d0 * delx * dz2 * (1d0 - eta) / s(:)
 beta(:) = -2d0 * (dz2 + dx2) - dx2 * dz2 * (1d0 - eta)**2 / s(:)**2
@@ -326,12 +321,11 @@ use parameters
 use ic_bc, only : s
 implicit none
 
-double precision :: alp(0:nx), beta(0:nx), gam(0:nx), delta
-integer, intent(out) :: desc_j(7)
-double precision, intent(out) :: j_mat(j_M,j_N)
-integer :: i, j, k, info, cpcol
-double precision :: work(lwork_fac)
-double precision, intent(out) :: af(laf)
+integer (i1), intent(out) :: desc_j(7)
+real (r2),    intent(out) :: j_mat(j_M,j_N), af(laf)
+real (r2)                 :: alp(0:nx), beta(0:nx), gam(0:nx), delta, &
+                             work(lwork_fac)
+integer (i1)              :: i, j, k, info, cpcol
 
 alp(:) = dz2 - 0.5d0 * delx * dz2 * (1d0 - eta) / s(:)
 beta(:) = -2d0 * (dz2 + dx2) - dx2 * dz2 * (1d0 - eta)**2 / s(:)**2
@@ -402,12 +396,11 @@ use parameters
 use ic_bc, only : s
 implicit none
 
-double precision :: alp(0:nx), beta(0:nx), gam(0:nx), delta
-integer, intent(out) :: desc_j(7)
-double precision, intent(out) :: j_mat(j_M,j_N)
-integer :: i, j, k, info, cpcol
-double precision :: work(lwork_fac)
-double precision, intent(out) :: af(laf)
+integer (i1), intent(out) :: desc_j(7)
+real (r2),    intent(out) :: j_mat(j_M,j_N), af(laf)
+real (r2)                 :: alp(0:nx), beta(0:nx), gam(0:nx), delta, &
+                             work(lwork_fac)
+integer (i1)              :: i, j, k, info, cpcol
 
 alp(:) = dz2 - 0.5d0 * delx * dz2 * (1d0 - eta) / s(:)
 beta(:) = -2d0 * (dz2 + dx2) - dx2 * dz2 * (1d0 - eta)**2 / s(:)**2

@@ -10,12 +10,13 @@ contains
 
 FUNCTION itos(n)
 !Function to convert an integer into a string of length 7
+use parameters, only : i1
 implicit none
 
-character(7) :: itos
-integer, intent(in) :: n
-integer   :: i, n_, d(7)
-character :: c(0:9) = (/'0','1','2','3','4','5','6','7','8','9'/)
+character(7)             :: itos
+integer (i1), intent(in) :: n
+integer (i1)             :: i, n_, d(7)
+character                :: c(0:9) = (/'0','1','2','3','4','5','6','7','8','9'/)
 
 n_ = n
 do i = 7, 1, -1
@@ -66,14 +67,14 @@ SUBROUTINE save_growth(t, ur, ur_prev, uz, uz_prev, pn, v, zn, bn, jn, &
 use parameters
 implicit none
 
-double precision, intent(in) :: t, ur(0:nx,0:nz), uz(0:nx,0:nz), &
-                                pn(0:nx,0:nz), bn(0:nx,0:nz), &
-                                jn(0:nx,0:nz), v(0:nx,0:nz), &
-                                zn(0:nx,0:nz), ur_prev(0:nx,0:nz), &
-                                uz_prev(0:nx,0:nz)
-double precision, intent(out) :: growth, growth_vz
-double precision, save :: min_p, max_p, min_ur, max_ur, min_uz, max_uz
-integer :: zpos, xpos
+real (r2), intent(in)  :: t, ur(0:nx,0:nz), uz(0:nx,0:nz), &
+                          pn(0:nx,0:nz), bn(0:nx,0:nz), &
+                          jn(0:nx,0:nz), v(0:nx,0:nz), &
+                          zn(0:nx,0:nz), ur_prev(0:nx,0:nz), &
+                          uz_prev(0:nx,0:nz)
+real (r2), intent(out) :: growth, growth_vz
+real (r2), save        :: min_p, max_p, min_ur, max_ur, min_uz, max_uz
+integer (i1)           :: zpos, xpos
 
 !growth rate of vortices
 growth = log(abs(ur(nx/2,nz/2)/ur_prev(nx/2,nz/2))) / (dt * save_rate)
@@ -119,9 +120,9 @@ SUBROUTINE save_torque(t, v)
 use parameters
 implicit none
 
-double precision, intent(in) :: t, v(0:nx,0:nz)
-integer :: k
-double precision :: xi, C1, C2, G1(0:nz), G2(0:nz), G1_, G2_
+real (r2), intent(in) :: t, v(0:nx,0:nz)
+integer (i1)          :: k
+real (r2)             :: xi, C1, C2, G1(0:nz), G2(0:nz), G1_, G2_
 
 xi = Re1_mod * cos(om1 * t) - eta * Re2_mod * cos(om2 * t)
 xi = xi / (Re1 - eta * Re2)
@@ -148,12 +149,12 @@ use parameters
 use ic_bc, only : x, z
 implicit none
 
-integer, intent(in) :: p
-double precision, intent(in) :: ur(0:nx,0:nz), uz(0:nx,0:nz), &
-                                pn(0:nx,0:nz), ut(0:nx,0:nz), &
-                                zt(0:nx,0:nz), bt(0:nx,0:nz), &
-                                jt(0:nx,0:nz), t
-integer :: j, k
+integer (i1), intent(in) :: p
+real (r2),    intent(in) :: ur(0:nx,0:nz), uz(0:nx,0:nz), &
+                            pn(0:nx,0:nz), ut(0:nx,0:nz), &
+                            zt(0:nx,0:nz), bt(0:nx,0:nz), &
+                            jt(0:nx,0:nz), t
+integer (i1)             :: j, k
 
 open (32, status = 'unknown', file = 'xsect'//itos(p)//'.dat')
 
@@ -180,11 +181,11 @@ use parameters
 use ic_bc, only : x_, th, z
 implicit none
 
-integer, intent(in) :: p
-double precision, intent(in) :: u_r(0:nx,0:nz), u_t(0:nx,0:nz), &
-                                u_z(0:nx,0:nz), pn(0:nx,0:nz)
-double precision :: hel(0:nx,0:nz)
-integer :: j, k, l
+integer (i1), intent(in) :: p
+real (r2),    intent(in) :: u_r(0:nx,0:nz), u_t(0:nx,0:nz), &
+                            u_z(0:nx,0:nz), pn(0:nx,0:nz)
+real (r2)                :: hel(0:nx,0:nz)
+integer (i1)             :: j, k, l
 
 !open (35, status = 'unknown', file = 'p3d'//itos(p)//'.dat')
 
@@ -226,11 +227,11 @@ use ic_bc, only : s
 use derivs, only : deriv_x, deriv_z
 implicit none
 
-double precision, intent(in) :: u_r(0:nx,0:nz), u_t(0:nx,0:nz), u_z(0:nx,0:nz)
-double precision, intent(out) :: hel(0:nx, 0:nz)
-double precision :: u_r_z(0:nx,0:nz), u_t_z(0:nx,0:nz), &
-                    u_t_x(0:nx,0:nz), u_z_x(0:nx,0:nz)
-integer :: k
+real (r2), intent(in)  :: u_r(0:nx,0:nz), u_t(0:nx,0:nz), u_z(0:nx,0:nz)
+real (r2), intent(out) :: hel(0:nx, 0:nz)
+real (r2)              :: u_r_z(0:nx,0:nz), u_t_z(0:nx,0:nz), &
+                          u_t_x(0:nx,0:nz), u_z_x(0:nx,0:nz)
+integer (i1)           :: k
 
 call deriv_z(u_r, u_r_z)
 call deriv_z(u_t, u_t_z)
@@ -254,12 +255,12 @@ use parameters
 use ic_bc, only : x, z
 implicit none
 
-integer, intent(in) :: p
-double precision, intent(in) :: t, pn(0:nx,0:nz), v(0:nx,0:nz), &
-                                zn(0:nx,0:nz), bn(0:nx,0:nz), &
-                                jn(0:nx,0:nz), ur(0:nx,0:nz), &
-                                uz(0:nx,0:nz)
-integer :: j, k
+integer (i1), intent(in) :: p
+real (r2),    intent(in) :: t, pn(0:nx,0:nz), v(0:nx,0:nz), &
+                            zn(0:nx,0:nz), bn(0:nx,0:nz), &
+                            jn(0:nx,0:nz), ur(0:nx,0:nz), &
+                            uz(0:nx,0:nz)
+integer (i1)             :: j, k
 
 open (19, status = 'unknown', file = 'p'//itos(p)//'.dat')
 !open (70, status = 'unknown', file = 'sin.dat')
@@ -317,9 +318,9 @@ use parameters
 use variables
 implicit none
 
-integer, intent(in) :: p, p_start
-double precision, intent(in) :: t
-double precision :: growth_rate, growth_rate_vz
+integer (i1), intent(in) :: p, p_start
+real (r2),    intent(in) :: t
+real (r2)                :: growth_rate, growth_rate_vz
 
 call vr_vz(psi%old, vr, vz)   !get radial, axial velocities
 if (save_part) call particle(vr, vrold, vz, vzold, x_pos, z_pos) !save particle
@@ -357,9 +358,9 @@ use parameters
 use variables
 implicit none
 
-integer, intent(in) :: p
-double precision, intent(in) :: t
-logical :: run_exist
+integer (i1), intent(in) :: p
+real (r2),    intent(in) :: t
+logical                  :: run_exist
 
 if (mycol == 0) then
    inquire(file='RUNNING', exist=run_exist)  !does 'RUNNING' exist?
@@ -388,9 +389,9 @@ use parameters
 use variables
 implicit none
 
-integer, intent(in) :: p
-double precision, intent(in) :: t
-logical :: save_exist
+integer (i1), intent(in) :: p
+real (r2),    intent(in) :: t
+logical                  :: save_exist
 
 inquire(file='SAVE', exist=save_exist)   !does 'SAVE' exist?
 if (save_exist) then   !if so then save fields
@@ -410,11 +411,11 @@ SUBROUTINE end_state(u, zn, pn, bn, jn, p)
 use parameters
 implicit none
 
-double precision, intent(in) :: u(0:nx,0:nz), zn(0:nx,0:nz), &
-                                pn(0:nx,0:nz), bn(0:nx,0:nz), &
-                                jn(0:nx,0:nz)
-integer, intent(in) :: p
-integer :: j, k
+real (r2),    intent(in) :: u(0:nx,0:nz), zn(0:nx,0:nz), &
+                            pn(0:nx,0:nz), bn(0:nx,0:nz), &
+                            jn(0:nx,0:nz)
+integer (i1), intent(in) :: p
+integer (i1)             :: j, k
 
 open (50, file = 'end_state.dat')
 
@@ -437,9 +438,10 @@ END SUBROUTINE end_state
 
 SUBROUTINE save_time_tau (tau, t)
 !Save the times at which tau is incremented
+use parameters, only : r2
 implicit none
 
-double precision, intent(in) :: tau, t
+real (r2), intent(in) :: tau, t
 
 write(51, '(2e17.9)') t, tau
 
@@ -450,19 +452,19 @@ SUBROUTINE particle (vr, vrold, vz, vzold, xold, zold)
 use parameters
 implicit none
 
-double precision, intent(in) :: vr(0:nx, 0:nz), vz(0:nx, 0:nz), &
-                                vrold(0:nx, 0:nz), vzold(0:nx, 0:nz)
-double precision, intent(inout) :: xold, zold
-integer :: xmin, xplu, zmin, zplu, j
-double precision :: c1, c2, rvel, zvel, xnew, znew, del_t
+real (r2), intent(in)    :: vr(0:nx, 0:nz), vz(0:nx, 0:nz), &
+                            vrold(0:nx, 0:nz), vzold(0:nx, 0:nz)
+real (r2), intent(inout) :: xold, zold
+integer (i1)             :: xmin, xplu, zmin, zplu, j
+real (r2)                :: c1, c2, rvel, zvel, xnew, znew, del_t
 
 del_t = dt / 1d0
 
 do j = 1, 1
-xmin = int(xold)
-xplu = int(xold + 1d0)
-zmin = int(zold)
-zplu = int(zold + 1d0)
+xmin = int(xold,i1)
+xplu = int(xold + 1d0,i1)
+zmin = int(zold,i1)
+zplu = int(zold + 1d0,i1)
 
 c1 = (xold - xmin) / (xplu - xmin)
 c2 = (zold - zmin) / (zplu - zmin)
@@ -492,7 +494,7 @@ SUBROUTINE get_timestep()
 use parameters
 implicit none
 
-double precision :: timestep
+real (r2) :: timestep
 
 if (Re1 * Re2 >= 0d0) then
    timestep = max(1d0, dabs(Re1) + dabs(Re1_mod), &

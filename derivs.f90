@@ -10,9 +10,10 @@ SUBROUTINE deriv_x(f, fx)
 !First x derivative
 use parameters
 implicit none
-double precision, intent(in) :: f(0:nx,0:nz)
-double precision, intent(out) :: fx(0:nx,0:nz)
-integer :: j, k
+
+real (r2), intent(in)  :: f(0:nx,0:nz)
+real (r2), intent(out) :: fx(0:nx,0:nz)
+integer (i1)           :: j, k
 
 do j = 1, nx1
    fx(j,:) = f(j+1,:) - f(j-1,:)
@@ -25,9 +26,10 @@ SUBROUTINE deriv_xx(f, fxx)
 !Second x derivative
 use parameters
 implicit none
-double precision, intent(in) :: f(0:nx,0:nz)
-double precision, intent(out) :: fxx(0:nx,0:nz)
-integer :: j, k
+
+real (r2), intent(in)  :: f(0:nx,0:nz)
+real (r2), intent(out) :: fxx(0:nx,0:nz)
+integer (i1)           :: j, k
 
 do j = 1, nx1
    fxx(j,:) = f(j+1,:) - 2d0 * f(j,:) + f(j-1,:)
@@ -40,9 +42,10 @@ SUBROUTINE deriv_z(f, fz)
 !First z derivative
 use parameters
 implicit none
-double precision, intent(in) :: f(0:nx,0:nz)
-double precision, intent(out) :: fz(0:nx,0:nz)
-integer :: j, k
+
+real (r2), intent(in)  :: f(0:nx,0:nz)
+real (r2), intent(out) :: fz(0:nx,0:nz)
+integer (i1)           :: j, k
 
 do k = 1, nz1
    fz(1:nx1,k) = f(1:nx1,k+1) - f(1:nx1,k-1)
@@ -58,9 +61,10 @@ SUBROUTINE deriv_zz(f, fzz)
 !Second z derivative
 use parameters
 implicit none
-double precision, intent(in) :: f(0:nx,0:nz)
-double precision, intent(out) :: fzz(0:nx,0:nz)
-integer :: j, k
+
+real (r2), intent(in)  :: f(0:nx,0:nz)
+real (r2), intent(out) :: fzz(0:nx,0:nz)
+integer (i1)           :: j, k
 
 do k = 1, nz1
    fzz(1:nx1,k) = f(1:nx1,k+1) - 2d0 * f(1:nx1,k) + f(1:nx1,k-1)
