@@ -1,187 +1,187 @@
 MODULE solve
-IMPLICIT NONE
+  IMPLICIT NONE
 
-PRIVATE
-PUBLIC :: solve_ux, solve_uz, solve_Zx, solve_Zz
+  PRIVATE
+  PUBLIC :: solve_ux, solve_uz, solve_Zx, solve_Zz
 
-CONTAINS
+  CONTAINS
 
-SUBROUTINE solve_ux(uo, u, u_nl, t, ux)
-!Solve for the azimuthal velocity field in the x-direction
-USE parameters
-USE variables
-USE ic_bc, ONLY : u_BCS, s
-IMPLICIT NONE
+  SUBROUTINE solve_ux(uo, u, u_nl, t, ux)
+    !Solve for the azimuthal velocity field in the x-direction
+    USE parameters
+    USE variables
+    USE ic_bc, ONLY : u_BCS, s
+    IMPLICIT NONE
 
-REAL (r2),       INTENT(IN)    :: t, u(0:nx,0:nz), u_nl(0:nx,0:nz)
-TYPE (MAT_COMP), INTENT(IN)    :: ux
-REAL (r2),       INTENT(INOUT) :: uo(0:nx,0:nz)
-REAL (r2)                      :: ux_rhs(nx1)
-INTEGER (i1)                   :: j, k
+    REAL (r2),       INTENT(IN)    :: t, u(0:nx,0:nz), u_nl(0:nx,0:nz)
+    TYPE (MAT_COMP), INTENT(IN)    :: ux
+    REAL (r2),       INTENT(INOUT) :: uo(0:nx,0:nz)
+    REAL (r2)                      :: ux_rhs(nx1)
+    INTEGER (i1)                   :: j, k
 
-CALL u_BCS(uo, t)
+    CALL u_BCS(uo, t)
 
-DO k = 1, nz1
-   ux_rhs(:) = u(1:nx1,k) + u_nl(1:nx1,k)   !RHS at fixed z, looping over x
-
-   ux_rhs(1) = ux_rhs(1) + (0.5_r2 * rxx * uo(0,k)) - &
-               (((1.0_r2 - eta) * rx) / (4.0_r2 * s(1))) * uo(0,k)    !BCS
-   ux_rhs(nx1) = ux_rhs(nx1) + (0.5_r2 * rxx * uo(nx,k)) + &
-               (((1.0_r2 - eta) * rx) / (4.0_r2 * s(nx1))) * uo(nx,k)
-
-   CALL thomas(xlb, nx1, ux%up, ux%di, ux%lo, ux_rhs)   !Thomas algorithm
-                                                        !at each z
-   uo(1:nx1,k) = ux_rhs(:)   !intermediate solution
-END DO
-
-IF (tau /= 1) THEN   !if tau /= 1 extra entries due to BCS
-   DO k = 0, nz, nz
-      ux_rhs(:) = u(1:nx1,k) + u_nl(1:nx1,k)
+    DO k = 1, nz1
+      ux_rhs(:) = u(1:nx1,k) + u_nl(1:nx1,k)   !RHS at fixed z, looping over x
 
       ux_rhs(1) = ux_rhs(1) + (0.5_r2 * rxx * uo(0,k)) - &
-                  (((1.0_r2 - eta) * rx) / (4.0_r2 * s(1))) * uo(0,k)
+                  (((1.0_r2 - eta) * rx) / (4.0_r2 * s(1))) * uo(0,k)    !BCS
       ux_rhs(nx1) = ux_rhs(nx1) + (0.5_r2 * rxx * uo(nx,k)) + &
-                  (((1.0_r2 - eta) * rx) / (4.0_r2 * s(nx1))) * uo(nx,k)
+                    (((1.0_r2 - eta) * rx) / (4.0_r2 * s(nx1))) * uo(nx,k)
 
-      CALL thomas(xlb, nx1, ux%up, ux%di, ux%lo, ux_rhs)
+      CALL thomas(xlb, nx1, ux%up, ux%di, ux%lo, ux_rhs)   !Thomas algorithm
+                                                           !at each z
+      uo(1:nx1,k) = ux_rhs(:)   !intermediate solution
+    END DO
 
-      uo(1:nx1,k) = ux_rhs(:)
-   END DO
-END IF
+    IF (tau /= 1) THEN   !if tau /= 1 extra entries due to BCS
+      DO k = 0, nz, nz
+        ux_rhs(:) = u(1:nx1,k) + u_nl(1:nx1,k)
 
-RETURN
-END SUBROUTINE solve_ux
+        ux_rhs(1) = ux_rhs(1) + (0.5_r2 * rxx * uo(0,k)) - &
+                    (((1.0_r2 - eta) * rx) / (4.0_r2 * s(1))) * uo(0,k)
+        ux_rhs(nx1) = ux_rhs(nx1) + (0.5_r2 * rxx * uo(nx,k)) + &
+                      (((1.0_r2 - eta) * rx) / (4.0_r2 * s(nx1))) * uo(nx,k)
 
-SUBROUTINE solve_Zx(zo, zn, z_nl, po, t, zx)
-!Solve for the azimuthal vorticity in the x-direction
-USE parameters
-USE variables
-USE ic_bc, ONLY : z_BCS, s
-IMPLICIT NONE
+        CALL thomas(xlb, nx1, ux%up, ux%di, ux%lo, ux_rhs)
 
-REAL (r2),       INTENT(IN)    :: t, zn(0:nx,0:nz), po(0:nx,0:nz), &
-                                  z_nl(0:nx,0:nz)
-TYPE (MAT_COMP), INTENT(IN)    :: zx
-REAL (r2),       INTENT(INOUT) :: zo(0:nx,0:nz)
-REAL (r2)                      :: zx_rhs(nx1)
-INTEGER (i1)                   :: j, k
+        uo(1:nx1,k) = ux_rhs(:)
+      END DO
+    END IF
 
-CALL z_BCS(zo, po, t)
+    RETURN
+  END SUBROUTINE solve_ux
 
-DO k = 1, nz1
-   zx_rhs(:) = zn(1:nx1,k) + z_nl(1:nx1,k)   !RHS at fixed z, looping over x
+  SUBROUTINE solve_Zx(zo, zn, z_nl, po, t, zx)
+    !Solve for the azimuthal vorticity in the x-direction
+    USE parameters
+    USE variables
+    USE ic_bc, ONLY : z_BCS, s
+    IMPLICIT NONE
 
-   zx_rhs(1) = zx_rhs(1) + (0.5_r2 * rxx * zo(0,k)) - &
-               (((1.0_r2 - eta) * rx) / (4.0_r2 * s(1))) * zo(0,k)   !BCS
-   zx_rhs(nx1) = zx_rhs(nx1) + (0.5_r2 * rxx * zo(nx,k)) + &
-               (((1.0_r2 - eta) * rx) / (4.0_r2 * s(nx1))) * zo(nx,k)
+    REAL (r2),       INTENT(IN)    :: t, zn(0:nx,0:nz), po(0:nx,0:nz), &
+                                      z_nl(0:nx,0:nz)
+    TYPE (MAT_COMP), INTENT(IN)    :: zx
+    REAL (r2),       INTENT(INOUT) :: zo(0:nx,0:nz)
+    REAL (r2)                      :: zx_rhs(nx1)
+    INTEGER (i1)                   :: j, k
 
-   CALL thomas(xlb, nx1, zx%up, zx%di, zx%lo, zx_rhs)   !Thomas algorithm
+    CALL z_BCS(zo, po, t)
 
-   zo(1:nx1,k) = zx_rhs(:)   !intermediate solution
-END DO
+    DO k = 1, nz1
+      zx_rhs(:) = zn(1:nx1,k) + z_nl(1:nx1,k)   !RHS at fixed z, looping over x
 
-RETURN
-END SUBROUTINE solve_Zx
+      zx_rhs(1) = zx_rhs(1) + (0.5_r2 * rxx * zo(0,k)) - &
+                  (((1.0_r2 - eta) * rx) / (4.0_r2 * s(1))) * zo(0,k)   !BCS
+      zx_rhs(nx1) = zx_rhs(nx1) + (0.5_r2 * rxx * zo(nx,k)) + &
+                    (((1.0_r2 - eta) * rx) / (4.0_r2 * s(nx1))) * zo(nx,k)
 
-SUBROUTINE solve_uz(uo, u, t, uz)
-!Solve for azimuthal velocity in z-direction to give full solution
-USE parameters
-USE variables
-USE ic_bc, ONLY : u_BCS, s
-IMPLICIT NONE
+      CALL thomas(xlb, nx1, zx%up, zx%di, zx%lo, zx_rhs)   !Thomas algorithm
 
-REAL (r2),          INTENT(IN)    :: t, uo(0:nx,0:nz)
-TYPE (UZ_MAT_COMP), INTENT(IN)    :: uz
-REAL (r2),          INTENT(INOUT) :: u(0:nx,0:nz)
-REAL (r2)                         :: uz_rhs(0:nz), uz_rhs_t1(nz1), &
-                                     up(nz-2), di(nz1), lo(2:nz1)
-INTEGER (i1)                      :: j, k
+      zo(1:nx1,k) = zx_rhs(:)   !intermediate solution
+    END DO
 
-CALL u_BCS(u, t)
+    RETURN
+  END SUBROUTINE solve_Zx
 
-IF (tau == 1) THEN
-   up(:) = uz%up(1:nz-2)
-   di(:) = uz%di(1:nz1)   !dimensions of upper, lower, diagonal change
-   lo(:) = uz%lo(2:nz1)   !for tau=1
+  SUBROUTINE solve_uz(uo, u, t, uz)
+    !Solve for azimuthal velocity in z-direction to give full solution
+    USE parameters
+    USE variables
+    USE ic_bc, ONLY : u_BCS, s
+    IMPLICIT NONE
 
-   DO j = 1, nx1
-      uz_rhs_t1(:) = uo(j,1:nz1)   !RHS at fixed x looping over z
+    REAL (r2),          INTENT(IN)    :: t, uo(0:nx,0:nz)
+    TYPE (UZ_MAT_COMP), INTENT(IN)    :: uz
+    REAL (r2),          INTENT(INOUT) :: u(0:nx,0:nz)
+    REAL (r2)                         :: uz_rhs(0:nz), uz_rhs_t1(nz1), &
+                                         up(nz-2), di(nz1), lo(2:nz1)
+    INTEGER (i1)                      :: j, k
 
-      uz_rhs_t1(1) = uz_rhs_t1(1) + 0.5_r2 * rzz * u(j,0)
-      uz_rhs_t1(nz1) = uz_rhs_t1(nz1) + 0.5_r2 * rzz * u(j,nz)   !BCS
+    CALL u_BCS(u, t)
 
-      CALL thomas(zlb+1, nz1, up, di, lo, uz_rhs_t1)   !Thomas algorithm
+    IF (tau == 1) THEN
+      up(:) = uz%up(1:nz-2)
+      di(:) = uz%di(1:nz1)   !dimensions of upper, lower, diagonal change
+      lo(:) = uz%lo(2:nz1)   !for tau=1
 
-      u(j,1:nz1) = uz_rhs_t1(:)   !full solution
-   END DO
-ELSE   !straight-forward if tau /= 1
-   DO j = 1, nx1
-      uz_rhs(:) = uo(j,:)   !RHS at fixed x looping over z
+      DO j = 1, nx1
+        uz_rhs_t1(:) = uo(j,1:nz1)   !RHS at fixed x looping over z
 
-      CALL thomas(zlb, nz, uz%up, uz%di, uz%lo, uz_rhs)   !Thomas algorithm
+        uz_rhs_t1(1) = uz_rhs_t1(1) + 0.5_r2 * rzz * u(j,0)
+        uz_rhs_t1(nz1) = uz_rhs_t1(nz1) + 0.5_r2 * rzz * u(j,nz)   !BCS
 
-      u(j,:) = uz_rhs(:)   !full solution
-   END DO
-END IF
+        CALL thomas(zlb+1, nz1, up, di, lo, uz_rhs_t1)   !Thomas algorithm
 
-RETURN
-END SUBROUTINE solve_uz
+        u(j,1:nz1) = uz_rhs_t1(:)   !full solution
+      END DO
+    ELSE   !straight-forward if tau /= 1
+      DO j = 1, nx1
+        uz_rhs(:) = uo(j,:)   !RHS at fixed x looping over z
 
-SUBROUTINE solve_Zz(zo, po, zn, t, zz)
-!Solve for azimuthal vorticity in z-direction to give full solution
-USE parameters
-USE variables
-USE ic_bc, ONLY : z_BCS, s
-IMPLICIT NONE
+        CALL thomas(zlb, nz, uz%up, uz%di, uz%lo, uz_rhs)   !Thomas algorithm
 
-REAL (r2),          INTENT(IN)    :: t, zo(0:nx,0:nz), po(0:nx,0:nz)
-TYPE (ZZ_MAT_COMP), INTENT(IN)    :: zz
-REAL (r2),          INTENT(INOUT) :: zn(0:nx,0:nz)
-REAL (r2)                         :: Zz_rhs(nz1)
-INTEGER (i1)                      :: j, k
+        u(j,:) = uz_rhs(:)   !full solution
+      END DO
+    END IF
 
-CALL z_BCS(zn, po, t)
+    RETURN
+  END SUBROUTINE solve_uz
 
-DO j = 1, nx1
-   Zz_rhs(:) = zo(j,1:nz1)   !RHS at fixed x, looping over z
+  SUBROUTINE solve_Zz(zo, po, zn, t, zz)
+    !Solve for azimuthal vorticity in z-direction to give full solution
+    USE parameters
+    USE variables
+    USE ic_bc, ONLY : z_BCS, s
+    IMPLICIT NONE
 
-   Zz_rhs(1) = Zz_rhs(1) + 0.5_r2 * rzz * zn(j,0)
-   Zz_rhs(nz1) = Zz_rhs(nz1) + 0.5_r2 * rzz * zn(j,nz)   !BCS
+    REAL (r2),          INTENT(IN)    :: t, zo(0:nx,0:nz), po(0:nx,0:nz)
+    TYPE (ZZ_MAT_COMP), INTENT(IN)    :: zz
+    REAL (r2),          INTENT(INOUT) :: zn(0:nx,0:nz)
+    REAL (r2)                         :: Zz_rhs(nz1)
+    INTEGER (i1)                      :: j, k
 
-   CALL thomas(zlb+1, nz1, zz%up, zz%di, zz%lo, Zz_rhs)   !Thomas algorithm
+    CALL z_BCS(zn, po, t)
 
-   zn(j,1:nz1) = Zz_rhs(:)   !full solution
-END DO
+    DO j = 1, nx1
+      Zz_rhs(:) = zo(j,1:nz1)   !RHS at fixed x, looping over z
 
-RETURN
-END SUBROUTINE solve_Zz
+      Zz_rhs(1) = Zz_rhs(1) + 0.5_r2 * rzz * zn(j,0)
+      Zz_rhs(nz1) = Zz_rhs(nz1) + 0.5_r2 * rzz * zn(j,nz)   !BCS
 
-SUBROUTINE thomas (lb, m, up, di, lo, r)
-!Thomas algorithm for solving a tridiagonal system of equations
-USE parameters, ONLY : i1, r2
-IMPLICIT NONE
+      CALL thomas(zlb+1, nz1, zz%up, zz%di, zz%lo, Zz_rhs)   !Thomas algorithm
 
-INTEGER (i1)                :: j
-INTEGER (i1), INTENT(IN)    :: m, lb  !lb is the vector lower-bound
-REAL (r2),    INTENT(IN)    :: up(lb:m-1), di(lb:m), lo(lb+1:m)
-REAL (r2),    INTENT(INOUT) :: r(lb:m)
-REAL (r2)                   :: dnew(lb:m), aa = 0.0_r2
+      zn(j,1:nz1) = Zz_rhs(:)   !full solution
+    END DO
 
-dnew = di   !create new diagonal so as not to destroy original
-DO j = lb+1, m
-   aa = -lo(j) / dnew(j-1)
-   dnew(j) = dnew(j) + aa * up(j-1)   !eliminate lower-diagonal
-   r(j) = r(j) + aa * r(j-1)
-END DO
+    RETURN
+  END SUBROUTINE solve_Zz
 
-r(m) = r(m) / dnew(m)   !first step back-substitution
+  SUBROUTINE thomas (lb, m, up, di, lo, r)
+    !Thomas algorithm for solving a tridiagonal system of equations
+    USE parameters, ONLY : i1, r2
+    IMPLICIT NONE
 
-DO j = m-1, lb, -1
-   r(j) = (r(j) - up(j) * r(j+1)) / dnew(j)  !solve by back-substitution
-END DO
+    INTEGER (i1)                :: j
+    INTEGER (i1), INTENT(IN)    :: m, lb  !lb is the vector lower-bound
+    REAL (r2),    INTENT(IN)    :: up(lb:m-1), di(lb:m), lo(lb+1:m)
+    REAL (r2),    INTENT(INOUT) :: r(lb:m)
+    REAL (r2)                   :: dnew(lb:m), aa = 0.0_r2
 
-RETURN
-END SUBROUTINE thomas
+    dnew = di   !create new diagonal so as not to destroy original
+    DO j = lb+1, m
+      aa = -lo(j) / dnew(j-1)
+      dnew(j) = dnew(j) + aa * up(j-1)   !eliminate lower-diagonal
+      r(j) = r(j) + aa * r(j-1)
+    END DO
+
+    r(m) = r(m) / dnew(m)   !first step back-substitution
+
+    DO j = m-1, lb, -1
+      r(j) = (r(j) - up(j) * r(j+1)) / dnew(j)  !solve by back-substitution
+    END DO
+
+    RETURN
+  END SUBROUTINE thomas
 
 END MODULE solve
