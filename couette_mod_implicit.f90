@@ -27,6 +27,13 @@ integer :: pivot(nx1*nz1)
 logical, parameter :: write_ofile = .true.
 integer :: j, k, p = 0, p_start = 1
 
+print*
+if (tau == 0) then
+   write(6, '(A7, i2, A21)') 'tau = ', tau, '- Infinite cylinder'
+else if (tau == 1) then
+   write(6, '(A7, i2, A22)') 'tau = ', tau, '- Finite aspect ratio'
+end if   
+
 call open_files()
 
 print*, 'Setting up ICS...'
