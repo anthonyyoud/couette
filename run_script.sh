@@ -15,14 +15,15 @@ NODELIST= #'giga05 giga16' #giga20 giga21' #giga03 giga04 giga06 giga07' #giga10
 #          giga11 giga12 giga13 giga14 giga15 giga16 giga17'
 #NODELIST='giga02'
 DATA_DIR=`pwd`
-RUN_DIR=/work/$JOB_ID
+RUN_DIR=/work/ay_$JOB_ID
 
 #****************************************************************************
 #NO CHANGES NECESSARY BELOW HERE
 #****************************************************************************
 
 mkdir $RUN_DIR
-cp $EXE $DATA $RUN_DIR
+mv $EXE $RUN_DIR
+cp $DATA $RUN_DIR
 if [ -e $DATA_DIR/end_state.dat ]; then
    mv end_state.dat $RUN_DIR
 fi
@@ -46,7 +47,8 @@ else
    time mpirun -np $NPROCS $EXE
    lamhalt
 fi
-cp -r $RUN_DIR $DATA_DIR/
+rm $EXE
+cp -r $RUN_DIR/* $DATA_DIR/$JOB_ID/
 mv $DATA_DIR/run$JOB_ID.log $DATA_DIR/$JOB_ID/
 if [ $SERIAL == 0 ]; then
    for NODE in $NODELIST

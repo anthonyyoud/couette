@@ -4,14 +4,15 @@ OBJECTS		= parameters.o ic_bc.o variables.o derivs.o pressure.o \
                   nonlinear.o solve.o couette_mod.o
 COMPFLAGS	= -O3 -w95 -tpp7 -xW -unroll #-parallel
 #COMPFLAGS	= -d0 -CA -CB -CS -CU -CV
+LINKFLAGS	= -i_dynamic
 TYPE            = implicit
-LIBS            = -L $(HOME)/lib -lscalapack_ref -lblacsF77init_MPI-LINUX-0 \
+LIBS            = -L $(HOME)/lib -lscalapack -lblacsF77init_MPI-LINUX-0 \
                   -lblacs_MPI-LINUX-0 -lblacsCinit_MPI-LINUX-0 -lblas_ref
 COMPILER	= mpif77
 
 #-----------------------------------------------------------------------
 all:	$(OBJECTS)
-	$(COMPILER) $(COMPFLAGS) -static -o\
+	$(COMPILER) $(COMPFLAGS) $(LINKFLAGS) -o\
         $(OUTDIR)couette_mod.out \
         $(OBJECTS) $(LIBS)
 

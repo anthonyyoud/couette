@@ -55,7 +55,8 @@ close (51)
 return
 END SUBROUTINE close_files
 
-SUBROUTINE save_growth(t, ur, ur_prev, uz, pn, v, zn, bn, jn, growth)
+SUBROUTINE save_growth(t, ur, ur_prev, uz, uz_prev, pn, v, zn, bn, jn, &
+                       growth, growth_vz)
 !Save fields at particular points in (x,z)-plane
 use parameters
 implicit none
@@ -63,18 +64,20 @@ implicit none
 double precision, intent(in) :: t, ur(0:nx,0:nz), uz(0:nx,0:nz), &
                                 pn(0:nx,0:nz), bn(0:nx,0:nz), &
                                 jn(0:nx,0:nz), v(0:nx,0:nz), &
-                                zn(0:nx,0:nz), ur_prev(0:nx,0:nz)
-double precision, intent(out) :: growth
+                                zn(0:nx,0:nz), ur_prev(0:nx,0:nz), &
+                                uz_prev(0:nx,0:nz)
+double precision, intent(out) :: growth, growth_vz
 double precision, save :: min_p, max_p, min_ur, max_ur, min_uz, max_uz
 integer :: zpos, xpos
 
 !growth rate of vortices
 growth = log(abs(ur(nx/2,nz/2)/ur_prev(nx/2,nz/2))) / (dt * save_rate)
+growth_vz = log(abs(uz(nx/2,nz/2)/uz_prev(nx/2,nz/2))) / (dt * save_rate)
 
 xpos = nx/2
 zpos = nz/2   !position at which to save fields
 
-write(20, '(11e17.9)') t, ur(nx/2,nz/2), ur(nx/2,0), growth, &
+write(20, '(12e17.9)') t, ur(nx/2,nz/2), ur(nx/2,0), growth, growth_vz, &
                       uz(xpos,zpos), &
                       pn(nx/4,3*nz/4), v(nx/2,nz/2), &
                       zn(nx/2,nz/4), bn(nx/2,nz/4), jn(nx/2,nz/2), &
@@ -303,7 +306,7 @@ implicit none
 
 integer, intent(in) :: p, p_start
 double precision, intent(in) :: t
-double precision :: growth_rate
+double precision :: growth_rate, growth_rate_vz
 
 call vr_vz(psi%old, vr, vz)   !get radial, axial velocities
 if (save_part) call particle(vr, vrold, vz, vzold, x_pos, z_pos) !save particle
@@ -311,10 +314,10 @@ if (save_part) call particle(vr, vrold, vz, vzold, x_pos, z_pos) !save particle
 !   call save_torque(t, unew)
 !end if
 if ((p /= p_start) .and. ((p - p_start) > save_rate)) then
-   call save_growth(t, vr, vrold, vz, psi%old, ut%new, zt%new, &
-                    bt%old, jt%old, growth_rate)
+   call save_growth(t, vr, vrold, vz, vzold, psi%old, ut%new, zt%new, &
+                    bt%old, jt%old, growth_rate, growth_rate_vz)
    if ((om1 == 0d0) .and. (om2 == 0d0)) then
-      if ((dabs(growth_rate) < 1d-8) .and. &  !if vr saturated
+      if ((dabs(growth_rate_vz) < 1d-8) .and. &  !if vr saturated
           (dabs(vr(nx/2, nz/2)) > 1d-3)) then
          if ((.not. auto_tau) .or. (tau == tau_end)) then  !if tau not auto
             call save_time_tau(tau, t)                     !or tau at end
