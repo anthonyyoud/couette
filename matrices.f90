@@ -82,11 +82,12 @@ do j = nx, nx1*nz1
    p_mat(2*nx1+1+nx1,j-nx1) = delta
 end do
 
-call DGBTRF(nx1*nz1, nx1*nz1, nx1, nx1, p_mat, 2*nx1+nx1+1, IPIV, info)
-
 !open (60, file = 'p_mat.dat')
-!write(60, '(9e17.9)') ((p_mat(j,k), k = 1, nx1*nz1), j = 1, 2*nx1+nx1+1)
+!write(60, '(16f7.2)') ((p_mat(j,k), k = 1, nx1*nz1), j = 1, 2*nx1+nx1+1)
 !close (60)
+
+call DGBTRF(nx1*nz1, nx1*nz1, nx1, nx1, p_mat, 2*nx1+nx1+1, IPIV, info)
+!print*,info
 
 return
 END SUBROUTINE psi_mat_setup
@@ -150,11 +151,11 @@ do j = nx, nxp1*nz1-1, nxp1
    b_mat(2*nx+4,j-1) = alp(nx) + gam(nx)
 end do
 
-call DGBTRF(nxp1*nz1, nxp1*nz1, nxp1, nxp1, b_mat, 2*nxp1+nxp1+1, IPIV, info)
+open (61, file = 'b_mat.dat')
+write(61, '(15f7.2)') ((b_mat(j,k), k = 0, nxp1*nz1-1), j = 1, 2*nxp1+nxp1+1)
+close (61)
 
-!open (61, file = 'b_mat.dat')
-!write(61, '(9e17.9)') ((b_mat(j,k), k = 1, nxp1*nz1), j = 1, 2*nxp1+nxp1+1)
-!close (61)
+call DGBTRF(nxp1*nz1, nxp1*nz1, nxp1, nxp1, b_mat, 2*nxp1+nxp1+1, IPIV, info)
 
 return
 END SUBROUTINE b_mat_setup
@@ -271,11 +272,11 @@ do j = nxp1*nzp1-nxp1, nxp1*nzp1-1
    b_mat(3*nx+4,j-nxp1) = 2d0 * delta
 end do
 
-call DGBTRF(nxp1*nzp1, nxp1*nzp1, nxp1, nxp1, b_mat, 2*nxp1+nxp1+1, IPIV, info)
-
 !open (61, file = 'b_mat.dat')
-!write(61, '(9e17.9)') ((b_mat(j,k), k = 1, nxp1*nz1), j = 1, 2*nxp1+nxp1+1)
+!write(61, '(20f7.2)') ((b_mat(j,k), k = 0, nxp1*nzp1-1), j = 1, 2*nxp1+nxp1+1)
 !close (61)
+
+call DGBTRF(nxp1*nzp1, nxp1*nzp1, nxp1, nxp1, b_mat, 2*nxp1+nxp1+1, IPIV, info)
 
 return
 END SUBROUTINE fin_b_mat_setup
@@ -351,11 +352,12 @@ do j = nx1*nzp1-nx1+1, nx1*nzp1
    !j_test(j,j-nx1) = 2d0 * delta
 end do
 
+!open(73,file='j_mat.dat')
+!write(73,'(15f7.2)') ((j_mat(j,k), k = 1, nx1*nzp1), j = 1, 2*nx1+nx1+1)
+!close(73)
+
 call DGBTRF(nx1*nzp1, nx1*nzp1, nx1, nx1, j_mat, 2*nx1+nx1+1, IPIV, info)
 
-!open(73,file='j_test.dat')
-!write(6,'(8e10.3)') ((j_test(j,k), k=1,nx1*nzp1), j=1,nx1*nzp1)
-!close(73)
 return
 END SUBROUTINE j_mat_setup
 
@@ -410,11 +412,12 @@ do j = nx, nx1*nz1
    !j_test(j,j-nx1) = delta
 end do
 
+!open(73,file='j_mat.dat')
+!write(73,'(16f7.2)') ((j_mat(j,k), k = 1, nx1*nz1), j = 1, 2*nx1+nx1+1)
+!close(73)
+
 call DGBTRF(nx1*nz1, nx1*nz1, nx1, nx1, j_mat, 2*nx1+nx1+1, IPIV, info)
 
-!open(73,file='j_test.dat')
-!write(6,'(8e10.3)') ((j_test(j,k), k=1,nx1*nzp1), j=1,nx1*nzp1)
-!close(73)
 return
 END SUBROUTINE fin_j_mat_setup
 

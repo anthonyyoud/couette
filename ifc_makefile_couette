@@ -1,16 +1,16 @@
 OUTDIR		= ./
 OBJECTS		= parameters.o ic_bc.o derivs.o pressure.o magnetic.o \
                   current.o matrices.o io.o couette_mod.o
-COMPFLAGS	= -O3 -w95 -tpp7 -xW -ipo -unroll #-parallel
+COMPFLAGS	= -O3 -pg -w95 -tpp7 -xW -ipo -unroll #-parallel
 #COMPFLAGS	= -c -g -d0 -CA -CB -CS -CU -CV
 TYPE            = implicit
-LIBS            = -L/home/pg/n8049290/Utilities/LAPACK \
-                  -llapack_LINUX -lblas_LINUX #-lpthread
+#LIBS            = -L $(HOME)/lib -llapack_LINUX -lblas_LINUX
+LIBS            = -L $(HOME)/lib -llapack -lptf77blas -lptcblas -latlas
 COMPILER	= ifc
 
 #-----------------------------------------------------------------------
 all:	$(OBJECTS)
-	$(COMPILER) $(COMPFLAGS) -i_dynamic -o\
+	$(COMPILER) $(COMPFLAGS) -i_dynamic -lpthread -o\
         $(OUTDIR)couette_mod.out \
         $(OBJECTS) $(LIBS)
 
