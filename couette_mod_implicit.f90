@@ -67,6 +67,11 @@ else if (tau == 1d0) then
    allocate(j_mat(2*nx1+nx1+1,nx1*nz1))
    allocate(b_pivot(nxp1*nzp1))
    allocate(j_pivot(nx1*nz1))
+else if ((tau /= 0d0) .and. (tau /= 1d0)) then
+   allocate(b_mat(2*nxp1+nxp1+1,0:nxp1*nzp1-1)) 
+   allocate(j_mat(2*nx1+nx1+1,nx1*nzp1))
+   allocate(b_pivot(nxp1*nzp1))
+   allocate(j_pivot(nx1*nzp1))
 end if
 
 print*, 'Setting up matrices...'
@@ -79,6 +84,9 @@ if (tau == 0d0) then
 else if (tau == 1d0) then
    call fin_b_mat_setup(b_mat, b_pivot)
    call fin_j_mat_setup(j_mat, j_pivot)
+else if ((tau /= 0d0) .and. (tau /= 1d0)) then
+   call fin_b_mat_setup(b_mat, b_pivot)
+   call j_mat_setup(j_mat, j_pivot)
 end if
 
 uold = unew
@@ -124,9 +132,9 @@ do p = p_start, Ntot
       if (save_part) then
          call particle(vr, vrold, vz, vzold, x_pos, z_pos)
       end if
-      if ((Re1 /= 0d0) .or. (Re2 /= 0d0)) then
-         call save_torque(t, unew)
-      end if
+      !if ((Re1 /= 0d0) .or. (Re2 /= 0d0)) then
+      !   call save_torque(t, unew)
+      !end if
       if ((p /= p_start) .and. ((p - p_start) > save_rate)) then
          call save_growth(t, vr, vrold, vz, pold, unew, znew, &
                           bold, jold, growth_rate)
@@ -155,7 +163,7 @@ do p = p_start, Ntot
    if (xsect_save) then
       if (mod(p, save_rate_2) == 0) then
          call save_xsect(vr, vz, pold, t, p)
-         call save_surface(pold, unew, znew, vr, vz, bold, jold, p, t)
+         !call save_surface(pold, unew, znew, vr, vz, bold, jold, p, t)
       end if
    end if
 
@@ -232,6 +240,9 @@ do p = p_start, Ntot
    else if (tau == 1d0) then
       call fin_b_poisson(unew, bnew, b_mat, b_pivot)
       call fin_j_poisson(pnew, jnew, j_mat, j_pivot)
+   else if ((tau /= 0d0) .and. (tau /= 1d0)) then
+      call fin_b_poisson(unew, bnew, b_mat, b_pivot)
+      call j_poisson(pnew, jnew, j_mat, j_pivot)
    end if
 
    if (diag) then

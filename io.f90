@@ -139,7 +139,7 @@ if (minval(pn) < min_p) then
    min_p = minval(pn)
 end if
 
-write (22, '(7e17.9)') t, max_p, min_p, max_ur, min_ur, max_uz, min_uz
+!write (22, '(7e17.9)') t, max_p, min_p, max_ur, min_ur, max_uz, min_uz
 
 return
 END SUBROUTINE save_growth

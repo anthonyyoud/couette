@@ -174,48 +174,101 @@ beta(:) = -2d0 * (dz2 + dx2) - dx2 * dz2 * (1d0 - eta)**2 / s(:)**2
 gam(:) = dz2 + 0.5d0 * delx * dz2 * (1d0 - eta) / s(:)
 delta = dx2
 
+!diagonal
 do j = 0, nxp1*nzp1-1
    b_mat(2*nx+3,j) = beta(mod(j, nxp1))
 end do
 
+!upper diagonal
 do j = 0, nxp1*nzp1-2
    b_mat(2*nx+2,j+1) = gam(mod(j, nxp1))
 end do
 
+!lower diagonal
 do j = 1, nxp1*nzp1-1
    b_mat(2*nx+4,j-1) = alp(mod(j, nxp1))
 end do
 
+!upper diagonal branch
 do j = 0, nxp1*nzp1-nxp1-1
    b_mat(nx+2,j+nxp1) = delta
 end do
 
+!lower diagonal branch
 do j = nxp1, nxp1*nzp1-1
    b_mat(3*nx+4,j-nxp1) = delta
 end do
 
+!upper diagonal, j=nx, so j=0 not present
 do j = nx, nxp1*nzp1-nxp1-1, nxp1
    b_mat(2*nx+2,j+1) = 0d0
 end do
 
+!lower diagonal, j=0, so j=nx not present
 do j = nxp1, nxp1*nzp1-nxp1, nxp1
    b_mat(2*nx+4,j-1) = 0d0
 end do
 
+!diagonal, j=0
 do j = 0, nxp1*nzp1-nxp1, nxp1
    b_mat(2*nx+3,j) = (2d0 * alp(0) * delx * (1d0 - eta) / s(0)) + beta(0)
 end do
 
+!diagonal, k=0
+do j = 0, nx
+   b_mat(2*nx+3,j) = beta(mod(j, nxp1)) - &
+                     2d0 * delta * delz * (1d0 - tau) / tau
+end do
+
+!diagonal, j=nx
 do j = nx, nxp1*nzp1-1, nxp1
    b_mat(2*nx+3,j) = (-2d0 * gam(nx) * delx * (1d0 - eta) / s(nx)) + beta(nx)
 end do
 
+!diagonal, k=nz
+do j = nxp1*nzp1-nxp1, nxp1*nzp1-1
+   b_mat(2*nx+3,j) = beta(mod(j, nxp1)) - &
+                     2d0 * delta * delz * (1d0 - tau) / tau
+end do
+
+!diagonal, j=0, k=0
+b_mat(2*nx+3,0) = beta(0) - &
+                  2d0 * delta * delz * (1d0 - tau) / tau + &
+                 (2d0 * alp(0) * delx * (1d0 - eta) / s(0))
+
+!diagonal, j=0, k=nz
+b_mat(2*nx+3,nxp1*nzp1-nxp1) = beta(0) - &
+                               2d0 * delta * delz * (1d0 - tau) / tau + &
+                              (2d0 * alp(0) * delx * (1d0 - eta) / s(0))
+
+!diagonal, j=nx, k=0
+b_mat(2*nx+3,nx) = beta(nx) - &
+                  2d0 * delta * delz * (1d0 - tau) / tau - &
+                 (2d0 * gam(nx) * delx * (1d0 - eta) / s(nx))
+
+!diagonal, j=nx, k=nz
+b_mat(2*nx+3,nxp1*nzp1-1) = beta(nx) - &
+                            2d0 * delta * delz * (1d0 - tau) / tau - &
+                           (2d0 * gam(nx) * delx * (1d0 - eta) / s(nx))
+
+!upper diagonal, j=0
 do j = 0, nxp1*nzp1-nxp1, nxp1
    b_mat(2*nx+2,j+1) = alp(0) + gam(0)
 end do
 
+!lower diagonal, j=nx
 do j = nx, nxp1*nzp1-1, nxp1
    b_mat(2*nx+4,j-1) = alp(nx) + gam(nx)
+end do
+
+!upper diagonal branch, k=0
+do j = 0, nx
+   b_mat(nx+2,j+nxp1) = 2d0 * delta
+end do
+
+!lower diagonal branch, k=nz
+do j = nxp1*nzp1-nxp1, nxp1*nzp1-1
+   b_mat(3*nx+4,j-nxp1) = 2d0 * delta
 end do
 
 call DGBTRF(nxp1*nzp1, nxp1*nzp1, nxp1, nxp1, b_mat, 2*nxp1+nxp1+1, IPIV, info)
@@ -246,6 +299,16 @@ delta = dx2
 do j = 1, nx1*nzp1
    j_mat(2*nx-1,j) = beta(mod(j-1, nx1)+1)
    !j_test(j,j) = beta(mod(j-1, nx1)+1)
+end do
+
+do j = 1, nx1
+   j_mat(2*nx-1,j) = beta(mod(j-1, nx1)+1) - &
+                     2d0 * delta * delz * tau / (1d0 - tau)
+end do
+
+do j = nx1*nzp1-nx1+1, nx1*nzp1
+   j_mat(2*nx-1,j) = beta(mod(j-1, nx1)+1) - &
+                     2d0 * delta * delz * tau / (1d0 - tau)
 end do
 
 do j = 1, nx1*nzp1-1
