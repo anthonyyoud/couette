@@ -4,9 +4,10 @@ Axisymmetric, modulated Couette flow in an infinite or finite cylinder
 using 2nd order implicit Crank-Nicolson for linear terms and 2nd order 
 explicit Adams-Bashforth for non-linear terms with operator factorisation.  
 2nd order centred finite differences.  Includes homotopy parameter, tau, to 
-continuously deform the boundaries from inifinite case (tau=0) to finite 
+continuously deform the boundaries from infinite case (tau=0) to finite 
 case (tau=1).  Also includes particle path subroutine to track the 
-trajectory of a particle.
+trajectory of a particle.  Also allows for axial oscillation of the 
+inner and/or outer Reynolds numbers to mimic a wavy cylinder boundary.
 
 FILES
 -----
@@ -113,9 +114,16 @@ restart		- Should we restart from a previous run.  If .true.,
 auto_tau	- For steady case, should tau be automatically stepped 
 		  after saturation at each tau.  Set in conjunction with 
 		  tau_step and tau_end.
+save_part	- Should a particle path be saved?
+eps1		- Amplitude of oscillation of Re_1(t,z) in axial 
+		  direction.
+freq1		- Frequency of oscillation of Re_1(t,z) in axial 
+		  direction.
+eps2		- As above but for Re_2(t,z).
+freq2		- As above but for Re_2(t,z).
 x_par_pos	- Initial radial position of a particle in the fluid as 
 		  a fraction of gap width.
 z_par_pos	- Initial axial position of a particle in the fluid as a 
 		  fraction of gamma (finite) or alpha (infinite).
 
-20/11/2003
+03/12/2003

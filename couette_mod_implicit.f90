@@ -38,7 +38,7 @@ call ICS(unew, znew, pnew, x, z, s, p_start)
 
 if (.not. restart) then
    print*, 'Setting up BCS...'
-   call u_BCS(unew, 0d0)
+   call u_BCS(unew, z, 0d0)
    call p_BCS(pnew)
    call z_BCS(znew, pnew, s, 0d0)
 end if
@@ -76,7 +76,9 @@ do p = p_start, Ntot
 
    if (mod(p, save_rate) == 0) then
       call r_vel(pold, s, vr, vz)
-      call particle(vr, vrold, vz, vzold, x_pos, z_pos)
+      if (save_part) then
+         call particle(vr, vrold, vz, vzold, x_pos, z_pos)
+      end if
       if ((Re1 /= 0d0) .or. (Re2 /= 0d0)) then
          call save_torque(t, unew)
       end if
@@ -140,7 +142,7 @@ do p = p_start, Ntot
 
 !*** Solve for v in x-direction **************
 
-   call solve_ux(uold, unew, u_nlin_new, s, t, Ux)
+   call solve_ux(uold, unew, u_nlin_new, s, z, t, Ux)
 
 !*********************************************
 
@@ -155,7 +157,7 @@ do p = p_start, Ntot
 
 !*** Solve for v in z-direction **************
 
-   call solve_uz(uold, unew, t, Uz)
+   call solve_uz(uold, unew, t, z, Uz)
 
 !*********************************************
 
@@ -251,15 +253,17 @@ end if
 return
 END SUBROUTINE ICS
 
-SUBROUTINE u_BCS(u, t)
+SUBROUTINE u_BCS(u, z, t)
 use parameters
 implicit none
 double precision, intent(out) :: u(0:nx,0:nz)
-double precision, intent(in) :: t
+double precision, intent(in) :: z(0:nz), t
 integer :: k
 
-u(0,:) = Re1 + Re1_mod * dcos(om1 * t)
-u(nx,:) = Re2 + Re2_mod * dcos(om2 * t)
+u(0,:) = Re1 + Re1_mod * dcos(om1 * t) + &
+         eps1 * dsin(freq1 * z(:))
+u(nx,:) = Re2 + Re2_mod * dcos(om2 * t) + &
+         eps2 * dsin(freq2 * z(:))
 
 if (tau == 1) then
    u(:,0) = 0d0
@@ -459,19 +463,19 @@ end do
 return
 END SUBROUTINE get_nlin_Zx
 
-SUBROUTINE solve_ux(uo, u, u_nl, s, t, ux)
+SUBROUTINE solve_ux(uo, u, u_nl, s, z, t, ux)
 use parameters
 use io
 implicit none
 double precision, intent(in) :: t
 double precision, intent(in) :: u(0:nx,0:nz), u_nl(0:nx,0:nz), &
-                                s(0:nx)
+                                s(0:nx), z(0:nz)
 type (mat_comp), intent(in) :: ux
 double precision, intent(inout) :: uo(0:nx,0:nz)
 double precision :: ux_rhs(nx1)
 integer :: j, k
 
-call u_BCS(uo, t)
+call u_BCS(uo, z, t)
 
 do k = 1, nz1
    ux_rhs(:) = u(1:nx1,k) + u_nl(1:nx1,k)
@@ -534,19 +538,19 @@ end do
 return
 END SUBROUTINE solve_Zx
 
-SUBROUTINE solve_uz(uo, u, t, uz)
+SUBROUTINE solve_uz(uo, u, t, z, uz)
 use parameters
 use io
 implicit none
 double precision, intent(in) :: t
-double precision, intent(in) :: uo(0:nx,0:nz)
+double precision, intent(in) :: uo(0:nx,0:nz), z(0:nz)
 type (uz_mat_comp), intent(in) :: uz
 double precision, intent(inout) :: u(0:nx,0:nz)
 double precision :: uz_rhs(0:nz), uz_rhs_t1(nz1), &
                     up(nz-2), di(nz1), lo(2:nz1)
 integer :: j, k
 
-call u_BCS(u, t)
+call u_BCS(u, z, t)
 
 if (tau == 1) then
    up(:) = uz%up(1:nz-2)

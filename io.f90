@@ -117,8 +117,8 @@ integer :: zpos, xpos
 
 growth = log(abs(ur(nx/2,nz/2)/ur_prev(nx/2,nz/2))) / (dt * save_rate)
 
-xpos = nx/4 !nx/10
-zpos = 3*nz/4 !nz - (nz / (2 * gamma)) !(nz * (gamma - 1)) / (2 * gamma)
+xpos = nx/2
+zpos = nz/2
 
 write(20, '(9e17.9)') t, ur(nx/2,nz/2), ur(nx/2,0), growth, &
                       uz(xpos,zpos), &
