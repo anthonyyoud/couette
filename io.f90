@@ -73,6 +73,7 @@ SUBROUTINE open_files()
 use parameters
 implicit none
 open (20, status = 'unknown', file = 'u_growth.dat')
+open (22, status = 'unknown', file = 'max_psi.dat')
 open (33, status = 'unknown', file = 'torque.dat')
 open (51, file = 'time_tau.dat')
 if (diag) then
@@ -90,6 +91,7 @@ SUBROUTINE close_files()
 use parameters
 implicit none
 close (20)
+close (22)
 close (33)
 close (51)
 if (diag) then
@@ -148,16 +150,24 @@ write (33, '(3e17.9)') t, G1_, G2_ !G1(nz/4), G2(nz/4)
 return
 END SUBROUTINE save_torque
 
-SUBROUTINE save_xsect(ur, uz, pn, x, z, p)
+SUBROUTINE save_xsect(ur, uz, pn, x, z, p, max_p, min_p)
 use parameters
 implicit none
 
 integer, intent(in) :: p
 double precision, intent(in) :: ur(0:nx,0:nz), uz(0:nx,0:nz), &
                                 pn(0:nx,0:nz), x(0:nx), z(0:nz)
+double precision :: min_p, max_p
 integer :: j, k
 
 open (32, status = 'unknown', file = 'xsect'//itos(p)//'.dat')
+
+if (maxval(pn) > max_p) then
+   max_p = maxval(pn)
+end if
+if (minval(pn) < min_p) then
+   min_p = minval(pn)
+end if
 
 write (32, '(2i5)') nx, nz
 write (32, '(e17.9)') ((ur(j,k), j = 0, nx), k = 0, nz)
@@ -225,6 +235,7 @@ integer :: j, k
 open (50, file = 'end_state.dat')
 
 write(50, '(i7)') p
+write(50, '(e19.7)') dt
 write(50, '(e19.7)') ((u(j,k), k = 0, nz), j = 0, nx)
 write(50, '(e19.7)') ((zn(j,k), k = 0, nz), j = 0, nx)
 write(50, '(e19.7)') ((pn(j,k), k = 0, nz), j = 0, nx)
@@ -241,17 +252,23 @@ use parameters
 implicit none
 double precision, intent(out) :: u(0:nx,0:nz), zn(0:nx,0:nz), &
                                  pn(0:nx,0:nz)
+double precision :: dt_prev
 integer, intent(out) :: p
 integer :: j, k
 
 open (50, file = 'end_state.dat')
 
 read(50, *) p
+read(50, *) dt_prev
 read(50, *) ((u(j,k), k = 0, nz), j = 0, nx)
 read(50, *) ((zn(j,k), k = 0, nz), j = 0, nx)
 read(50, *) ((pn(j,k), k = 0, nz), j = 0, nx)
 
 close (50)
+
+if (dt_prev /= dt) then
+   p = p * dt_prev / dt
+end if
 
 return
 END SUBROUTINE state_restart

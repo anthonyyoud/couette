@@ -11,7 +11,7 @@ type (mat_comp) :: Ux, Zx
 type (uz_mat_comp) :: Uz
 type (zz_mat_comp) :: Zz
 !type (grid_setup) :: grid
-double precision :: growth_rate
+double precision :: growth_rate, p_max = 0d0, p_min = 0d0
 double precision :: x(0:nx), z(0:nz), s(0:nx), &
 !double precision :: s(0:nx), &
                     t = 0d0, A = 0d0, A_ = 0d0, B = 0d0, B_ = 0d0, &
@@ -73,7 +73,8 @@ do p = p_start, Ntot
       print*, 'Stop requested'
       print*, 'Saving end state'
       call end_state(uold, zold, pold, p)
-      call save_xsect(vr, vz, pold, x, z, p)
+      call save_xsect(vr, vz, pold, x, z, p, p_max, p_min)
+      write (22, '(3e17.9)') t, p_max, p_min
       call save_surface(pold, uold, zold, vr, vz, x, z, p, t)
       exit
    end if
@@ -172,7 +173,8 @@ do p = p_start, Ntot
                    call save_time_tau(tau, t)
                    tau = tau + tau_step
                    print*, 'tau = ', tau
-                   call save_xsect(vr, vz, pold, x, z, p)
+                   call save_xsect(vr, vz, pold, x, z, p, p_max, p_min)
+                   write (22, '(3e17.9)') t, p_max, p_min
                    call save_surface(pold, unew, znew, vr, vz, x, z, p, t)
                 end if
             end if
@@ -184,14 +186,16 @@ do p = p_start, Ntot
 
    if (xsect_save) then
       if (mod(p, save_rate_2) == 0) then
-         call save_xsect(vr, vz, pold, x, z, p)
+         call save_xsect(vr, vz, pold, x, z, p, p_max, p_min)
+         write (22, '(3e17.9)') t, p_max, p_min
          call save_surface(pold, unew, znew, vr, vz, x, z, p, t)
       end if
    end if
 
    if (p == Ntot) then
       call end_state(unew, znew, pold, p)
-      call save_xsect(vr, vz, pold, x, z, p)
+      call save_xsect(vr, vz, pold, x, z, p, p_max, p_min)
+      write (22, '(3e17.9)') t, p_max, p_min
       call save_surface(pold, unew, znew, vr, vz, x, z, p, t)
    end if
 

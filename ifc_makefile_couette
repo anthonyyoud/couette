@@ -10,7 +10,7 @@ COMPILER	= ifc
 
 #-----------------------------------------------------------------------
 all:	$(OBJECTS)
-	$(COMPILER) -pg -O3 -w95 -tpp7 -xW -o\
+	$(COMPILER) -pg -i_dynamic -O3 -w95 -tpp7 -xW -o\
         $(OUTDIR)couette_mod.out \
         $(OBJECTS) $(LIBS)
 
