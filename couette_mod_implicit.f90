@@ -29,9 +29,9 @@ integer :: j, k, p = 0, p_start = 1
 
 print*
 if (tau == 0) then
-   write(6, '(A7, i2, A21)') 'tau = ', tau, '- Infinite cylinder'
+   write(6, '(A7, f4.2, A21)') 'tau = ', tau, '- Infinite cylinder'
 else if (tau == 1) then
-   write(6, '(A7, i2, A22)') 'tau = ', tau, '- Finite aspect ratio'
+   write(6, '(A7, f4.2, A22)') 'tau = ', tau, '- Finite aspect ratio'
 end if   
 
 call open_files()
@@ -261,8 +261,10 @@ if (tau == 1) then
    zn(:,nz) = -(8d0 * pn(:,nz1) - pn(:,nz-2)) / &
                (2d0 * (s(:)**2) * dz2)
 else
-   zn(:,0) = 0d0 
-   zn(:,nz) = 0d0 
+   zn(:,0) = (-tau / (s(:)**2 * (1d0 - tau))) * &
+             (0.5d0 * (-pn(:,2) + 4d0 * pn(:,1)) / delx)
+   zn(:,nz) = (tau / (s(:)**2 * (1d0 - tau))) * &
+             (0.5d0 * (pn(:,nz-2) - 4d0 * pn(:,nz1)) / delx)
 end if
 
 return
@@ -555,7 +557,10 @@ if (tau == 1) then
 else
    do j = 1, nx1
       uz_rhs(:) = uo(j,:)
-   
+
+      uz_rhs(0) = uz_rhs(0) - ((rz * tau * vc(j)) / (1d0 - tau))   
+      uz_rhs(nz) = uz_rhs(nz) - ((rz * tau * vc(j)) / (1d0 - tau))   
+
       call thomas(zlb, nz, uz%up, uz%di, uz%lo, uz_rhs)
 
       u(j,:) = uz_rhs(:)
