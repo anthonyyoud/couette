@@ -4,11 +4,11 @@ save
 
 double precision, parameter :: pi 	   = 3.14159265358979d0
 double precision, parameter :: alpha 	   = 0d0
-double precision, parameter :: gamma 	   = 4d0 !(2d0 * pi) / alpha
+double precision, parameter :: gamma 	   = 16d0 !(2d0 * pi) / alpha
 double precision, parameter :: eta 	   = 0.75d0
 double precision, parameter :: Re1 	   = 0d0
 double precision, parameter :: Re2 	   = 0d0
-double precision, parameter :: Re1_mod 	   = 300d0
+double precision, parameter :: Re1_mod 	   = 150d0
 double precision, parameter :: Re2_mod 	   = 0d0
 double precision, parameter :: om1 	   = 3d0
 double precision, parameter :: om2 	   = 0d0
@@ -19,15 +19,15 @@ double precision, parameter :: tau_init	   = 1d0
 double precision, parameter :: tau_step    = 1d0
 double precision, parameter :: tau_end     = 1d0
 integer, 	  parameter :: nx 	   = 20
-integer, 	  parameter :: nz 	   = 80
+integer, 	  parameter :: nz 	   = 320
 integer, 	  parameter :: save_rate   = 10
 integer, 	  parameter :: save_rate_2 = 2
 logical, 	  parameter :: diag 	   = .false.
 logical, 	  parameter :: xsect_save  = .false.
 logical, 	  parameter :: restart 	   = .false.
 logical,	  parameter :: auto_tau    = .false.
-double precision, parameter :: x_par_pos   = 0.5d0
-double precision, parameter :: z_par_pos   = 0.80d0
+double precision, parameter :: x_par_pos   = 0.6d0
+double precision, parameter :: z_par_pos   = 0.5d0
 
 integer, 	  parameter :: Ntot = end_time / dt
 double precision, parameter :: delx = 1d0 / (nx+0)
