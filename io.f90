@@ -245,7 +245,7 @@ MODULE io
                                    u_t(:,k) * u_r_z(:,k) - &
                                    u_t(:,k) * u_z_x(:,k) + &
                                    u_z(:,k) * u_t_x(:,k)) + &
-                 (s(:) * u_t(:,k) * u_z(:,k)) / (1.0_r2 - eta)
+                 (s(:) * u_t(:,k) * u_z(:,k)) / one_eta
     END DO
 
     RETURN
@@ -510,7 +510,7 @@ MODULE io
                  ABS(Re2) + ABS(Re2_mod))
     END IF
 
-    timestep = 1e-4_r2 * eta * 2.0_r2 * pi / ((1.0_r2 - eta) * timestep)
+    timestep = 1e-4_r2 * eta * 2.0_r2 * pi / (one_eta * timestep)
 
     PRINT*, timestep
 

@@ -19,10 +19,9 @@ MODULE matrices
     TYPE (UZ_MAT_COMP), INTENT(OUT) :: uz
     TYPE (ZZ_MAT_COMP), INTENT(OUT) :: zz
 
-    ux%di(:) = 1.0_r2 + rxx + (((1.0_r2 - eta)**2) * dt) / &
-                                (2.0_r2 * s(1:nx-1)**2)
-    ux%lo(:) = -0.5_r2 * rxx + ((1.0_r2 - eta) * rx) / (4.0_r2 * s(2:nx-1))
-    ux%up(:) = -0.5_r2 * rxx - ((1.0_r2 - eta) * rx) / (4.0_r2 * s(1:nx-2))
+    ux%di(:) = 1.0_r2 + rxx + one_eta**2 * dt * 0.5_r2 / s(1:nx-1)**2
+    ux%lo(:) = -0.5_r2 * rxx + one_eta * rx * 0.25_r2 / s(2:nx-1)
+    ux%up(:) = -0.5_r2 * rxx - one_eta * rx * 0.25_r2 / s(1:nx-2)
 
     uz%di(:) = 1.0_r2 + rzz
     uz%lo(:) = -0.5_r2 * rzz
@@ -35,10 +34,9 @@ MODULE matrices
       uz%up(0) = -rzz
     END IF
 
-    zx%di(:) = 1.0_r2 + rxx + (((1.0_r2 - eta)**2) * dt) / &
-                                (2.0_r2 * s(1:nx-1)**2)
-    zx%lo(:) = -0.5_r2 * rxx + ((1.0_r2 - eta) * rx) / (4.0_r2 * s(2:nx-1))
-    zx%up(:) = -0.5_r2 * rxx - ((1.0_r2 - eta) * rx) / (4.0_r2 * s(1:nx-2))
+    zx%di(:) = 1.0_r2 + rxx + one_eta**2 * dt * 0.5_r2 / s(1:nx-1)**2
+    zx%lo(:) = -0.5_r2 * rxx + one_eta * rx * 0.25_r2 / s(2:nx-1)
+    zx%up(:) = -0.5_r2 * rxx - one_eta * rx * 0.25_r2 / s(1:nx-2)
 
     zz%di(:) = 1.0_r2 + rzz
     zz%lo(:) = -0.5_r2 * rzz
@@ -59,8 +57,8 @@ MODULE matrices
                                  work(lwork_fac)
     INTEGER (i1)              :: i, j, k, info, cpcol
 
-    alp(:) = dz2 + 0.5_r2 * delx * dz2 * (1.0_r2 - eta) / s(:)   !coefficients
-    gam(:) = dz2 - 0.5_r2 * delx * dz2 * (1.0_r2 - eta) / s(:)   !in matrix
+    alp(:) = dz2 + 0.5_r2 * delx * dz2 * one_eta / s(:)   !coefficients
+    gam(:) = dz2 - 0.5_r2 * delx * dz2 * one_eta / s(:)   !in matrix
     beta = -2.0_r2 * (dz2 + dx2)
     delta = dx2
 
@@ -125,9 +123,9 @@ MODULE matrices
                                  work(lwork_b_fac)
     INTEGER (i1)              :: i, j, k, info, cpcol
 
-    alp(:) = dz2 - 0.5_r2 * delx * dz2 * (1.0_r2 - eta) / s(:)
-    beta(:) = -2.0_r2 * (dz2 + dx2) - dx2 * dz2 * (1.0_r2 - eta)**2 / s(:)**2
-    gam(:) = dz2 + 0.5_r2 * delx * dz2 * (1.0_r2 - eta) / s(:)
+    alp(:) = dz2 - 0.5_r2 * delx * dz2 * one_eta / s(:)
+    beta(:) = -2.0_r2 * (dz2 + dx2) - dx2 * dz2 * one_eta**2 / s(:)**2
+    gam(:) = dz2 + 0.5_r2 * delx * dz2 * one_eta / s(:)
     delta = dx2
 
     desc_b(1) = 501
@@ -145,11 +143,11 @@ MODULE matrices
           i = k + j - 1
           b_mat(nx+2,k) = beta(MODULO(i, nxp1))   !diagonal
           IF (MODULO(i, nxp1) == 0) THEN
-            b_mat(nx+2,k) = (2.0_r2 * alp(0) * delx * (1.0_r2 - eta) / &
+            b_mat(nx+2,k) = (2.0_r2 * alp(0) * delx * one_eta / &
                              s(0)) + beta(0)   !diagonal, BCS
           END IF
           IF (MODULO(i+1, nxp1) == 0) THEN
-            b_mat(nx+2,k) = (-2.0_r2 * gam(nx) * delx * (1.0_r2 - eta) / &
+            b_mat(nx+2,k) = (-2.0_r2 * gam(nx) * delx * one_eta / &
                              s(nx)) + beta(nx) !diagonal, BCS
           END IF
           IF (i /= 0) THEN
@@ -202,9 +200,9 @@ MODULE matrices
                                  work(lwork_b_fac)
     INTEGER (i1)              :: i, j, k, info, cpcol
 
-    alp(:) = dz2 - 0.5_r2 * delx * dz2 * (1.0_r2 - eta) / s(:)
-    beta(:) = -2.0_r2 * (dz2 + dx2) - dx2 * dz2 * (1.0_r2 - eta)**2 / s(:)**2
-    gam(:) = dz2 + 0.5_r2 * delx * dz2 * (1.0_r2 - eta) / s(:)
+    alp(:) = dz2 - 0.5_r2 * delx * dz2 * one_eta / s(:)
+    beta(:) = -2.0_r2 * (dz2 + dx2) - dx2 * dz2 * one_eta**2 / s(:)**2
+    gam(:) = dz2 + 0.5_r2 * delx * dz2 * one_eta / s(:)
     delta = dx2
 
     desc_b(1) = 501
@@ -224,7 +222,7 @@ MODULE matrices
           b_mat(nx+2,k) = beta(MODULO(i, nxp1))
           !diagonal, j=0
           IF (MODULO(i, nxp1) == 0) THEN
-            b_mat(nx+2,k) = (2.0_r2 * alp(0) * delx * (1.0_r2 - eta) / &
+            b_mat(nx+2,k) = (2.0_r2 * alp(0) * delx * one_eta / &
                              s(0)) + beta(0)
           END IF
           !diagonal, k=0
@@ -234,7 +232,7 @@ MODULE matrices
           END IF
           !diagonal, j=nx
           IF (MODULO(i+1, nxp1) == 0) THEN
-            b_mat(nx+2,k) = (-2.0_r2 * gam(nx) * delx * (1.0_r2 - eta) / &
+            b_mat(nx+2,k) = (-2.0_r2 * gam(nx) * delx * one_eta / &
                              s(nx)) + beta(nx)
           END IF
           !diagonal, k=nz
@@ -246,25 +244,25 @@ MODULE matrices
           IF (i == 0) THEN
             b_mat(nx+2,k) = beta(0) - &
                             2.0_r2 * delta * delz * (1.0_r2 - tau) / tau + &
-                           (2.0_r2 * alp(0) * delx * (1.0_r2 - eta) / s(0))
+                           (2.0_r2 * alp(0) * delx * one_eta / s(0))
           END IF
           !diagonal, j=0, k=nz
           IF (i == nxp1*nzp1-nxp1) THEN
             b_mat(nx+2,k) = beta(0) - &
                             2.0_r2 * delta * delz * (1.0_r2 - tau) / tau + &
-                           (2.0_r2 * alp(0) * delx * (1.0_r2 - eta) / s(0))
+                           (2.0_r2 * alp(0) * delx * one_eta / s(0))
           END IF
           !diagonal, j=nx, k=0
           IF (i == nx) THEN
             b_mat(nx+2,k) = beta(nx) - &
                             2.0_r2 * delta * delz * (1.0_r2 - tau) / tau - &
-                           (2.0_r2 * gam(nx) * delx * (1.0_r2 - eta) / s(nx))
+                           (2.0_r2 * gam(nx) * delx * one_eta / s(nx))
           END IF
           !diagonal, j=nx, k=nz
           IF (i == nxp1*nzp1-1) THEN
             b_mat(nx+2,k) = beta(nx) - &
                             2.0_r2 * delta * delz * (1.0_r2 - tau) / tau - &
-                           (2.0_r2 * gam(nx) * delx * (1.0_r2 - eta) / s(nx))
+                           (2.0_r2 * gam(nx) * delx * one_eta / s(nx))
           END IF
           IF (i /= 0) THEN
             !super-diagonal
@@ -330,9 +328,9 @@ MODULE matrices
                                  work(lwork_fac)
     INTEGER (i1)              :: i, j, k, info, cpcol
 
-    alp(:) = dz2 - 0.5_r2 * delx * dz2 * (1.0_r2 - eta) / s(:)
-    beta(:) = -2.0_r2 * (dz2 + dx2) - dx2 * dz2 * (1.0_r2 - eta)**2 / s(:)**2
-    gam(:) = dz2 + 0.5_r2 * delx * dz2 * (1.0_r2 - eta) / s(:)
+    alp(:) = dz2 - 0.5_r2 * delx * dz2 * one_eta / s(:)
+    beta(:) = -2.0_r2 * (dz2 + dx2) - dx2 * dz2 * one_eta**2 / s(:)**2
+    gam(:) = dz2 + 0.5_r2 * delx * dz2 * one_eta / s(:)
     delta = dx2
 
     desc_j(1) = 501
@@ -405,9 +403,9 @@ MODULE matrices
                                  work(lwork_fac)
     INTEGER (i1)              :: i, j, k, info, cpcol
 
-    alp(:) = dz2 - 0.5_r2 * delx * dz2 * (1.0_r2 - eta) / s(:)
-    beta(:) = -2.0_r2 * (dz2 + dx2) - dx2 * dz2 * (1.0_r2 - eta)**2 / s(:)**2
-    gam(:) = dz2 + 0.5_r2 * delx * dz2 * (1.0_r2 - eta) / s(:)
+    alp(:) = dz2 - 0.5_r2 * delx * dz2 * one_eta / s(:)
+    beta(:) = -2.0_r2 * (dz2 + dx2) - dx2 * dz2 * one_eta**2 / s(:)**2
+    gam(:) = dz2 + 0.5_r2 * delx * dz2 * one_eta / s(:)
     delta = dx2
 
     desc_j(1) = 501

@@ -30,7 +30,7 @@ MODULE ic_bc
     END DO
 
     x_ = x + 1.0_r2                 !shift radial coordinate for OpenDX
-    s = eta + ((1.0_r2 - eta) * x)
+    s = eta + one_eta * x
 
     RETURN
   END SUBROUTINE get_xzs
@@ -74,7 +74,7 @@ MODULE ic_bc
           DO j = 1, nx1
             zn(j,k) = -(pn(j+1,k) - 2.0_r2 * pn(j,k) + pn(j-1,k)) / &
                        (s(j) * dx2) + &
-                       0.5_r2 * (1.0_r2 - eta) * (pn(j+1,k) - pn(j-1,k)) / &
+                       0.5_r2 * one_eta * (pn(j+1,k) - pn(j-1,k)) / &
                        (s(j)**2 * delx) - &
                        (pn(j,k+1) - 2.0_r2 * pn(j,k) + pn(j,k-1)) / &
                        (s(j) * dz2)  !ICS based on above fields for vorticity

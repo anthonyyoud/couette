@@ -33,12 +33,12 @@ MODULE nonlinear
     CALL deriv_z(bo2, db2%z)
 
     DO k = 1, nz1
-      u_nl_n(1:nx1,k) = (-rx / (8.0_r2 * s(1:nx1) * delz)) * &
+      u_nl_n(1:nx1,k) = (-0.125_r2 * rx / (s(1:nx1) * delz)) * &
                         (3.0_r2 * (dp%x(1:nx1,k) * du%z(1:nx1,k) - &
                         dp%z(1:nx1,k) * du%x(1:nx1,k)) - &
                         (dp2%x(1:nx1,k) * du2%z(1:nx1,k) - &
                         dp2%z(1:nx1,k) * du2%x(1:nx1,k))) + &
-                        ((1.0_r2 - eta) * rz / (4.0_r2 * s(1:nx1)**2)) * &
+                        (one_eta * rz * 0.25_r2 / s(1:nx1)**2) * &
                         (3.0_r2 * uo(1:nx1,k) * dp%z(1:nx1,k) - &
                         uo2(1:nx1,k) * dp2%z(1:nx1,k)) + &
                         0.25_r2 * rz * Q * (3.0_r2 * db%z(1:nx1,k) - &
@@ -46,19 +46,19 @@ MODULE nonlinear
     END DO
 
     IF (tau /= 1) THEN
-      u_nl_n(1:nx1,0) = (-rx / (8.0_r2 * s(1:nx1) * delz)) * &
+      u_nl_n(1:nx1,0) = (-0.125_r2 * rx / (s(1:nx1) * delz)) * &
                         (-3.0_r2 * dp%z(1:nx1,0) * du%x(1:nx1,0) + &
                         dp2%z(1:nx1,0) * du2%x(1:nx1,0)) + &
-                        ((1.0_r2 - eta) * rz / (4.0_r2 * s(1:nx1)**2)) * &
+                        (one_eta * rz * 0.25_r2 / s(1:nx1)**2) * &
                         (3.0_r2 * uo(1:nx1,0) * dp%z(1:nx1,0) - &
                         uo2(1:nx1,0) * dp2%z(1:nx1,0)) + &
                         0.25_r2 * rz * Q * (3.0_r2 * db%z(1:nx1,0) - &
                         db2%z(1:nx1,0))
 
-      u_nl_n(1:nx1,nz) = (-rx / (8.0_r2 * s(1:nx1) * delz)) * &
+      u_nl_n(1:nx1,nz) = (-0.125_r2 * rx / (s(1:nx1) * delz)) * &
                          (-3.0_r2 * dp%z(1:nx1,nz) * du%x(1:nx1,nz) + &
                          dp2%z(1:nx1,nz) * du2%x(1:nx1,nz)) + &
-                         ((1.0_r2 - eta) * rz / (4.0_r2 * s(1:nx1)**2)) * &
+                         (one_eta * rz * 0.25_r2 / s(1:nx1)**2) * &
                         (3.0_r2 * uo(1:nx1,nz) * dp%z(1:nx1,nz) - &
                          uo2(1:nx1,nz) * dp2%z(1:nx1,nz)) + &
                          0.25_r2 * rz * Q * (3.0_r2 * db%z(1:nx1,nz) - &
@@ -98,13 +98,13 @@ MODULE nonlinear
     CALL deriv_z(jo2, dj2%z)
 
     DO k = 1, nz1
-      z_nl_n(1:nx1,k) = (((1.0_r2 - eta) * rz) / (2.0_r2 * s(1:nx1))) * &
+      z_nl_n(1:nx1,k) = (one_eta * rz * 0.5_r2 / s(1:nx1)) * &
                         (3.0_r2 * uo(1:nx1,k) * du%z(1:nx1,k) - &
                         uo2(1:nx1,k) * du2%z(1:nx1,k)) - &
-                        ((1.0_r2 - eta) * rz / (4.0_r2 * s(1:nx1)**2)) * &
+                        (one_eta * rz * 0.25_r2 / s(1:nx1)**2) * &
                         (3.0_r2 * zo(1:nx1,k) * dp%z(1:nx1,k) - &
                         zo2(1:nx1,k) * dp2%z(1:nx1,k)) - &
-                        (rx / (8.0_r2 * s(1:nx1) * delz)) * &
+                        (0.125_r2 * rx / (s(1:nx1) * delz)) * &
                         ((3.0_r2 * (dp%x(1:nx1,k) * dz%z(1:nx1,k) - &
                         dp%z(1:nx1,k) * dz%x(1:nx1,k))) - &
                         (dp2%x(1:nx1,k) * dz_2%z(1:nx1,k) - &

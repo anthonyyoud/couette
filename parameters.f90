@@ -77,6 +77,7 @@ MODULE parameters
   REAL (r2),    PARAMETER :: rz = dt / delz
   REAL (r2),    PARAMETER :: rxx = dt / dx2
   REAL (r2),    PARAMETER :: rzz = dt / dz2
+  REAL (r2),    PARAMETER :: one_eta = 1.0_r2 - eta
   INTEGER (i1), PARAMETER :: nx1 = nx-1
   INTEGER (i1), PARAMETER :: nz1 = nz-1
   INTEGER (i1), PARAMETER :: nxp1 = nx+1

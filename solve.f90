@@ -24,10 +24,10 @@ MODULE solve
     DO k = 1, nz1
       ux_rhs(:) = u(1:nx1,k) + u_nl(1:nx1,k)   !RHS at fixed z, looping over x
 
-      ux_rhs(1) = ux_rhs(1) + (0.5_r2 * rxx * uo(0,k)) - &
-                  (((1.0_r2 - eta) * rx) / (4.0_r2 * s(1))) * uo(0,k)    !BCS
-      ux_rhs(nx1) = ux_rhs(nx1) + (0.5_r2 * rxx * uo(nx,k)) + &
-                    (((1.0_r2 - eta) * rx) / (4.0_r2 * s(nx1))) * uo(nx,k)
+      ux_rhs(1) = ux_rhs(1) + 0.5_r2 * rxx * uo(0,k) - &
+                  one_eta * rx * 0.25_r2 * uo(0,k) / s(1)    !BCS
+      ux_rhs(nx1) = ux_rhs(nx1) + 0.5_r2 * rxx * uo(nx,k) + &
+                    one_eta * rx * 0.25_r2 * uo(nx,k) / s(nx1)
 
       CALL thomas(xlb, nx1, ux%up, ux%di, ux%lo, ux_rhs)   !Thomas algorithm
                                                            !at each z
@@ -38,10 +38,10 @@ MODULE solve
       DO k = 0, nz, nz
         ux_rhs(:) = u(1:nx1,k) + u_nl(1:nx1,k)
 
-        ux_rhs(1) = ux_rhs(1) + (0.5_r2 * rxx * uo(0,k)) - &
-                    (((1.0_r2 - eta) * rx) / (4.0_r2 * s(1))) * uo(0,k)
-        ux_rhs(nx1) = ux_rhs(nx1) + (0.5_r2 * rxx * uo(nx,k)) + &
-                      (((1.0_r2 - eta) * rx) / (4.0_r2 * s(nx1))) * uo(nx,k)
+        ux_rhs(1) = ux_rhs(1) + 0.5_r2 * rxx * uo(0,k) - &
+                    one_eta * rx * 0.25_r2 * uo(0,k) / s(1)
+        ux_rhs(nx1) = ux_rhs(nx1) + 0.5_r2 * rxx * uo(nx,k) + &
+                      one_eta * rx * 0.25_r2 * uo(nx,k) / s(nx1)
 
         CALL thomas(xlb, nx1, ux%up, ux%di, ux%lo, ux_rhs)
 
@@ -71,10 +71,10 @@ MODULE solve
     DO k = 1, nz1
       zx_rhs(:) = zn(1:nx1,k) + z_nl(1:nx1,k)   !RHS at fixed z, looping over x
 
-      zx_rhs(1) = zx_rhs(1) + (0.5_r2 * rxx * zo(0,k)) - &
-                  (((1.0_r2 - eta) * rx) / (4.0_r2 * s(1))) * zo(0,k)   !BCS
-      zx_rhs(nx1) = zx_rhs(nx1) + (0.5_r2 * rxx * zo(nx,k)) + &
-                    (((1.0_r2 - eta) * rx) / (4.0_r2 * s(nx1))) * zo(nx,k)
+      zx_rhs(1) = zx_rhs(1) + 0.5_r2 * rxx * zo(0,k) - &
+                  one_eta * rx * 0.25_r2 * zo(0,k) / s(1)   !BCS
+      zx_rhs(nx1) = zx_rhs(nx1) + 0.5_r2 * rxx * zo(nx,k) + &
+                    one_eta * rx * 0.25_r2 * zo(nx,k) / s(nx1)
 
       CALL thomas(xlb, nx1, zx%up, zx%di, zx%lo, zx_rhs)   !Thomas algorithm
 

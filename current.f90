@@ -55,7 +55,7 @@ MODULE current
           l = (i-1)/nx1
           p_vec(k) = dx2 * dz2 * (0.5_r2 * dp%zzz(h,l) / (s(h) * delz**3) + &
                      0.5_r2 * dp%zxx(h,l) / (s(h) * dx2 * delz) - &
-                     0.25_r2 * (1.0_r2 - eta) * dp%zx(h,l) / &
+                     0.25_r2 * one_eta * dp%zx(h,l) / &
                      (s(h)**2 * delx * delz))!transform RHS matrix to vector
         END DO
       END IF
@@ -147,7 +147,7 @@ MODULE current
            p_vec(k) = dx2 * dz2 * (0.5_r2 * dp%zzz(h,l) / &
                       (s(h) * delz**3) + &
                       0.5_r2 * dp%zxx(h,l) / (s(h) * dx2 * delz) - &
-                      0.25_r2 * (1.0_r2 - eta) * dp%zx(h,l) / &
+                      0.25_r2 * one_eta * dp%zx(h,l) / &
                       (s(h)**2 * delx * delz))
         END DO
       END IF

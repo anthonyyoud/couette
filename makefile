@@ -2,21 +2,20 @@ OUTDIR		= ./
 OBJECTS		= parameters.o ic_bc.o variables.o derivs.o stream.o \
                   variables.o magnetic.o current.o matrices.o io.o linear.o \
                   nonlinear.o solve.o couette_mod.o
-FFLAGS	        = -O2 -w95 -tpp7 -xW -unroll -vec_report0 #-parallel
+FFLAGS	        = -O2 -w95 -tpp7 -xW -unroll -vec_report0
 #FFLAGS	        = -d0 -CA -CB -CS -CU -CV
 LINKFLAGS	= #-i_dynamic
 COMPILER	= mpif77
 #COMPILER	= ifort
-LDBLAS          = -L$(BLASHOME)/lib -lblas 
+LDBLAS          = -L$(BLASHOME)/lib -lblas
 LDSCALA         = -L$(SCALAPACKHOME)/lib -lscalapack
 LDBLACS         = -L$(BLACSHOME)/lib -lblacsF77_MPI -lblacs_MPI -lblacsC_MPI
 
 LIBS            = $(LDSCALA) $(LDBLACS) $(LDBLAS)
-COMPFLAGS       = $(FFLAGS) 
+COMPFLAGS       = $(FFLAGS)
 #-----------------------------------------------------------------------
 all:	$(OBJECTS)
-	$(COMPILER) $(COMPFLAGS) $(LINKFLAGS) -o\
-        $(OUTDIR)couette_mod.out \
+	$(COMPILER) $(COMPFLAGS) $(LINKFLAGS) -o $(OUTDIR)couette_mod.out \
         $(OBJECTS) $(LIBS)
 
 #-----------------------------------------------------------------------
@@ -69,8 +68,7 @@ solve.o : solve.f90
 
 #-----------------------------------------------------------------------
 couette_mod.o : couette_mod.f90
-	$(COMPILER) $(COMPFLAGS) -c -o couette_mod.o \
-                                    couette_mod.f90
+	$(COMPILER) $(COMPFLAGS) -c couette_mod.f90
 #-----------------------------------------------------------------------
 clean :
 	rm -f *.o *.mod *.d *.out *.pc *.pcl *.il
