@@ -244,6 +244,10 @@ do p = p_start, Ntot        !start main time loop
 end do   !end time loop
 
 if (mycol == 0) then
+  deallocate(p_mat, b_mat, j_mat)   !deallocate allocated arrays
+end if
+
+if (mycol == 0) then
    call close_files()   !close runtime files
 end if
 

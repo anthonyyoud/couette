@@ -6,7 +6,7 @@ COMPFLAGS	= -O3 -w95 -tpp7 -xW -unroll #-parallel
 #COMPFLAGS	= -d0 -CA -CB -CS -CU -CV
 LINKFLAGS	= -i_dynamic
 TYPE            = implicit
-LIBS            = -L $(HOME)/lib -lscalapack -lblacsF77init_MPI-LINUX-0 \
+LIBS            = -L $(HOME)/lib/ -lscalapack -lblacsF77init_MPI-LINUX-0 \
                   -lblacs_MPI-LINUX-0 -lblacsCinit_MPI-LINUX-0 -lblas_ref
 COMPILER	= mpif77
 
