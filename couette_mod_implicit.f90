@@ -601,10 +601,10 @@ do k = 0, nz
 end do
 
 do k = 0, nz
-   vz(0,k) = (1d0 / (2d0 * s(j) * delx)) * &
-              (-3d0 * p(0,k) + 4d0 * p(1,k) - p(2,k))
-   vz(nx,k) = (1d0 / (2d0 * s(j) * delx)) * &
-              (3d0 * p(nx,k) - 4d0 * p(nx1,k) + p(nx-2,k))
+   vz(0,k) = 0d0 !(1d0 / (2d0 * s(0) * delx)) * &
+              !(-3d0 * p(0,k) + 4d0 * p(1,k) - p(2,k))
+   vz(nx,k) = 0d0 !(1d0 / (2d0 * s(nx) * delx)) * &
+              !(3d0 * p(nx,k) - 4d0 * p(nx1,k) + p(nx-2,k))
 end do
 
 return
