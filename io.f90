@@ -73,8 +73,8 @@ SUBROUTINE open_files()
 use parameters
 implicit none
 open (20, status = 'unknown', file = 'u_growth.dat')
-open (32, status = 'unknown', file = 'torque.dat')
-open (50, file = 'ans.dat')
+open (33, status = 'unknown', file = 'torque.dat')
+open (51, file = 'time_tau.dat')
 if (diag) then
    open (90, status = 'unknown', file = 'lhs_u.dat')
    open (91, status = 'unknown', file = 'lhs_Z.dat')
@@ -90,8 +90,8 @@ SUBROUTINE close_files()
 use parameters
 implicit none
 close (20)
-close (32)
-close (50)
+close (33)
+close (51)
 if (diag) then
    close (90)
    close (91)
@@ -145,7 +145,7 @@ C2 = 1d0 / (Re1 - eta * Re2)
 G1_ = sum(G1(:))
 G2_ = sum(G2(:))
 !print*,C1,C2
-write (32, '(3e17.9)') t, G1_, G2_ !G1(nz/4), G2(nz/4)
+write (33, '(3e17.9)') t, G1_, G2_ !G1(nz/4), G2(nz/4)
 
 return
 END SUBROUTINE save_torque
@@ -256,6 +256,14 @@ close (50)
 
 return
 END SUBROUTINE state_restart
+
+SUBROUTINE save_time_tau (tau, t)
+implicit none
+double precision, intent(in) :: tau, t
+
+write(51, '(2e17.9)') t, tau
+
+END SUBROUTINE save_time_tau
 
 SUBROUTINE thomas (lb, m, up, di, lo, r)
 implicit none

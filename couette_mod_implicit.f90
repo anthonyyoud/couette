@@ -165,7 +165,16 @@ do p = p_start, Ntot
          if ((Re1_mod == 0d0) .and. (Re2_mod == 0d0)) then
             if ((dabs(growth_rate) < 1d-8) .and. &
                 (dabs(vr(nx/2, nz/2)) > 1d-3)) then
-                call end_state(uold, zold, pold, p)
+                if ((.not. auto_tau) .or. (tau == tau_end)) then
+                   call save_time_tau(tau, t)
+                   call end_state(uold, zold, pold, p)
+                else if (tau < 1d0) then
+                   call save_time_tau(tau, t)
+                   tau = tau + tau_step
+                   print*, 'tau = ', tau
+                   call save_xsect(vr, vz, x, z, p)
+                   call save_surface(pold, unew, znew, vr, vz, x, z, p, t)
+                end if
             end if
          end if
       end if
