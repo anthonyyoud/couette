@@ -49,7 +49,7 @@ else
    else
       do k = 0, nz
          u(:,k) = seed * dsin(pi*x(:)) * dcos(2d0*pi*z(k)/gamma)
-         pn(:,k) = seed * dsin(pi*x(:)) * dsin(2d0*pi**z(k)/gamma)
+         pn(:,k) = seed * dsin(pi*x(:)) * dsin(2d0*pi*z(k)/gamma)
       end do
 
       do k = 1, nz1
