@@ -49,7 +49,7 @@ end type zz_mat_comp
 
 type (var), public, save :: ut, zt, psi, bt, jt
 real (r2),  public, save :: vr(0:nx,0:nz), vz(0:nx,0:nz), &
-                            vrold(0:nx,0:nz) = 0d0, vzold(0:nx,0:nz) = 0d0
+                            vrold(0:nx,0:nz) = 0.0_r2, vzold(0:nx,0:nz) = 0.0_r2
 
 contains
 
@@ -77,27 +77,27 @@ real (r2), intent(out) :: vr(0:nx,0:nz), vz(0:nx,0:nz)
 integer (i1)           :: j, k
 
 do k = 1, nz1
-   vr(:,k) = (-1d0 / (2d0 * s(:) * delz)) * (p(:,k+1) - p(:,k-1))
+   vr(:,k) = (-1.0_r2 / (2.0_r2 * s(:) * delz)) * (p(:,k+1) - p(:,k-1))
 end do
 
 if (tau /= 1) then
-   vr(:,0) = (-1d0 / (2d0 * s(:) * delz)) * &
-             (-3d0 * p(:,0) + 4d0 * p(:,1) - p(:,2))
-   vr(:,nz) = (-1d0 / (2d0 * s(:) * delz)) * &
-              (3d0 * p(:,nz) - 4d0 * p(:,nz1) + p(:,nz-2))
+   vr(:,0) = (-1.0_r2 / (2.0_r2 * s(:) * delz)) * &
+             (-3.0_r2 * p(:,0) + 4.0_r2 * p(:,1) - p(:,2))
+   vr(:,nz) = (-1.0_r2 / (2.0_r2 * s(:) * delz)) * &
+              (3.0_r2 * p(:,nz) - 4.0_r2 * p(:,nz1) + p(:,nz-2))
 else
-   vr(:,0) = 0d0
-   vr(:,nz) = 0d0
+   vr(:,0) = 0.0_r2
+   vr(:,nz) = 0.0_r2
 end if
 
 do j = 1, nx1
-   vz(j,:) = (1d0 / (2d0 * s(j) * delx)) * (p(j+1,:) - p(j-1,:))
+   vz(j,:) = (1.0_r2 / (2.0_r2 * s(j) * delx)) * (p(j+1,:) - p(j-1,:))
 end do
 
-vz(0,:) = 0d0 !(1d0 / (2d0 * s(0) * delx)) * &
-              !(-3d0 * p(0,k) + 4d0 * p(1,k) - p(2,k))
-vz(nx,:) = 0d0 !(1d0 / (2d0 * s(nx) * delx)) * &
-              !(3d0 * p(nx,k) - 4d0 * p(nx1,k) + p(nx-2,k))
+vz(0,:) = 0.0_r2 !(1.0_r2 / (2.0_r2 * s(0) * delx)) * &
+              !(-3.0_r2 * p(0,k) + 4.0_r2 * p(1,k) - p(2,k))
+vz(nx,:) = 0.0_r2 !(1.0_r2 / (2.0_r2 * s(nx) * delx)) * &
+              !(3.0_r2 * p(nx,k) - 4.0_r2 * p(nx1,k) + p(nx-2,k))
 
 return
 END SUBROUTINE vr_vz

@@ -27,8 +27,8 @@ do j = 0, nx
    x(j) = real(j,r2) * delx
 end do
 
-x_ = x + 1d0                 !shift radial coordinate for OpenDX
-s = eta + ((1d0 - eta) * x)
+x_ = x + 1.0_r2                 !shift radial coordinate for OpenDX
+s = eta + ((1.0_r2 - eta) * x)
 
 return
 END SUBROUTINE get_xzs
@@ -54,26 +54,26 @@ if (restart) then
 else                   !put in estimate of eigen-function shape
    if (tau == 1) then  !which satisfies BCS multiplied by small seed
       do k = 0, nz
-         u(:,k) = seed * dsin(2d0*pi*z(k)/gamma) * dsin(pi*x(:))
-         pn(:,k) = seed * dsin(2d0*pi*z(k)/gamma) * dsin(pi*x(:))
-         bn(:,k) = seed * dcos(2d0*pi*z(k)/gamma) / s(:)
-         jn(:,k) = seed * dsin(pi*x(:)) * dsin(2d0*pi*z(k)/gamma)
+         u(:,k) = seed * sin(2.0_r2*pi*z(k)/gamma) * sin(pi*x(:))
+         pn(:,k) = seed * sin(2.0_r2*pi*z(k)/gamma) * sin(pi*x(:))
+         bn(:,k) = seed * cos(2.0_r2*pi*z(k)/gamma) / s(:)
+         jn(:,k) = seed * sin(pi*x(:)) * sin(2.0_r2*pi*z(k)/gamma)
       end do
    else
       do k = 0, nz
-         u(:,k) = seed * dsin(pi*x(:)) * dcos(2d0*pi*z(k)/gamma)
-         pn(:,k) = seed * dsin(pi*x(:)) * dsin(2d0*pi*z(k)/gamma)
-         bn(:,k) = seed * dsin(2d0*pi*z(k)/gamma) / s(:)
-         jn(:,k) = seed * dsin(pi*x(:)) * dcos(2d0*pi*z(k)/gamma)
+         u(:,k) = seed * sin(pi*x(:)) * cos(2.0_r2*pi*z(k)/gamma)
+         pn(:,k) = seed * sin(pi*x(:)) * sin(2.0_r2*pi*z(k)/gamma)
+         bn(:,k) = seed * sin(2.0_r2*pi*z(k)/gamma) / s(:)
+         jn(:,k) = seed * sin(pi*x(:)) * cos(2.0_r2*pi*z(k)/gamma)
       end do
 
       do k = 1, nz1
         do j = 1, nx1
-           zn(j,k) = -(pn(j+1,k) - 2d0 * pn(j,k) + pn(j-1,k)) / &
+           zn(j,k) = -(pn(j+1,k) - 2.0_r2 * pn(j,k) + pn(j-1,k)) / &
                       (s(j) * dx2) + &
-                      0.5d0 * (1d0 - eta) * (pn(j+1,k) - pn(j-1,k)) / &
+                      0.5_r2 * (1.0_r2 - eta) * (pn(j+1,k) - pn(j-1,k)) / &
                       (s(j)**2 * delx) - &
-                      (pn(j,k+1) - 2d0 * pn(j,k) + pn(j,k-1)) / &
+                      (pn(j,k+1) - 2.0_r2 * pn(j,k) + pn(j,k-1)) / &
                       (s(j) * dz2)  !ICS based on above fields for vorticity
         end do
       end do
@@ -155,7 +155,7 @@ real (r2),    intent(out) :: u(0:nx,0:nz), zn(0:nx,0:nz), &
 real (r2)                 :: dx_prev, dz_prev, x_prev(0:nxp), z_prev(0:nzp)
 integer (i1)              :: j, k
 
-dx_prev = 1d0 / nxp       !previous space mesh
+dx_prev = 1.0_r2 / nxp       !previous space mesh
 dz_prev = gamma / nzp
 
 do j = 0, nxp
@@ -194,10 +194,10 @@ do k = 0, nz   !new 'z' index
       j2 = int(nxp*j/nx,i1)   !old 'x' index
       int1 = (x(j) - x_prev(j2)) / (x_prev(j2+1) - x_prev(j2))   !interpolating
       int2 = (z(k) - z_prev(k2)) / (z_prev(k2+1) - z_prev(k2))   !constants
-      out_var(j,k) = (1d0 - int1) * (1d0 - int2) * in_var(j2,k2) + &
-                     int1 * (1d0 - int2) * in_var(j2+1,k2) + &
+      out_var(j,k) = (1.0_r2 - int1) * (1.0_r2 - int2) * in_var(j2,k2) + &
+                     int1 * (1.0_r2 - int2) * in_var(j2+1,k2) + &
                      int1 * int2 * in_var(j2+1,k2+1) + &   !bilinear
-                     (1d0 - int1) * int2 * in_var(j2,k2+1) !interpolation
+                     (1.0_r2 - int1) * int2 * in_var(j2,k2+1) !interpolation
    end do
 end do
 
@@ -213,14 +213,14 @@ real (r2), intent(out) :: u(0:nx,0:nz)
 real (r2), intent(in)  :: t
 integer (i1)           :: k
 
-u(0,:) = Re1 + Re1_mod * dcos(om1 * t) + &
-         eps1 * Re1 * (1d0 / eta - 1d0) * dcos(freq1 * z(:))
-u(nx,:) = Re2 + Re2_mod * dcos(om2 * t) - &
-         eps2 * dcos(freq2 * z(:))
+u(0,:) = Re1 + Re1_mod * cos(om1 * t) + &
+         eps1 * Re1 * (1.0_r2 / eta - 1.0_r2) * cos(freq1 * z(:))
+u(nx,:) = Re2 + Re2_mod * cos(om2 * t) - &
+         eps2 * cos(freq2 * z(:))
 
 if (tau == 1) then
-   u(:,0) = 0d0
-   u(:,nz) = 0d0
+   u(:,0) = 0.0_r2
+   u(:,nz) = 0.0_r2
 end if
 
 return
@@ -234,19 +234,19 @@ implicit none
 real (r2), intent(out) :: zn(0:nx,0:nz)
 real (r2), intent(in)  :: t, pn(0:nx,0:nz)
 
-zn(0,:) = -(8d0 * pn(1,:) - pn(2,:)) / (2d0 * s(0) * dx2)
-zn(nx,:) = -(8d0 * pn(nx1,:) - pn(nx-2,:)) / (2d0 * s(nx) * dx2)
+zn(0,:) = -(8.0_r2 * pn(1,:) - pn(2,:)) / (2.0_r2 * s(0) * dx2)
+zn(nx,:) = -(8.0_r2 * pn(nx1,:) - pn(nx-2,:)) / (2.0_r2 * s(nx) * dx2)
 
 if (tau == 1) then
-   zn(:,0) = -(8d0 * pn(:,1) - pn(:,2)) / &
-              (2d0 * (s(:)) * dz2)
-   zn(:,nz) = -(8d0 * pn(:,nz1) - pn(:,nz-2)) / &
-               (2d0 * (s(:)) * dz2)
+   zn(:,0) = -(8.0_r2 * pn(:,1) - pn(:,2)) / &
+              (2.0_r2 * (s(:)) * dz2)
+   zn(:,nz) = -(8.0_r2 * pn(:,nz1) - pn(:,nz-2)) / &
+               (2.0_r2 * (s(:)) * dz2)
 else
-   zn(:,0) = (-tau / (s(:) * (1d0 - tau))) * &
-             (0.5d0 * (-pn(:,2) + 4d0 * pn(:,1)) / delz)
-   zn(:,nz) = (tau / (s(:) * (1d0 - tau))) * &
-             (0.5d0 * (pn(:,nz-2) - 4d0 * pn(:,nz1)) / delz)
+   zn(:,0) = (-tau / (s(:) * (1.0_r2 - tau))) * &
+             (0.5_r2 * (-pn(:,2) + 4.0_r2 * pn(:,1)) / delz)
+   zn(:,nz) = (tau / (s(:) * (1.0_r2 - tau))) * &
+             (0.5_r2 * (pn(:,nz-2) - 4.0_r2 * pn(:,nz1)) / delz)
 end if
 
 return
@@ -259,11 +259,11 @@ implicit none
 
 real (r2), intent(out) :: p(0:nx,0:nz)
 
-p(0,:) = 0d0
-p(nx,:) = 0d0
+p(0,:) = 0.0_r2
+p(nx,:) = 0.0_r2
 
-p(:,0) = 0d0
-p(:,nz) = 0d0
+p(:,0) = 0.0_r2
+p(:,nz) = 0.0_r2
 
 return
 END SUBROUTINE p_BCS
@@ -276,8 +276,8 @@ implicit none
 real (r2), intent(out) :: bn(0:nx,0:nz)
 
 if (tau == 0) then
-   bn(:,0) = 0d0
-   bn(:,nz) = 0d0
+   bn(:,0) = 0.0_r2
+   bn(:,nz) = 0.0_r2
 end if
 
 return
@@ -290,12 +290,12 @@ implicit none
 
 real (r2), intent(out) :: jn(0:nx,0:nz)
 
-jn(0,:) = 0d0
-jn(nx,:) = 0d0
+jn(0,:) = 0.0_r2
+jn(nx,:) = 0.0_r2
 
 if (tau == 1) then
-   jn(:,0) = 0d0
-   jn(:,nz) = 0d0
+   jn(:,0) = 0.0_r2
+   jn(:,nz) = 0.0_r2
 end if
 
 return
@@ -308,7 +308,7 @@ implicit none
 integer (i1), intent(in) :: index
 real (r2)                :: f1
 
-f1 = eps1 * dcos(freq1*z(index))
+f1 = eps1 * cos(freq1*z(index))
 
 return
 END FUNCTION f1   
@@ -320,7 +320,7 @@ implicit none
 integer (i1), intent(in) :: index
 real (r2)                :: f2
 
-f2 = eps2 * dcos(freq2*z(index)-pi)
+f2 = eps2 * cos(freq2*z(index)-pi)
 
 return
 END FUNCTION f2 

@@ -47,7 +47,7 @@ if (info /= 0) print*, 'psi_PDDBTRS ', info
 
 cpcol = 0
 
-psi = 0d0
+psi = 0.0_r2
 do j = 1, nx1*nz1, nb
    if (mycol == cpcol) then
       do k = 1, min(nb, nx1*nz1-j+1)

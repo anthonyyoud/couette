@@ -37,9 +37,10 @@ end if
 
 call SLTIMER(9)
 if (npcol > 1) then
-   call DGEBR2D(ictxt, 'A', ' ', nxp1, nzp1, dp%zx, nxp1, 0, 0)   !broadcast RHS
-   call DGEBR2D(ictxt, 'A', ' ', nxp1, nzp1, dp%zxx, nxp1, 0, 0)  !to all
-   call DGEBR2D(ictxt, 'A', ' ', nxp1, nzp1, dp%zzz, nxp1, 0, 0)  !processes
+   !Broadcast RHS to all processes
+   call DGEBR2D(ictxt, 'A', ' ', nxp1, nzp1, dp%zx, nxp1, 0, 0) 
+   call DGEBR2D(ictxt, 'A', ' ', nxp1, nzp1, dp%zxx, nxp1, 0, 0)
+   call DGEBR2D(ictxt, 'A', ' ', nxp1, nzp1, dp%zzz, nxp1, 0, 0)
 end if
 call SLTIMER(9)
 
@@ -52,10 +53,10 @@ do j = 1, nx1*nzp1, nb
          i = k + j - 1
          h = modulo(i-1, nx1) + 1
          l = (i-1)/nx1
-         p_vec(k) = dx2 * dz2 * (0.5d0 * dp%zzz(h,l) / (s(h) * delz**3) + &
-                    0.5d0 * dp%zxx(h,l) / (s(h) * dx2 * delz) - &
-                    0.25d0 * (1d0 - eta) * dp%zx(h,l) / &
-                    (s(h)**2 * delx * delz))  !transform RHS matrix into vector
+         p_vec(k) = dx2 * dz2 * (0.5_r2 * dp%zzz(h,l) / (s(h) * delz**3) + &
+                    0.5_r2 * dp%zxx(h,l) / (s(h) * dx2 * delz) - &
+                    0.25_r2 * (1.0_r2 - eta) * dp%zx(h,l) / &
+                    (s(h)**2 * delx * delz))!transform RHS matrix into vector
       end do
    end if
    if (cpcol == npcol) exit  !if last process then exit
@@ -69,11 +70,11 @@ if (info /= 0) print*, 'j_infinite_PDDBTRS ', info
 
 cpcol = 0   !reset current process column
 
-jn = 0d0   !set matrix to zero on all processes
+jn = 0_r2   !set matrix to zero on all processes
 do j = 1, nx1*nzp1, nb
    if (mycol == cpcol) then
       do k = 1, min(nb, nx1*nzp1-j+1)   !transform distributed RHS vector
-         i = k + j - 1                  !into distributed matrix
+         i = k + j - 1                     !into distributed matrix
          h = modulo(i-1, nx1) + 1
          l = (i-1)/nx1
          jn(h,l) = p_vec(k)
@@ -83,9 +84,9 @@ do j = 1, nx1*nzp1, nb
    cpcol = cpcol + 1
 end do
 
-call SLTIMER(7)                                            !collect distributed
+call SLTIMER(7)                                        !collect distributed
 if (npcol > 1) then
-   call DGSUM2D(ictxt, 'A', ' ', nxp1, nzp1, jn, nxp1, 0, 0)  !matrix onto
+   call DGSUM2D(ictxt, 'A', ' ', nxp1, nzp1, jn, nxp1, 0, 0) !matrix onto
 end if
 call SLTIMER(7)                                            !master process
 
@@ -143,10 +144,10 @@ do j = 1, nx1*nz1, nb
          i = k + j - 1
          h = modulo(i-1, nx1) + 1
          l = (i-1)/nx1 + 1
-         p_vec(k) = dx2 * dz2 * (0.5d0 * dp%zzz(h,l) / &
+         p_vec(k) = dx2 * dz2 * (0.5_r2 * dp%zzz(h,l) / &
                     (s(h) * delz**3) + &
-                    0.5d0 * dp%zxx(h,l) / (s(h) * dx2 * delz) - &
-                    0.25d0 * (1d0 - eta) * dp%zx(h,l) / &
+                    0.5_r2 * dp%zxx(h,l) / (s(h) * dx2 * delz) - &
+                    0.25_r2 * (1.0_r2 - eta) * dp%zx(h,l) / &
                     (s(h)**2 * delx * delz))
       end do
    end if
@@ -160,7 +161,7 @@ if (info /= 0) print*, 'j_finite_PDDBTRS ', info
 
 cpcol = 0
 
-jn = 0d0
+jn = 0.0_r2
 do j = 1, nx1*nz1, nb
    if (mycol == cpcol) then
       do k = 1, min(nb, nx1*nz1-j+1)

@@ -6,7 +6,7 @@ save
 !Data types by kind
 !****************************************************************************
 integer, parameter :: i1 = selected_int_kind(9)       !4-byte integer
-integer, parameter :: r1 = selected_real_kind(6,37)   !4-byte real
+!integer, parameter :: r2 = selected_real_kind(6,37)   !4-byte real
 integer, parameter :: r2 = selected_real_kind(15,307) !8-byte real
 !****************************************************************************
 
@@ -21,23 +21,23 @@ integer (i1), parameter :: npcol       = 1
 !****************************************************************************
 !Parameters to set
 !****************************************************************************
-real (r2),    parameter :: pi          = 3.14159265358979d0
-real (r2),    parameter :: alpha       = 0d0 !3.13d0
-real (r2),    parameter :: gamma       = 0.46d0 !(2d0 * pi) / alpha
-real (r2),    parameter :: eta         = 0.5d0
-real (r2),    parameter :: Q           = 0d0
-real (r2),    parameter :: Re1         = 0d0
-real (r2),    parameter :: Re2         = 0d0 !-1d0*(1d0/eta)*Re1
-real (r2),    parameter :: Re1_mod     = 700d0
-real (r2),    parameter :: Re2_mod     = 0d0
-real (r2),    parameter :: om1         = 4d0
-real (r2),    parameter :: om2         = 0d0
-real (r2),    parameter :: dt          = 0.0001d0
-real (r2),    parameter :: seed        = 1d-1
-real (r2),    parameter :: end_time    = 3.154d0
-real (r2),    parameter :: tau_init    = 1d0
-real (r2),    parameter :: tau_step    = 1d0
-real (r2),    parameter :: tau_end     = 1d0
+real (r2),    parameter :: pi          = 3.14159265358979_r2
+real (r2),    parameter :: alpha       = 0.0_r2 !3.13_r2
+real (r2),    parameter :: gamma       = 0.46_r2 !(2.0_r2 * pi) / alpha
+real (r2),    parameter :: eta         = 0.5_r2
+real (r2),    parameter :: Q           = 0.0_r2
+real (r2),    parameter :: Re1         = 0.0_r2
+real (r2),    parameter :: Re2         = 0.0_r2 !-1.0_r2*(1.0_r2/eta)*Re1
+real (r2),    parameter :: Re1_mod     = 700.0_r2
+real (r2),    parameter :: Re2_mod     = 0.0_r2
+real (r2),    parameter :: om1         = 4.0_r2
+real (r2),    parameter :: om2         = 0.0_r2
+real (r2),    parameter :: dt          = 0.0001_r2
+real (r2),    parameter :: seed        = 1e-1_r2
+real (r2),    parameter :: end_time    = 3.154_r2
+real (r2),    parameter :: tau_init    = 1.0_r2
+real (r2),    parameter :: tau_step    = 1.0_r2
+real (r2),    parameter :: tau_end     = 1.0_r2
 integer (i1), parameter :: nx          = 80
 integer (i1), parameter :: nt          = 20
 integer (i1), parameter :: nz          = 40
@@ -56,20 +56,20 @@ logical,      parameter :: save_part   = .false.
 !****************************************************************************
 integer (i1), parameter :: nb = (nx+1)*(nz+1)
 
-real (r2),    parameter :: eps1 = 0d0 !0.30529d0
-real (r2),    parameter :: freq1 = 0d0 !2d0 * pi / 2.8d0
-real (r2),    parameter :: eps2 = 0d0
-real (r2),    parameter :: freq2 = 0d0
-real (r2),    parameter :: x_par_pos = 0.5d0
-real (r2),    parameter :: z_par_pos = 0.3d0
+real (r2),    parameter :: eps1 = 0.0_r2 !0.30529_r2
+real (r2),    parameter :: freq1 = 0.0_r2 !2.0_r2 * pi / 2.8_r2
+real (r2),    parameter :: eps2 = 0.0_r2
+real (r2),    parameter :: freq2 = 0.0_r2
+real (r2),    parameter :: x_par_pos = 0.5_r2
+real (r2),    parameter :: z_par_pos = 0.3_r2
 !****************************************************************************
 
 !****************************************************************************
 !NOTHING BELOW HERE SHOULD BE CHANGED
 !****************************************************************************
 integer (i1), parameter :: Ntot = end_time / dt
-real (r2),    parameter :: delx = 1d0 / nx
-real (r2),    parameter :: delt = 2d0*pi / nt
+real (r2),    parameter :: delx = 1.0_r2 / nx
+real (r2),    parameter :: delt = 2.0_r2*pi / nt
 real (r2),    parameter :: delz = gamma / nz
 real (r2),    parameter :: dx2 = delx ** 2
 real (r2),    parameter :: dz2 = delz ** 2

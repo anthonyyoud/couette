@@ -16,7 +16,7 @@ type (mat_comp)           :: Ux, Zx
 type (uz_mat_comp)        :: Uz
 type (zz_mat_comp)        :: Zz
 real (r2)                 :: p_fill(laf), b_fill(b_laf), j_fill(laf), &
-                             wtime(10), t = 0d0
+                             wtime(10), t=0.0_r2
 real (r2),    allocatable :: p_mat(:,:), b_mat(:,:), j_mat(:,:)
 real (r2),    external    :: SLINQUIRE
 integer (i1), external    :: NUMROC
@@ -57,9 +57,9 @@ if (mycol == 0) then                                            !initial
       !exit if not doing restart but end_state.dat exists
       if (state_exist) STOP 'restart=.false. but end_state.dat exists.'
       print*, 'Setting up BCS...'
-      call u_BCS(ut%new, 0d0)
+      call u_BCS(ut%new, 0.0_r2)
       call p_BCS(psi%new)
-      call z_BCS(zt%new, psi%new, 0d0)   !get boundary conditions
+      call z_BCS(zt%new, psi%new, 0.0_r2)   !get boundary conditions
       call b_BCS(bt%new)
       call j_BCS(jt%new)
    end if
@@ -69,21 +69,21 @@ end if
 !call BLACS_BARRIER(ictxt, 'A')  !wait until all processes get here
 
 call SLTIMER(1)
-if (tau == 0d0) then
+if (tau == 0.0_r2) then
    b_M = NUMROC(2*nxp1+1, 2*nxp1+1, myrow, 0, nprow)
    b_N = NUMROC(nxp1*nz1, nb, mycol, 0, npcol)
-   j_M = NUMROC(2*nx1+1, 2*nx1+1, myrow, 0, nprow)      !allocate the matrix
-   j_N = NUMROC(nx1*nzp1, nb, mycol, 0, npcol)          !dimensions local
+   j_M = NUMROC(2*nx1+1, 2*nx1+1, myrow, 0, nprow) !allocate
+   j_N = NUMROC(nx1*nzp1, nb, mycol, 0, npcol)       !matrix dimensions local
    allocate(b_mat(b_M,b_N))                             !to each process
    allocate(j_mat(j_M,j_N))                             !depending on finite
-else if (tau == 1d0) then                               !or infinite
-   b_M = NUMROC(2*nxp1+1, 2*nxp1+1, myrow, 0, nprow)    !cylinders
+else if (tau == 1.0_r2) then                              !or infinite cylinders
+   b_M = NUMROC(2*nxp1+1, 2*nxp1+1, myrow, 0, nprow)
    b_N = NUMROC(nxp1*nzp1, nb, mycol, 0, npcol)
    j_M = NUMROC(2*nx1+1, 2*nx1+1, myrow, 0, nprow)
    j_N = NUMROC(nx1*nz1, nb, mycol, 0, npcol)
    allocate(b_mat(b_M,b_N)) 
    allocate(j_mat(j_M,j_N))
-else if ((tau /= 0d0) .and. (tau /= 1d0)) then
+else if ((tau /= 0.0_r2) .and. (tau /= 1.0_r2)) then
    b_M = NUMROC(2*nxp1+1, 2*nxp1+1, myrow, 0, nprow)
    b_N = NUMROC(nxp1*nzp1, nb, mycol, 0, npcol)
    j_M = NUMROC(2*nx1+1, 2*nx1+1, myrow, 0, nprow)
@@ -105,13 +105,13 @@ end if
 call SLTIMER(2)
 call psi_mat_setup(p_mat, desc_p, p_fill)
 
-if (tau == 0d0) then
+if (tau == 0.0_r2) then
    call b_mat_setup(b_mat, desc_b, b_fill)
    call j_mat_setup(j_mat, desc_j, j_fill)
-else if (tau == 1d0) then                         !left-hand side matrices
+else if (tau == 1.0_r2) then                         !left-hand side matrices
    call fin_b_mat_setup(b_mat, desc_b, b_fill)    !for stream-function,
    call fin_j_mat_setup(j_mat, desc_j, j_fill)    !current and magnetic
-else if ((tau /= 0d0) .and. (tau /= 1d0)) then    !Poisson equations
+else if ((tau /= 0.0_r2) .and. (tau /= 1.0_r2)) then    !Poisson equations
    call fin_b_mat_setup(b_mat, desc_b, b_fill)
    call j_mat_setup(j_mat, desc_j, j_fill)
 end if
@@ -150,7 +150,7 @@ do p = p_start, Ntot        !start main time loop
    end if
 
    if (mycol == 0) then     !save cross-sections, surfaces if
-      call save_run(p, t)   !file 'SAVE' exists in run directory
+      call save_run(p, t)      !file 'SAVE' exists in run directory
    end if
 
    t = p * dt   !increment time
@@ -230,13 +230,13 @@ do p = p_start, Ntot        !start main time loop
    call SLTIMER(5)
 !solve Poisson equations depending on tau
    call p_poisson(zt%new, psi%new, p_mat, desc_p, p_fill)
-   if (tau == 0d0) then
+   if (tau == 0.0_r2) then
       call b_poisson(ut%new, bt%new, b_mat, desc_b, b_fill)
       call j_poisson(psi%new, jt%new, j_mat, desc_j, j_fill)
-   else if (tau == 1d0) then
+   else if (tau == 1.0_r2) then
       call fin_b_poisson(ut%new, bt%new, b_mat, desc_b, b_fill)
       call fin_j_poisson(psi%new, jt%new, j_mat, desc_j, j_fill)
-   else if ((tau /= 0d0) .and. (tau /= 1d0)) then
+   else if ((tau /= 0.0_r2) .and. (tau /= 1.0_r2)) then
       call fin_b_poisson(ut%new, bt%new, b_mat, desc_b, b_fill)
       call j_poisson(psi%new, jt%new, j_mat, desc_j, j_fill)
    end if

@@ -24,10 +24,10 @@ call u_BCS(uo, t)
 do k = 1, nz1
    ux_rhs(:) = u(1:nx1,k) + u_nl(1:nx1,k)   !RHS at fixed z, looping over x
 
-   ux_rhs(1) = ux_rhs(1) + (0.5d0 * rxx * uo(0,k)) - &
-               (((1d0 - eta) * rx) / (4d0 * s(1))) * uo(0,k)    !BCS
-   ux_rhs(nx1) = ux_rhs(nx1) + (0.5d0 * rxx * uo(nx,k)) + &
-               (((1d0 - eta) * rx) / (4d0 * s(nx1))) * uo(nx,k)
+   ux_rhs(1) = ux_rhs(1) + (0.5_r2 * rxx * uo(0,k)) - &
+               (((1.0_r2 - eta) * rx) / (4.0_r2 * s(1))) * uo(0,k)    !BCS
+   ux_rhs(nx1) = ux_rhs(nx1) + (0.5_r2 * rxx * uo(nx,k)) + &
+               (((1.0_r2 - eta) * rx) / (4.0_r2 * s(nx1))) * uo(nx,k)
 
    call thomas(xlb, nx1, ux%up, ux%di, ux%lo, ux_rhs)   !Thomas algorithm
                                                         !at each z
@@ -38,10 +38,10 @@ if (tau /= 1) then   !if tau /= 1 extra entries due to BCS
    do k = 0, nz, nz
       ux_rhs(:) = u(1:nx1,k) + u_nl(1:nx1,k)
 
-      ux_rhs(1) = ux_rhs(1) + (0.5d0 * rxx * uo(0,k)) - &
-                  (((1d0 - eta) * rx) / (4d0 * s(1))) * uo(0,k)
-      ux_rhs(nx1) = ux_rhs(nx1) + (0.5d0 * rxx * uo(nx,k)) + &
-                  (((1d0 - eta) * rx) / (4d0 * s(nx1))) * uo(nx,k)
+      ux_rhs(1) = ux_rhs(1) + (0.5_r2 * rxx * uo(0,k)) - &
+                  (((1.0_r2 - eta) * rx) / (4.0_r2 * s(1))) * uo(0,k)
+      ux_rhs(nx1) = ux_rhs(nx1) + (0.5_r2 * rxx * uo(nx,k)) + &
+                  (((1.0_r2 - eta) * rx) / (4.0_r2 * s(nx1))) * uo(nx,k)
 
       call thomas(xlb, nx1, ux%up, ux%di, ux%lo, ux_rhs)
 
@@ -71,10 +71,10 @@ call z_BCS(zo, po, t)
 do k = 1, nz1
    zx_rhs(:) = zn(1:nx1,k) + z_nl(1:nx1,k)   !RHS at fixed z, looping over x
 
-   zx_rhs(1) = zx_rhs(1) + (0.5d0 * rxx * zo(0,k)) - &
-               (((1d0 - eta) * rx) / (4d0 * s(1))) * zo(0,k)   !BCS
-   zx_rhs(nx1) = zx_rhs(nx1) + (0.5d0 * rxx * zo(nx,k)) + &
-               (((1d0 - eta) * rx) / (4d0 * s(nx1))) * zo(nx,k)
+   zx_rhs(1) = zx_rhs(1) + (0.5_r2 * rxx * zo(0,k)) - &
+               (((1.0_r2 - eta) * rx) / (4.0_r2 * s(1))) * zo(0,k)   !BCS
+   zx_rhs(nx1) = zx_rhs(nx1) + (0.5_r2 * rxx * zo(nx,k)) + &
+               (((1.0_r2 - eta) * rx) / (4.0_r2 * s(nx1))) * zo(nx,k)
 
    call thomas(xlb, nx1, zx%up, zx%di, zx%lo, zx_rhs)   !Thomas algorithm
 
@@ -108,8 +108,8 @@ if (tau == 1) then
    do j = 1, nx1
       uz_rhs_t1(:) = uo(j,1:nz1)   !RHS at fixed x looping over z
 
-      uz_rhs_t1(1) = uz_rhs_t1(1) + 0.5d0 * rzz * u(j,0)
-      uz_rhs_t1(nz1) = uz_rhs_t1(nz1) + 0.5d0 * rzz * u(j,nz)   !BCS
+      uz_rhs_t1(1) = uz_rhs_t1(1) + 0.5_r2 * rzz * u(j,0)
+      uz_rhs_t1(nz1) = uz_rhs_t1(nz1) + 0.5_r2 * rzz * u(j,nz)   !BCS
 
       call thomas(zlb+1, nz1, up, di, lo, uz_rhs_t1)   !Thomas algorithm
 
@@ -146,8 +146,8 @@ call z_BCS(zn, po, t)
 do j = 1, nx1
    Zz_rhs(:) = zo(j,1:nz1)   !RHS at fixed x, looping over z
 
-   Zz_rhs(1) = Zz_rhs(1) + 0.5d0 * rzz * zn(j,0)
-   Zz_rhs(nz1) = Zz_rhs(nz1) + 0.5d0 * rzz * zn(j,nz)   !BCS
+   Zz_rhs(1) = Zz_rhs(1) + 0.5_r2 * rzz * zn(j,0)
+   Zz_rhs(nz1) = Zz_rhs(nz1) + 0.5_r2 * rzz * zn(j,nz)   !BCS
 
    call thomas(zlb+1, nz1, zz%up, zz%di, zz%lo, Zz_rhs)   !Thomas algorithm
 
@@ -166,7 +166,7 @@ integer (i1)                :: j
 integer (i1), intent(in)    :: m, lb  !lb is the vector lower-bound
 real (r2),    intent(in)    :: up(lb:m-1), di(lb:m), lo(lb+1:m)
 real (r2),    intent(inout) :: r(lb:m)
-real (r2)                   :: dnew(lb:m), aa = 0d0
+real (r2)                   :: dnew(lb:m), aa = 0.0_r2
 
 dnew = di   !create new diagonal so as not to destroy original
 do j = lb+1, m

@@ -33,7 +33,7 @@ do j = 0, nxp1*nz1-1, nb
    if (mycol == cpcol) then
       do k = 1, min(nb, nxp1*nz1-j)
          i = k + j - 1
-         u_vec(k) = 0.5d0 * dx2 * delz * &
+         u_vec(k) = 0.5_r2 * dx2 * delz * &
                               (u_mat(modulo(i, nxp1), i/nxp1) - &
                                u_mat(modulo(i, nxp1), i/nxp1 + 2))
       end do
@@ -48,7 +48,7 @@ if (info /= 0) print*, 'b_infinite_PDDBTRS ', info
 
 cpcol = 0
 
-bn = 0d0
+bn = 0.0_r2
 do j = 0, nxp1*nz1-1, nb
    if (mycol == cpcol) then
       do k = 1, min(nb, nxp1*nz1-j)
@@ -106,7 +106,7 @@ do j = 0, nxp1*nzp1-1, nb
    if (mycol == cpcol) then
       do k = 1, min(nb, nxp1*nzp1-j)
          i = k + j - 1
-         u_vec(k) = -0.5d0 * dx2 * delz * &
+         u_vec(k) = -0.5_r2 * dx2 * delz * &
                      u_mat_z(modulo(i, nxp1), i/nxp1)
       end do
    end if
@@ -120,7 +120,7 @@ if (info /= 0) print*, 'b_finite_PDDBTRS ', info
 
 cpcol = 0
 
-bn = 0d0
+bn = 0.0_r2
 do j = 0, nxp1*nzp1-1, nb
    if (mycol == cpcol) then
       do k = 1, min(nb, nxp1*nzp1-j)

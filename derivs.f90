@@ -32,7 +32,7 @@ real (r2), intent(out) :: fxx(0:nx,0:nz)
 integer (i1)           :: j, k
 
 do j = 1, nx1
-   fxx(j,:) = f(j+1,:) - 2d0 * f(j,:) + f(j-1,:)
+   fxx(j,:) = f(j+1,:) - 2.0_r2 * f(j,:) + f(j-1,:)
 end do
 
 return
@@ -49,8 +49,8 @@ integer (i1)           :: j, k
 
 do k = 1, nz1
    fz(1:nx1,k) = f(1:nx1,k+1) - f(1:nx1,k-1)
-   fz(1:nx1,0) = -f(1:nx1,2) + 4d0 * f(1:nx1,1) - 3d0 * f(1:nx1,0)
-   fz(1:nx1,nz) = f(1:nx1,nz-2) - 4d0 * f(1:nx1,nz1) + 3d0 * &
+   fz(1:nx1,0) = -f(1:nx1,2) + 4.0_r2 * f(1:nx1,1) - 3.0_r2 * f(1:nx1,0)
+   fz(1:nx1,nz) = f(1:nx1,nz-2) - 4.0_r2 * f(1:nx1,nz1) + 3.0_r2 * &
                    f(1:nx1,nz)   !forward/backward difference at boundaries
 end do
 
@@ -67,11 +67,11 @@ real (r2), intent(out) :: fzz(0:nx,0:nz)
 integer (i1)           :: j, k
 
 do k = 1, nz1
-   fzz(1:nx1,k) = f(1:nx1,k+1) - 2d0 * f(1:nx1,k) + f(1:nx1,k-1)
-   fzz(1:nx1,0) = -f(1:nx1,3) + 4d0 * f(1:nx1,2) - &
-                    5d0 * f(1:nx1,1) + 2d0 * f(1:nx1,0)      !forward/backward
-   fzz(1:nx1,nz) = -f(1:nx1,nz-3) + 4d0 * f(1:nx1,nz-2) - &  !difference at
-                     5d0 * f(1:nx1,nz1) + 2d0 * f(1:nx1,nz)  !boundaries
+   fzz(1:nx1,k) = f(1:nx1,k+1) - 2.0_r2 * f(1:nx1,k) + f(1:nx1,k-1)
+   fzz(1:nx1,0) = -f(1:nx1,3) + 4.0_r2 * f(1:nx1,2) - &
+                    5.0_r2 * f(1:nx1,1) + 2.0_r2 * f(1:nx1,0) !forward/backward
+   fzz(1:nx1,nz) = -f(1:nx1,nz-3) + 4.0_r2 * f(1:nx1,nz-2) - &  !difference at
+                     5.0_r2 * f(1:nx1,nz1) + 2.0_r2 * f(1:nx1,nz)  !boundaries
 end do
 
 return

@@ -24,22 +24,22 @@ call deriv_xx(uo, du%xx)   !get derivatives
 call deriv_zz(uo, du%zz)
 
 do k = 1, nz1
-   u(1:nx1,k) = uo(1:nx1,k) + (0.5d0 * rxx * du%xx(1:nx1,k)) + &
-            (((1d0 - eta) * rx) / (4d0 * s(1:nx1))) * du%x(1:nx1,k) - &
-            (((1d0 - eta)**2 * dt) / (2d0 * s(1:nx1)**2)) * &
-            uo(1:nx1,k) + 0.5d0 * rzz * du%zz(1:nx1,k)
+   u(1:nx1,k) = uo(1:nx1,k) + (0.5_r2 * rxx * du%xx(1:nx1,k)) + &
+            (((1.0_r2 - eta) * rx) / (4.0_r2 * s(1:nx1))) * du%x(1:nx1,k) - &
+            (((1.0_r2 - eta)**2 * dt) / (2.0_r2 * s(1:nx1)**2)) * &
+            uo(1:nx1,k) + 0.5_r2 * rzz * du%zz(1:nx1,k)
 end do
 
 if (tau /= 1) then
-   u(1:nx1,0) = uo(1:nx1,0) + (0.5d0 * rxx * du%xx(1:nx1,0)) + &
-                (((1d0 - eta) * rx) / (4d0 * s(1:nx1))) * du%x(1:nx1,0) - &
-                (((1d0 - eta)**2 * dt) / (2d0 * s(1:nx1)**2)) * &
-                uo(1:nx1,0) + 0.5d0 * rzz * du%zz(1:nx1,0)
+   u(1:nx1,0) = uo(1:nx1,0) + (0.5_r2 * rxx * du%xx(1:nx1,0)) + &
+                (((1.0_r2 - eta) * rx) / (4.0_r2 * s(1:nx1))) * du%x(1:nx1,0) - &
+                (((1.0_r2 - eta)**2 * dt) / (2.0_r2 * s(1:nx1)**2)) * &
+                uo(1:nx1,0) + 0.5_r2 * rzz * du%zz(1:nx1,0)
 
-   u(1:nx1,nz) = uo(1:nx1,nz) + (0.5d0 * rxx * du%xx(1:nx1,nz)) + &
-                 (((1d0 - eta) * rx) / (4d0 * s(1:nx1))) * du%x(1:nx1,nz) - &
-                 (((1d0 - eta)**2 * dt) / (2d0 * s(1:nx1)**2)) * &
-                 uo(1:nx1,nz) + 0.5d0 * rzz * du%zz(1:nx1,nz)
+   u(1:nx1,nz) = uo(1:nx1,nz) + (0.5_r2 * rxx * du%xx(1:nx1,nz)) + &
+                 (((1.0_r2 - eta) * rx) / (4.0_r2 * s(1:nx1))) * du%x(1:nx1,nz) - &
+                 (((1.0_r2 - eta)**2 * dt) / (2.0_r2 * s(1:nx1)**2)) * &
+                 uo(1:nx1,nz) + 0.5_r2 * rzz * du%zz(1:nx1,nz)
 end if
 
 return
@@ -63,10 +63,10 @@ call deriv_xx(zo, dz%xx)   !get derivatives
 call deriv_zz(zo, dz%zz)
 
 do k = 1, nz1
-   zn(1:nx1,k) = zo(1:nx1,k) + (0.5d0 * rxx * dz%xx(1:nx1,k)) + &
-                 (((1d0 - eta) * rx) / (4d0 * s(1:nx1))) * dz%x(1:nx1,k) - &
-                 (((1d0 - eta)**2 * dt) / (2d0 * s(1:nx1)**2)) * &
-                 zo(1:nx1,k) + 0.5d0 * rzz * dz%zz(1:nx1,k)
+   zn(1:nx1,k) = zo(1:nx1,k) + (0.5_r2 * rxx * dz%xx(1:nx1,k)) + &
+                 (((1.0_r2 - eta) * rx) / (4.0_r2 * s(1:nx1))) * dz%x(1:nx1,k) - &
+                 (((1.0_r2 - eta)**2 * dt) / (2.0_r2 * s(1:nx1)**2)) * &
+                 zo(1:nx1,k) + 0.5_r2 * rzz * dz%zz(1:nx1,k)
 end do
 
 return

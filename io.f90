@@ -87,7 +87,7 @@ write(20, '(12e17.9)') t, ur(nx/2,nz/2), ur(nx/2,nz*2/gamma), growth, growth_vz,
                       uz(xpos,zpos), &
                       pn(nx/4,3*nz/4), v(nx/2,nz/2), &
                       zn(nx/2,nz/4), bn(nx/2,nz/4), jn(nx/2,nz/2), &
-                      Re1 + Re1_mod * dcos(om1 * t)
+                      Re1 + Re1_mod * cos(om1 * t)
 
 if (maxval(ur) > max_ur) then
    max_ur = maxval(ur)
@@ -127,12 +127,12 @@ real (r2)             :: xi, C1, C2, G1(0:nz), G2(0:nz), G1_, G2_
 xi = Re1_mod * cos(om1 * t) - eta * Re2_mod * cos(om2 * t)
 xi = xi / (Re1 - eta * Re2)
 
-C1 = (-2d0 * (1d0 + xi)) / (eta * (1d0 + eta))
+C1 = (-2.0_r2 * (1.0_r2 + xi)) / (eta * (1.0_r2 + eta))
 
-C2 = 1d0 / (Re1 - eta * Re2)
+C2 = 1.0_r2 / (Re1 - eta * Re2)
 
-   G1(:) = C1 + C2 * (0.5d0 * (4d0 * v(1,:) - v(2,:))) / delx
-   G2(:) = C1 + (C2 / eta**2) * (0.5d0 * (v(nx-2,:) - 4d0 * &
+   G1(:) = C1 + C2 * (0.5_r2 * (4.0_r2 * v(1,:) - v(2,:))) / delx
+   G2(:) = C1 + (C2 / eta**2) * (0.5_r2 * (v(nx-2,:) - 4.0_r2 * &
                                     v(nx-1,:))) / delx
 
 G1_ = sum(G1(:))
@@ -197,7 +197,7 @@ if (iso_hel) then            !save helicity u.(curl u)
    do j = 0, nx
       do l = 0, nt
          do k = 0, nz
-            write(35,'(4e11.3)') x_(j) * dcos(th(l)), x_(j) * dsin(th(l)), &
+            write(35,'(4e11.3)') x_(j) * cos(th(l)), x_(j) * sin(th(l)), &
 	                         z(k), hel(j,k)
          end do
       end do
@@ -206,7 +206,7 @@ else
    do j = 0, nx
       do l = 0, nt
          do k = 0, nz
-            write(35,'(4e11.3)') x_(j) * dcos(th(l)), x_(j) * dsin(th(l)), &
+            write(35,'(4e11.3)') x_(j) * cos(th(l)), x_(j) * sin(th(l)), &
 	                         z(k), pn(j,k)
          end do
       end do
@@ -239,11 +239,11 @@ call deriv_x(u_t, u_t_x)
 call deriv_x(u_z, u_z_x)
 
 do k = 0, nz
-   hel(:,k) = 0.5d0 * delx * (-u_r(:,k) * u_t_z(:,k) + &
+   hel(:,k) = 0.5_r2 * delx * (-u_r(:,k) * u_t_z(:,k) + &
                                u_t(:,k) * u_r_z(:,k) - &
                                u_t(:,k) * u_z_x(:,k) + &
                                u_z(:,k) * u_t_x(:,k)) + &
-                               (s(:) * u_t(:,k) * u_z(:,k)) / (1d0 - eta)
+                               (s(:) * u_t(:,k) * u_z(:,k)) / (1.0_r2 - eta)
 end do
 
 return
@@ -295,8 +295,8 @@ do j = 0, nx
    write(19, *)
    write(21, '(3e19.7)') (x(j), z(k), zn(j,k), k = 0, nz)
    write(21, *)
-!   write(70, '(3e19.7)') (x(j), z(k), dsin(pi*x(j))*&
-!                          dsin(alpha*z(k)), k = 0, nz)
+!   write(70, '(3e19.7)') (x(j), z(k), sin(pi*x(j))*&
+!                          sin(alpha*z(k)), k = 0, nz)
 !   write(70, *)
 end do
 
@@ -324,19 +324,19 @@ real (r2)                :: growth_rate, growth_rate_vz
 
 call vr_vz(psi%old, vr, vz)   !get radial, axial velocities
 if (save_part) call particle(vr, vrold, vz, vzold, x_pos, z_pos) !save particle
-!if ((Re1 /= 0d0) .or. (Re2 /= 0d0)) then                        !path
+!if ((Re1 /= 0.0_r2) .or. (Re2 /= 0.0_r2)) then                        !path
 !   call save_torque(t, unew)
 !end if
 if ((p /= p_start) .and. ((p - p_start) > save_rate)) then
    call save_growth(t, vr, vrold, vz, vzold, psi%old, ut%new, zt%new, &
                     bt%old, jt%old, growth_rate, growth_rate_vz)
-   if ((om1 == 0d0) .and. (om2 == 0d0)) then
-      if ((dabs(growth_rate_vz) < 1d-8) .and. &  !if vr saturated
-          (dabs(vr(nx/2, nz/2)) > 1d-3)) then
+   if ((om1 == 0.0_r2) .and. (om2 == 0.0_r2)) then
+      if ((abs(growth_rate_vz) < 1e-8_r2) .and. &  !if vr saturated
+          (abs(vr(nx/2, nz/2)) > 1e-3_r2)) then
          if ((.not. auto_tau) .or. (tau == tau_end)) then  !if tau not auto
             call save_time_tau(tau, t)                     !or tau at end
             call end_state(ut%old, zt%old, psi%old, bt%old, jt%old, p) !finish
-         else if (tau < 1d0) then
+         else if (tau < 1.0_r2) then
             call save_time_tau(tau, t)
             tau = tau + tau_step   !increment tau
             print*, 'tau = ', tau
@@ -458,26 +458,26 @@ real (r2), intent(inout) :: xold, zold
 integer (i1)             :: xmin, xplu, zmin, zplu, j
 real (r2)                :: c1, c2, rvel, zvel, xnew, znew, del_t
 
-del_t = dt / 1d0
+del_t = dt / 1.0_r2
 
 do j = 1, 1
 xmin = int(xold,i1)
-xplu = int(xold + 1d0,i1)
+xplu = int(xold + 1.0_r2,i1)
 zmin = int(zold,i1)
-zplu = int(zold + 1d0,i1)
+zplu = int(zold + 1.0_r2,i1)
 
 c1 = (xold - xmin) / (xplu - xmin)
 c2 = (zold - zmin) / (zplu - zmin)
 
-rvel = (1d0 - c1) * (1d0 - c2) * vrold(xmin, zmin) + &
-        c1 * (1d0 - c2) * vrold(xplu, zmin) + &
+rvel = (1.0_r2 - c1) * (1.0_r2 - c2) * vrold(xmin, zmin) + &
+        c1 * (1.0_r2 - c2) * vrold(xplu, zmin) + &
         c1 * c2 * vrold(xplu, zplu) + &
-        (1d0 - c1) * c2 * vrold(xmin, zplu)
+        (1.0_r2 - c1) * c2 * vrold(xmin, zplu)
 
-zvel = (1d0 - c1) * (1d0 - c2) * vzold(xmin, zmin) + &
-        c1 * (1d0 - c2) * vzold(xplu, zmin) + &
+zvel = (1.0_r2 - c1) * (1.0_r2 - c2) * vzold(xmin, zmin) + &
+        c1 * (1.0_r2 - c2) * vzold(xplu, zmin) + &
         c1 * c2 * vzold(xplu, zplu) + &
-        (1d0 - c1) * c2 * vzold(xmin, zplu)
+        (1.0_r2 - c1) * c2 * vzold(xmin, zplu)
 
 xnew = xold + del_t * rvel
 znew = zold + del_t * zvel
@@ -496,15 +496,15 @@ implicit none
 
 real (r2) :: timestep
 
-if (Re1 * Re2 >= 0d0) then
-   timestep = max(1d0, dabs(Re1) + dabs(Re1_mod), &
-                  dabs(Re2) + dabs(Re2_mod))
+if (Re1 * Re2 >= 0.0_r2) then
+   timestep = max(1.0_r2, abs(Re1) + abs(Re1_mod), &
+                  abs(Re2) + abs(Re2_mod))
 else
-   timestep = max(1d0, dabs(Re1) + dabs(Re1_mod) + &
-                    dabs(Re2) + dabs(Re2_mod))
+   timestep = max(1.0_r2, abs(Re1) + abs(Re1_mod) + &
+                    abs(Re2) + abs(Re2_mod))
 end if
 
-timestep = 1d-4 * eta * 2d0 * pi / ((1d0 - eta) * timestep)
+timestep = 1e-4_r2 * eta * 2.0_r2 * pi / ((1.0_r2 - eta) * timestep)
 
 print*, timestep
 
