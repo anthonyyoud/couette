@@ -166,7 +166,7 @@ do p = p_start, Ntot        !start main time loop
 
       if (save3d) then   !save 3D surface
          if (mod(p, save_rate_2) == 0) then
-            call save_3d(psi%old, p)
+            call save_3d(vr, ut%new, vz, psi%old, p)
          end if
       end if
 

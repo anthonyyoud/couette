@@ -32,6 +32,7 @@ open (20, status = 'unknown', file = 'u_growth.dat')
 open (22, status = 'unknown', file = 'max_psi.dat')
 open (24, status = 'unknown', file = 'particle.dat')
 open (33, status = 'unknown', file = 'torque.dat')
+if (save3d) open (35, status = 'unknown', file = 'isosurface.dat')
 open (51, file = 'time_tau.dat')
 open (99, file = 'RUNNING')
 close (99)
@@ -48,6 +49,7 @@ close (20)
 close (22)
 close (24)
 close (33)
+if (save3d) close (35)
 close (51)
 
 return
@@ -158,36 +160,84 @@ close (32)
 return
 END SUBROUTINE
 
-SUBROUTINE save_3d(pn, p)
+SUBROUTINE save_3d(u_r, u_t, u_z, pn, p)
 use parameters
 use ic_bc
 implicit none
 
 integer, intent(in) :: p
-double precision, intent(in) :: pn(0:nx,0:nz)
+double precision, intent(in) :: u_r(0:nx,0:nz), u_t(0:nx,0:nz), &
+                                u_z(0:nx,0:nz), pn(0:nx,0:nz)
+double precision :: hel(0:nx,0:nz)
 integer :: j, k, l
 
-open (35, status = 'unknown', file = 'p3d'//itos(p)//'.dat')
+!open (35, status = 'unknown', file = 'p3d'//itos(p)//'.dat')
 
-do j = 0, nx
-   do l = 0, nt
-      do k = 0, nz
-         write(35,'(4e11.3)') x_(j) * dcos(th(l)), x_(j) * dsin(th(l)), &
-	                      z(k), pn(j,k)
+if (iso_hel) call helicity(u_r, u_t, u_z, hel)
+
+write(35,*) 'nx, nt, nz = ', nx, nt, nz, p
+
+if (iso_hel) then
+   do j = 0, nx
+      do l = 0, nt
+         do k = 0, nz
+            write(35,'(4e11.3)') x_(j) * dcos(th(l)), x_(j) * dsin(th(l)), &
+	                         z(k), hel(j,k)
+         end do
       end do
    end do
-end do
+else
+   do j = 0, nx
+      do l = 0, nt
+         do k = 0, nz
+            write(35,'(4e11.3)') x_(j) * dcos(th(l)), x_(j) * dsin(th(l)), &
+	                         z(k), pn(j,k)
+         end do
+      end do
+   end do
+end if
 
-close(35)
+write(35,*)
+
+!close(35)
 
 return
 END SUBROUTINE save_3d
+
+SUBROUTINE helicity(u_r, u_t, u_z, hel)
+use parameters
+use ic_bc
+use derivs
+implicit none
+
+double precision, intent(in) :: u_r(0:nx,0:nz), u_t(0:nx,0:nz), u_z(0:nx,0:nz)
+double precision, intent(out) :: hel(0:nx, 0:nz)
+double precision :: u_r_z(0:nx,0:nz), u_t_z(0:nx,0:nz), &
+                    u_t_x(0:nx,0:nz), u_z_x(0:nx,0:nz)
+integer :: k
+
+call deriv_z(u_r, u_r_z)
+call deriv_z(u_t, u_t_z)
+call deriv_x(u_t, u_t_x)
+call deriv_x(u_z, u_z_x)
+
+do k = 0, nz
+   hel(:,k) = 0.5d0 * delx * (-u_r(:,k) * u_t_z(:,k) + &
+                               u_t(:,k) * u_r_z(:,k) - &
+                               u_t(:,k) * u_z_x(:,k) + &
+                               u_z(:,k) * u_t_x(:,k)) + &
+                               (s(:) * u_t(:,k) * u_z(:,k)) / (1d0 - eta)
+end do
+
+return
+END SUBROUTINE helicity
 
 SUBROUTINE save_surface(pn, v, zn, ur, uz, bn, jn, p, t)
 !Save surfaces of fields for use in gnuplot
 use parameters
 use ic_bc
 implicit none
+
 integer, intent(in) :: p
 double precision, intent(in) :: t, pn(0:nx,0:nz), v(0:nx,0:nz), &
                                 zn(0:nx,0:nz), bn(0:nx,0:nz), &
