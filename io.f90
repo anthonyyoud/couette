@@ -319,7 +319,7 @@ if ((p /= p_start) .and. ((p - p_start) > save_rate)) then
    call save_growth(t, vr, vrold, vz, vzold, psi%old, ut%new, zt%new, &
                     bt%old, jt%old, growth_rate, growth_rate_vz)
    if ((om1 == 0d0) .and. (om2 == 0d0)) then
-      if ((dabs(growth_rate) < 1d-8) .and. &  !if vr saturated
+      if ((dabs(growth_rate_vz) < 1d-8) .and. &  !if vr saturated
           (dabs(vr(nx/2, nz/2)) > 1d-3)) then
          if ((.not. auto_tau) .or. (tau == tau_end)) then  !if tau not auto
             call save_time_tau(tau, t)                     !or tau at end
