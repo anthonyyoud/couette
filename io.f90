@@ -1,4 +1,5 @@
 MODULE io
+  USE parameters
   IMPLICIT NONE
 
   PRIVATE
@@ -40,6 +41,7 @@ MODULE io
     OPEN (24, STATUS = 'unknown', FILE = 'particle.dat')
     OPEN (33, STATUS = 'unknown', FILE = 'torque.dat')
     IF (save3d) OPEN (35, STATUS = 'unknown', FILE = 'isosurface.dat')
+    OPEN (36, STATUS = 'unknown', FILE = 'energy.dat')
     OPEN (51, FILE = 'time_tau.dat')
     OPEN (99, FILE = 'RUNNING')
     CLOSE (99)
@@ -57,6 +59,7 @@ MODULE io
     CLOSE (24)
     CLOSE (33)
     IF (save3d) CLOSE (35)
+    CLOSE (36)
     CLOSE (51)
 
     RETURN
@@ -75,7 +78,6 @@ MODULE io
                                  uz_prev(0:nx,0:nz)
     REAL    (r2), INTENT(OUT) :: growth, growth_vz
     INTEGER (i1)              :: zpos, xpos
-    REAL    (r2)              :: Eccf, E
     REAL    (r2), SAVE        :: min_p, max_p, min_ur, max_ur, min_uz, max_uz
 
     !growth rate of vortices
@@ -85,15 +87,12 @@ MODULE io
     xpos = nx/2
     zpos = nz/2   !position at which to save fields
 
-    CALL energy_CCF(t, Eccf)
-    CALL save_energy(ur, v, uz, E)
-    
-    WRITE(20, '(14e17.9)') t, ur(nx/2,nz/2), ur(nx/2,0), &
+    WRITE(20, '(12e17.9)') t, ur(nx/2,nz/2), ur(nx/2,0), &
                            growth, growth_vz, &
                            uz(xpos,zpos), &
                            pn(nx/4,3*nz/4), v(nx/2,nz/2), &
                            zn(nx/2,nz/4), bn(nx/2,nz/4), jn(nx/2,nz/2), &
-                           Eccf, E, Re1 + Re1_mod * COS(om1 * t)
+                           Re1 + Re1_mod * COS(om1 * t)
 
     IF (MAXVAL(ur) > max_ur) THEN
       max_ur = MAXVAL(ur)
@@ -122,33 +121,60 @@ MODULE io
   END SUBROUTINE save_growth
 
   SUBROUTINE save_torque(t, v)
-    !Save torques
+    !Save torques on inner and outer cylinders as well as torque due to CCF
     USE parameters
+    USE variables, ONLY : integrate_z, Re_1, Re_2
     IMPLICIT NONE
 
     REAL    (r2), INTENT(IN) :: t, v(0:nx,0:nz)
-    INTEGER (i1)             :: k
-    REAL    (r2)             :: xi, C1, C2, G1(0:nz), G2(0:nz), G1_, G2_
+    REAL    (r2)             :: A1G1, A1G2, A2G1, A2G2, G1, G2, Gc, &
+                                uc(0:nx), var1(0:nz), var2(0:nz), &
+                                z_int1, z_int2
 
-    xi = Re1_mod * COS(om1 * t) - eta * Re2_mod * COS(om2 * t)
-    xi = xi / (Re1 - eta * Re2)
+    CALL get_CCF(t, uc)
+    
+    A1G1 = (2.0_r2 * pi * eta**2) / one_eta**2
+    A1G2 = (2.0_r2 * pi) / one_eta**2
 
-    C1 = (-2.0_r2 * (1.0_r2 + xi)) / (eta * (1.0_r2 + eta))
+    A2G1 = Re_1(t) * one_eta * gamma / eta
+    A2G2 = Re_2(t) * one_eta * gamma
 
-    C2 = 1.0_r2 / (Re1 - eta * Re2)
+    var1(:) = (0.5_r2 * (-3.0_r2 * v(0,:) + 4.0_r2 * v(1,:) - v(2,:))) / delx
+    var2(:) = (0.5_r2 * (v(nx-2,:) - 4.0_r2 * v(nx1,:) + &
+               3.0_r2 * v(nx,:))) / delx
 
-    G1(:) = C1 + C2 * (0.5_r2 * (4.0_r2 * v(1,:) - v(2,:))) / delx
-    G2(:) = C1 + (C2 / eta**2) * (0.5_r2 * (v(nx-2,:) - 4.0_r2 * &
-            v(nx1,:))) / delx
+    CALL integrate_z(var1, z_int1)
+    CALL integrate_z(var2, z_int2)
 
-    G1_ = sum(G1(:))
-    G2_ = sum(G2(:))
-    !PRINT*,C1,C2
-    WRITE (33, '(3e17.9)') t, G1_, G2_ !G1(nz/4), G2(nz/4)
+    G1 = A1G1 * (A2G1 - z_int1)
+    G2 = A1G2 * (A2G2 - z_int2)
+    Gc = 4.0_r2 * pi * eta * gamma * uc(0) / &
+         ((1.0_r2 - eta**2) * one_eta)
+    
+    WRITE (33, '(5e17.9)') t, G1, G2, Gc, G1 / Gc
 
     RETURN
   END SUBROUTINE save_torque
 
+  SUBROUTINE get_CCF(t, uc)
+    !(Dimensionless) Circular Couette flow
+    USE parameters
+    USE ic_bc, ONLY : s
+    USE variables, ONLY : Re_1, Re_2
+    IMPLICIT NONE
+
+    REAL (r2), INTENT(IN)  :: t
+    REAL (r2), INTENT(OUT) :: uc(0:nx)
+    REAL (r2)              :: A, B
+  
+    A = (Re_2(t) - eta * Re_1(t)) / (1.0_r2 + eta)
+    B = eta * (Re_1(t) - eta * Re_2(t)) / ((1.0_r2 + eta) * one_eta**2)
+
+    uc = A * s / one_eta + B * one_eta / s
+
+    RETURN
+  END SUBROUTINE get_CCF
+                                              
   SUBROUTINE save_xsect(ur, uz, pn, ut, zt, bt, jt, t, p)
     !Save cross-sections of fields for use in IDL
     USE parameters
@@ -332,12 +358,11 @@ MODULE io
     IF (save_part) THEN
       CALL particle(vr, vrold, vz, vzold, x_pos, z_pos) !save particle
     END IF                                              !path
-   !IF ((Re1 /= 0.0_r2) .OR. (Re2 /= 0.0_r2)) THEN
-   !  CALL save_torque(t, unew)
-   !END IF
+    CALL save_torque(t, ut%new)
     IF ((p /= p_start) .AND. ((p - p_start) > save_rate)) THEN
       CALL save_growth(t, vr, vrold, vz, vzold, psi%old, ut%new, zt%new, &
                        bt%old, jt%old, growth_rate, growth_rate_vz)
+      CALL save_energy(vr, ut%new, vz, t)
       IF ((ABS(om1 - 0.0_r2) < EPSILON(om1)) .AND. &
           (ABS(om2 - 0.0_r2) < EPSILON(om2))) THEN
         IF ((ABS(growth_rate) < 1e-8_r2) .AND. &  !if vr saturated
@@ -472,7 +497,7 @@ MODULE io
                                    vrold(0:nx, 0:nz), vzold(0:nx, 0:nz)
     REAL    (r2), INTENT(INOUT) :: xold, zold
     INTEGER (i1)                :: xmin, xplu, zmin, zplu, j
-    REAL    (r2)                :: c1, c2, rvel, zvel, xnew, znew, del_t
+    REAL    (r2)                :: cc1, cc2, rvel, zvel, xnew, znew, del_t
 
     del_t = dt / 1.0_r2
 
@@ -482,18 +507,18 @@ MODULE io
       zmin = INT(zold,i1)
       zplu = INT(zold + 1.0_r2,i1)
 
-      c1 = (xold - xmin) / (xplu - xmin)
-      c2 = (zold - zmin) / (zplu - zmin)
+      cc1 = (xold - xmin) / (xplu - xmin)
+      cc2 = (zold - zmin) / (zplu - zmin)
 
-      rvel = (1.0_r2 - c1) * (1.0_r2 - c2) * vrold(xmin, zmin) + &
-             c1 * (1.0_r2 - c2) * vrold(xplu, zmin) + &
-             c1 * c2 * vrold(xplu, zplu) + &
-             (1.0_r2 - c1) * c2 * vrold(xmin, zplu)
+      rvel = (1.0_r2 - cc1) * (1.0_r2 - cc2) * vrold(xmin, zmin) + &
+             cc1 * (1.0_r2 - cc2) * vrold(xplu, zmin) + &
+             cc1 * cc2 * vrold(xplu, zplu) + &
+             (1.0_r2 - cc1) * cc2 * vrold(xmin, zplu)
 
-      zvel = (1.0_r2 - c1) * (1.0_r2 - c2) * vzold(xmin, zmin) + &
-             c1 * (1.0_r2 - c2) * vzold(xplu, zmin) + &
-             c1 * c2 * vzold(xplu, zplu) + &
-             (1.0_r2 - c1) * c2 * vzold(xmin, zplu)
+      zvel = (1.0_r2 - cc1) * (1.0_r2 - cc2) * vzold(xmin, zmin) + &
+             cc1 * (1.0_r2 - cc2) * vzold(xplu, zmin) + &
+             cc1 * cc2 * vzold(xplu, zplu) + &
+             (1.0_r2 - cc1) * cc2 * vzold(xmin, zplu)
 
       xnew = xold + del_t * rvel
       znew = zold + del_t * zvel
@@ -507,7 +532,9 @@ MODULE io
   END SUBROUTINE particle
 
   SUBROUTINE energy_CCF(t, Eccf)
+    !Explicitly integrated (dimensionless) form of the kinetic energy in CCF
     USE parameters
+    USE variables, ONLY : Re_1, Re_2
     IMPLICIT NONE
 
     REAL (r2), INTENT(IN)  :: t
@@ -520,93 +547,35 @@ MODULE io
     c = eta**2 * (Re_1(t) - eta * Re_2(t))**2 * LOG(1.0_r2 / eta)
 
     Eccf = gamma * pi * (a + b + c) / &
-          ((1.0_r2 + eta)**2 * (1.0_r2 - eta)**4)
+          ((1.0_r2 + eta)**2 * (one_eta)**4)
     
     RETURN
   END SUBROUTINE energy_CCF
 
-  SUBROUTINE save_energy(ur, ut, uz, E)
+  SUBROUTINE save_energy(ur, ut, uz, t)
+    !Total kinetic energy in flow (including CCF)
     USE parameters
+    USE variables, ONLY : integrate_r, integrate_z
     IMPLICIT NONE
 
-    REAL (r2), INTENT(IN)  :: ur(0:nx,0:nz), ut(0:nx,0:nz), uz(0:nx,0:nz)
-    REAL (r2), INTENT(OUT) :: E
-    REAL (r2)              :: u2(0:nx,0:nz)
+    REAL (r2), INTENT(IN)  :: ur(0:nx,0:nz), ut(0:nx,0:nz), uz(0:nx,0:nz), t
+    REAL (r2)              :: u2(0:nx,0:nz), int_r(0:nz), int_z, E, Eccf
 
     u2 = ur**2 + ut**2 + uz**2
 
-    CALL integrate(u2, E)
+    CALL energy_CCF(t, Eccf)
+    CALL integrate_r(u2, int_r)
+    CALL integrate_z(int_r, int_z)
 
-    CONTAINS
+    E = pi * int_z
 
-    SUBROUTINE integrate(in_var, out_var)
-      USE parameters
-      USE ic_bc, ONLY : s
-      IMPLICIT NONE
+    WRITE (36, '(3e17.9)') t, Eccf, E
 
-      REAL    (r2), INTENT(IN)  :: in_var(0:nx,0:nz)
-      REAL    (r2), INTENT(OUT) :: out_var
-      INTEGER (i1)              :: j, k
-      REAL    (r2)              :: z_int
-      REAL    (r2)              :: var(0:nx,0:nz), r_int(0:nz)
-      REAL    (r2), PARAMETER   :: c1=3.0_r2/8.0_r2, &
-                                   c2=7.0_r2/6.0_r2, &
-                                   c3=23.0_r2/24.0_r2
-
-      DO j = 0, nx
-        var(j,:) = in_var(j,:) * s(j) / (1.0_r2 - eta)**2
-      END DO
-
-      DO k = 0, nz
-        r_int(k) = (c1 * var(0,k) + &
-                    c2 * var(1,k) + &
-                    c3 * var(2,k) + &
-                    SUM(var(3:nx-3,k)) + &
-                    c3 * var(nx-2,k) + &
-                    c2 * var(nx-1,k) + &
-                    c1 * var(nx,k)) * ds
-      END DO      
-    
-      z_int = (c1 * r_int(0) + &
-               c2 * r_int(1) + &
-               c3 * r_int(2) + &
-               SUM(r_int(3:nz-3)) + &
-               c3 * r_int(nz-2) + &
-               c2 * r_int(nz-1) + &
-               c1 * r_int(nz)) * delz
-
-      out_var = pi * z_int
-
-      RETURN
-    END SUBROUTINE integrate
-
+    RETURN
   END SUBROUTINE save_energy
-  
-  FUNCTION Re_1(t)
-    USE parameters
-    IMPLICIT NONE
 
-    REAL (r2), INTENT(IN) :: t
-    REAL (r2)             :: Re_1
-
-    Re_1 = Re1 + Re1_mod * COS(om1 * t)
-
-    RETURN
-  END FUNCTION Re_1
-  
-  FUNCTION Re_2(t)
-    USE parameters
-    IMPLICIT NONE
-
-    REAL (r2), INTENT(IN) :: t
-    REAL (r2)             :: Re_2
-
-    Re_2 = Re2 + Re2_mod * COS(om2 * t)
-
-    RETURN
-  END FUNCTION Re_2
-  
   SUBROUTINE get_timestep()
+    !Obsolete: from attempt at adaptive timestep
     USE parameters
     IMPLICIT NONE
 

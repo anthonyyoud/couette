@@ -3,7 +3,11 @@ MODULE variables
   IMPLICIT NONE
 
   PRIVATE
-  PUBLIC :: copy_var, vr_vz
+  PUBLIC :: copy_var, vr_vz, integrate_r, integrate_z, Re_1, Re_2
+
+  REAL (r2), PARAMETER, PRIVATE   :: c1=3.0_r2/8.0_r2, & !Constants for
+                                     c2=7.0_r2/6.0_r2, & !numerical
+                                     c3=23.0_r2/24.0_r2  !integration
 
   TYPE, PUBLIC :: VAR
     !variables
@@ -68,7 +72,7 @@ MODULE variables
   END SUBROUTINE copy_var
 
   SUBROUTINE vr_vz(p, vr, vz)
-    !Calculate radial and axial velocity components from the stream-function
+    !Calculate radial and axial velocity components from the stream function
     USE parameters
     USE ic_bc, ONLY : s
     IMPLICIT NONE
@@ -102,5 +106,78 @@ MODULE variables
 
     RETURN
   END SUBROUTINE vr_vz
+
+  SUBROUTINE integrate_r(in_var, r_int)
+    !Integrate a (2D) variable in r
+    USE parameters
+    USE ic_bc, ONLY : s
+    IMPLICIT NONE
+                                                                                
+    REAL    (r2), INTENT(IN)  :: in_var(0:nx,0:nz)
+    REAL    (r2), INTENT(OUT) :: r_int(0:nz)
+    INTEGER (i1)              :: j, k
+    REAL    (r2)              :: var(0:nx,0:nz)
+                                                                                
+    DO j = 0, nx
+      var(j,:) = in_var(j,:) * s(j) / (1.0_r2 - eta)
+    END DO
+
+    DO k = 0, nz
+      r_int(k) = (c1 * var(0,k) + &
+                  c2 * var(1,k) + &
+                  c3 * var(2,k) + &
+                  SUM(var(3:nx-3,k)) + &
+                  c3 * var(nx-2,k) + &
+                  c2 * var(nx-1,k) + &
+                  c1 * var(nx,k)) * delx
+    END DO
+                                                                                
+    RETURN
+  END SUBROUTINE integrate_r
+
+  SUBROUTINE integrate_z(in_var, z_int)
+    !Integrate a (1D) variable in z
+    USE parameters
+    IMPLICIT NONE
+                                                                                
+    REAL    (r2), INTENT(IN)  :: in_var(0:nz)
+    REAL    (r2), INTENT(OUT) :: z_int
+                                                                                
+    z_int = (c1 * in_var(0) + &
+             c2 * in_var(1) + &
+             c3 * in_var(2) + &
+             SUM(in_var(3:nz-3)) + &
+             c3 * in_var(nz-2) + &
+             c2 * in_var(nz-1) + &
+             c1 * in_var(nz)) * delz
+                                                                                
+    RETURN
+  END SUBROUTINE integrate_z
+
+  FUNCTION Re_1(t)
+    !Time-dependent Reynolds number of the inner cylinder
+    USE parameters
+    IMPLICIT NONE
+                                                                                
+    REAL (r2), INTENT(IN) :: t
+    REAL (r2)             :: Re_1
+
+    Re_1 = Re1 + Re1_mod * COS(om1 * t)
+                                                                                
+    RETURN
+  END FUNCTION Re_1
+
+  FUNCTION Re_2(t)
+    !Time-dependent Reynolds number of the outer cylinder
+    USE parameters
+    IMPLICIT NONE
+                                                                                
+    REAL (r2), INTENT(IN) :: t
+    REAL (r2)             :: Re_2
+
+    Re_2 = Re2 + Re2_mod * COS(om2 * t)
+                                                                                
+    RETURN
+  END FUNCTION Re_2
 
 END MODULE variables

@@ -1,21 +1,22 @@
 OUTDIR		= ./
 OBJECTS		= parameters.o ic_bc.o variables.o derivs.o stream.o \
-                  variables.o magnetic.o current.o matrices.o io.o linear.o \
+                  magnetic.o current.o matrices.o io.o linear.o \
                   nonlinear.o solve.o couette_mod.o
 FFLAGS	        = -O2 -w95 -tpp7 -xW -unroll -vec_report0
-#FFLAGS	        = -d0 -CA -CB -CS -CU -CV
-LINKFLAGS	= #-i_dynamic
+#FFLAGS	        = -pg -d0 -CA -CB -CS -CU -CV
+LINKFLAGS	= -static
 COMPILER	= mpif77
-#COMPILER	= ifort
 LDBLAS          = -L$(BLASHOME)/lib -lblas
-LDSCALA         = -L$(SCALAPACKHOME)/lib -lscalapack
-LDBLACS         = -L$(BLACSHOME)/lib -lblacsF77_MPI -lblacs_MPI -lblacsC_MPI
+#LDSCALA         = -L$(SCALAPACKHOME)/lib -lscalapack
+LDSCALA         = -L/work/n8049290/mpi/SCALAPACK -lscalapack_ifc8_gcc
+LDBLACS         = -L$(BLACSHOME)/lib -lblacsF77init -lblacs -lblacsCinit
 
 LIBS            = $(LDSCALA) $(LDBLACS) $(LDBLAS)
 COMPFLAGS       = $(FFLAGS)
 #-----------------------------------------------------------------------
 all:	$(OBJECTS)
-	$(COMPILER) $(COMPFLAGS) $(LINKFLAGS) -o $(OUTDIR)couette_mod.out \
+	$(COMPILER) $(COMPFLAGS) $(LINKFLAGS) -o \
+        $(OUTDIR)couette_mod.out \
         $(OBJECTS) $(LIBS)
 
 #-----------------------------------------------------------------------
@@ -27,12 +28,12 @@ ic_bc.o : ic_bc.f90
 	$(COMPILER) $(COMPFLAGS) -c ic_bc.f90
 
 #-----------------------------------------------------------------------
-variables.o : variables.f90
-	$(COMPILER) $(COMPFLAGS) -c variables.f90
-
-#-----------------------------------------------------------------------
 io.o : io.f90
 	$(COMPILER) $(COMPFLAGS) -c io.f90
+
+#-----------------------------------------------------------------------
+variables.o : variables.f90
+	$(COMPILER) $(COMPFLAGS) -c variables.f90
 
 #-----------------------------------------------------------------------
 derivs.o : derivs.f90

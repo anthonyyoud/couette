@@ -22,9 +22,11 @@ IMPORTANT INFORMATION
 Since the code uses ScaLAPACK for the parallelism, this package must be
 available.  ScaLAPACK in turn depends on other packages.  These are (in order):
 
-MPI	- A version of the message-passing interface.  This code has only been
+MPI	- A version of the message-passing interface.  This code has been
           tested using LAM-MPI, therefore this would be the recommended version
-          to use.
+          to use.  It has been tentatively tested using MPICH, although I did
+          not build the required libraries myself.  All I can say is that the
+          code does work using MPICH if all the libraries are built correctly. 
 
 BLACS	- The Basic Linear Algebra Communication System.  ScaLAPACK uses this
 	  to call the MPI commands, hence no knowledge of MPI is required.
@@ -270,7 +272,6 @@ MAKEFILE
 Settings here will need to be changed, depending on the architecture on which
 the code is run.
 
-
 OUTDIR		- The output directory of the object files and executable.
 
 OBJECTS		- The object files that should be linked.
@@ -353,6 +354,9 @@ OUTPUT FILES
 end_state.dat	- Saves time index, p, time-step, dt, and fields u, Z, psi,
                   current and magnetic field for restart.
 
+energy.dat      - Saves the kinetic energy due to CCF and the total kinetic
+                  energy including CCF at each time.
+
 max_psi.dat	- Saves maximum value of psi (and vr, vz) over whole field.
                   Mainly for use with IDL plots.
 
@@ -364,8 +368,9 @@ run_script.sh	- For use on giga queue.
 time_tau.dat	- If auto_tau=.true. saves time at which each step in tau
                   occured.
 
-torque.dat	- For steady case saves torque on inner and outer cylinder.
-                  Needs more work.
+torque.dat	- Saves the torques on the inner (G1) and outer cylinders (G2),
+                  the torque due to CCF (Gc), and the ratio G1/Gc.  For steady
+                  states G1=G2.
 
 u_growth.dat	- Saves time, radial velocity (outflow, inflow), growth rate,
 		  axial velocity, stream function, azimuthal velocity,
@@ -410,4 +415,4 @@ run******.log	- Info file; showing the number of processes which the job
 		  followed by a process number.  This statement is repeated for
 		  all processes).  Any error messages will also be shown here.
                   Finally, the total time for the job to complete is shown.
-02/02/2005
+18/03/2005

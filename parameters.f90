@@ -22,11 +22,11 @@ MODULE parameters
   !Parameters to set
   !****************************************************************************
   REAL    (r2), PARAMETER :: pi          = 3.14159265358979_r2
-  REAL    (r2), PARAMETER :: alpha       = 3.13_r2
+  REAL    (r2), PARAMETER :: alpha       = 3.1631_r2
   REAL    (r2), PARAMETER :: gamma       = (2.0_r2 * pi) / alpha
-  REAL    (r2), PARAMETER :: eta         = 0.765_r2
+  REAL    (r2), PARAMETER :: eta         = 0.5_r2
   REAL    (r2), PARAMETER :: Q           = 0.0_r2
-  REAL    (r2), PARAMETER :: Re1         = 50.0_r2
+  REAL    (r2), PARAMETER :: Re1         = 72.5_r2
   REAL    (r2), PARAMETER :: Re2         = 0.0_r2 !-1.0_r2*(1.0_r2/eta)*Re1
   REAL    (r2), PARAMETER :: Re1_mod     = 0.0_r2
   REAL    (r2), PARAMETER :: Re2_mod     = 0.0_r2
@@ -71,7 +71,6 @@ MODULE parameters
   REAL    (r2), PARAMETER :: delx = 1.0_r2 / REAL(nx,r2)
   REAL    (r2), PARAMETER :: delt = 2.0_r2*pi / REAL(nt,r2)
   REAL    (r2), PARAMETER :: delz = gamma / REAL(nz,r2)
-  REAL    (r2), PARAMETER :: ds = (1.0_r2 - eta) * delx
   REAL    (r2), PARAMETER :: dx2 = delx ** 2
   REAL    (r2), PARAMETER :: dz2 = delz ** 2
   REAL    (r2), PARAMETER :: rx = dt / delx
