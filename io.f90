@@ -457,19 +457,20 @@ MODULE io
                                 jn(0:nx,0:nz)
     INTEGER (i1)             :: j, k
 
-    OPEN (50, FILE = 'end_state.dat')
+    OPEN (50, FILE = 'end_state.dat', FORM='unformatted')
 
-    WRITE(50, *) nx
-    WRITE(50, *) nz
-    WRITE(50, '(i8)') p
-    WRITE(50, '(e19.7)') dt
-    WRITE(50, '(e19.7)') ((u(j,k), k = 0, nz), j = 0, nx)
-    WRITE(50, '(e19.7)') ((zn(j,k), k = 0, nz), j = 0, nx)
-    WRITE(50, '(e19.7)') ((pn(j,k), k = 0, nz), j = 0, nx)
-    WRITE(50, '(e19.7)') ((bn(j,k), k = 0, nz), j = 0, nx)
-    WRITE(50, '(e19.7)') ((jn(j,k), k = 0, nz), j = 0, nx)
+    WRITE(50) nx
+    WRITE(50) nz
+    WRITE(50) p
+    WRITE(50) dt
+    WRITE(50) u
+    WRITE(50) zn
+    WRITE(50) pn
+    WRITE(50) bn
+    WRITE(50) jn
 
     CLOSE (50)
+
     OPEN (99, FILE = 'RUNNING')  !delete 'RUNNING' to finish run
     CLOSE (99, STATUS = 'delete')
 

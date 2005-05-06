@@ -100,12 +100,12 @@ MODULE ic_bc
     REAL    (r2), ALLOCATABLE :: u_prev(:,:), z_prev(:,:), p_prev(:,:), &
                                  b_prev(:,:), j_prev(:,:)
 
-    OPEN (50, FILE = 'end_state.dat')
+    OPEN (50, FILE = 'end_state.dat', FORM='unformatted')
 
-    READ(50, *) nx_prev
-    READ(50, *) nz_prev
-    READ(50, *) p
-    READ(50, *) dt_prev
+    READ (50) nx_prev
+    READ (50) nz_prev
+    READ (50) p
+    READ (50) dt_prev
 
     IF ((nx_prev /= nx) .OR. (nz_prev /= nz)) THEN  !interpolate onto new grid
       PRINT*, 'Interpolating onto new grid...'
@@ -113,11 +113,11 @@ MODULE ic_bc
                p_prev(0:nx_prev,0:nz_prev), b_prev(0:nx_prev,0:nz_prev) , &
                j_prev(0:nx_prev,0:nz_prev), STAT=alloc_err)
       IF (alloc_err /= 0) STOP 'ERROR: Interpolating allocation error' 
-      READ(50, *) ((u_prev(j,k), k = 0, nz_prev), j = 0, nx_prev)
-      READ(50, *) ((z_prev(j,k), k = 0, nz_prev), j = 0, nx_prev)
-      READ(50, *) ((p_prev(j,k), k = 0, nz_prev), j = 0, nx_prev)
-      READ(50, *) ((b_prev(j,k), k = 0, nz_prev), j = 0, nx_prev)
-      READ(50, *) ((j_prev(j,k), k = 0, nz_prev), j = 0, nx_prev)
+      READ (50) u_prev
+      READ (50) z_prev
+      READ (50) p_prev
+      READ (50) b_prev
+      READ (50) j_prev
       CALL inter(u_prev, z_prev, p_prev, b_prev, j_prev, nx_prev, nz_prev, &
                  u, zn, pn, bn, jn)
       IF (ALLOCATED(u_prev)) DEALLOCATE(u_prev, STAT=alloc_err)
@@ -131,20 +131,14 @@ MODULE ic_bc
       IF (ALLOCATED(j_prev)) DEALLOCATE(j_prev, STAT=alloc_err)
       IF (alloc_err /= 0) STOP 'ERROR: Interpolating deallocation error'
     ELSE     !just read the data
-      READ(50, *) ((u(j,k), k = 0, nz), j = 0, nx)
-      READ(50, *) ((zn(j,k), k = 0, nz), j = 0, nx)
-      READ(50, *) ((pn(j,k), k = 0, nz), j = 0, nx)
-      READ(50, *) ((bn(j,k), k = 0, nz), j = 0, nx)
-      READ(50, *) ((jn(j,k), k = 0, nz), j = 0, nx)
+      READ (50) u
+      READ (50) zn
+      READ (50) pn
+      READ (50) bn
+      READ (50) jn
     END IF
 
     CLOSE (50)   
-
-    !u = u
-    !zn = zn
-    !pn = pn
-    !bn = bn
-    !jn = jn
 
     IF (dt_prev /= dt) THEN  !if restart tstep /= old tstep adjust index 'p'
       p = p * dt_prev / dt
