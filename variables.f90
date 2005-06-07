@@ -1,4 +1,5 @@
 MODULE variables
+  !Set up types and other routines to manipulate variables.
   USE parameters
   IMPLICIT NONE
 

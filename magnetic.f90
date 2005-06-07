@@ -1,4 +1,6 @@
 MODULE magnetic 
+  !Routines to do with solving the Poisson equation for the azimuthal magnetic
+  !field.
   !Algorithms for the solution of the magnetic Poisson equation are as
   !for the current in current.f90
   IMPLICIT NONE

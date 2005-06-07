@@ -11,7 +11,7 @@ NPROCS=1
 EXE=couette_mod.out
 DATA=parameters.f90
 NODECPU=2
-NODELIST= #'giga05 giga16' #giga20 giga21' #giga03 giga04 giga06 giga07' #giga10'
+NODELIST= #'giga20 giga21' #giga20 giga21' #giga03 giga04 giga06 giga07' #giga10'
 #          giga11 giga12 giga13 giga14 giga15 giga16 giga17'
 #NODELIST='giga02'
 DATA_DIR=`pwd`

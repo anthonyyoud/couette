@@ -1,4 +1,6 @@
 PROGRAM couette_mod
+  !Main program file.  See README for a description of the code and how to run
+  !it.
   USE parameters
   USE stream
   USE matrices

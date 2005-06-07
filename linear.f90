@@ -1,4 +1,6 @@
 MODULE linear
+  !Routines to get the linear parts of the right-hand side of the azimuthal
+  !velocity/vorticity equations.
   IMPLICIT NONE
 
   PRIVATE

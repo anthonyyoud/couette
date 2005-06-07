@@ -1,4 +1,5 @@
 MODULE io
+  !Routines to do with input/output to/from files.
   USE parameters
   IMPLICIT NONE
 
@@ -365,7 +366,7 @@ MODULE io
       CALL save_energy(vr, ut%new, vz, t)
       IF ((ABS(om1 - 0.0_r2) < EPSILON(om1)) .AND. &
           (ABS(om2 - 0.0_r2) < EPSILON(om2))) THEN
-        IF ((ABS(growth_rate) < 1e-8_r2) .AND. &  !if vr saturated
+        IF ((ABS(growth_rate_vz) < 1e-8_r2) .AND. &  !if vr saturated
             (ABS(vr(nx/2, nz/2)) > 1e-3_r2)) THEN
           saturated = saturated + 1
           IF (saturated > 4) THEN

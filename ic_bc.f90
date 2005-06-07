@@ -1,4 +1,5 @@
 MODULE ic_bc
+  !Routines to do with grid setup, initial and boundary conditions.
   USE parameters
   IMPLICIT NONE
 

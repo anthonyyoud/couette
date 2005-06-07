@@ -1,4 +1,6 @@
 MODULE nonlinear
+  !Routines to get the nonlinear parts of the right-hand side of the azimuthal
+  !velocity/vorticity equations.
   IMPLICIT NONE
 
   PRIVATE

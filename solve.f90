@@ -1,4 +1,5 @@
 MODULE solve
+  !Routines to solve the equations for the azimuthal velocity/vorticity.
   IMPLICIT NONE
 
   PRIVATE

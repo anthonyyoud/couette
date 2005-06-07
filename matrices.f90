@@ -1,4 +1,5 @@
 MODULE matrices
+  !Routines to set up the matrices for use in the solution of the equations.
   IMPLICIT NONE
 
   PRIVATE

@@ -1,4 +1,5 @@
 MODULE current 
+  !Routines to do with solving the Poisson equation for the aximuthal current.
   IMPLICIT NONE
 
   PRIVATE

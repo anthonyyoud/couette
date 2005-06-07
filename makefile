@@ -7,8 +7,8 @@ FFLAGS	        = -O2 -w95 -tpp7 -xW -unroll -vec_report0
 LINKFLAGS	= -static
 COMPILER	= mpif77
 LDBLAS          = -L$(BLASHOME)/lib -lblas
-#LDSCALA         = -L$(SCALAPACKHOME)/lib -lscalapack
-LDSCALA         = -L/work/n8049290/mpi/SCALAPACK -lscalapack_ifc8_gcc
+LDSCALA         = -L$(SCALAPACKHOME)/lib -lscalapack
+#LDSCALA         = -L/work/n8049290/mpi/SCALAPACK -lscalapack_ifc8_gcc
 LDBLACS         = -L$(BLACSHOME)/lib -lblacsF77init -lblacs -lblacsCinit
 
 LIBS            = $(LDSCALA) $(LDBLACS) $(LDBLAS)

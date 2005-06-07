@@ -1,4 +1,7 @@
 MODULE derivs
+  !Routines which calculate finite-difference derivatives.  These only
+  !calculate the numerator of the derivatives; the denominator dx, dz etc. is
+  !included in other routines whenever the derivative is used.
   IMPLICIT NONE
 
   PRIVATE
