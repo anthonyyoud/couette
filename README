@@ -163,6 +163,12 @@ Re1,2_mod	- Modulation amplitude as above.
 
 om1,2		- Frequency of modulation as above.
 
+Re_incr         - How much Re1 should be incremented or decremented when
+                  searching for critical values.
+
+growth_tol      - How close two successive growth rates should be before Re1 is
+                  altered in searching for critical values.
+
 dt		- Timestep.  In general 10^-4 is a good choice.  Once the
 		  Reynolds numbers are large (>700, say) and/or the spatial
                   resolution is increased significantly (>80 points in z) then
@@ -211,6 +217,15 @@ restart		- Should we restart from a previous run?  If .true., file
 auto_tau	- For steady case, should tau be automatically stepped after
 		  saturation at each tau.  Set in conjunction with tau_step and
                   tau_end.
+
+auto_Re         - For steady case, should Re1 be stepped automatically?
+
+dec_Re          - Can the critical value for Re1 only be found by a
+                  quasi-static decrease of Re1?
+
+hyst_Re         - Is the critical value of Re1 in a hysteresis region?
+                  (Specifically for 1- and 2-cell flows at very small aspect
+                  ratio).
 
 RARELY USED PARAMETERS
 ----------------------
@@ -415,4 +430,4 @@ run******.log	- Info file; showing the number of processes which the job
 		  followed by a process number.  This statement is repeated for
 		  all processes).  Any error messages will also be shown here.
                   Finally, the total time for the job to complete is shown.
-18/03/2005
+27/06/2005
