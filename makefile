@@ -4,7 +4,8 @@ OBJECTS		= parameters.o ic_bc.o variables.o derivs.o stream.o \
                   nonlinear.o solve.o couette_mod.o
 FFLAGS	        = -O2 -w95 -tpp7 -xW -unroll -vec_report0
 #FFLAGS	        = -pg -d0 -CA -CB -CS -CU -CV
-LINKFLAGS	= -static
+#LINKFLAGS	= -static
+LINKFLAGS	= -i_dynamic
 COMPILER	= mpif77
 LDBLAS          = -L$(BLASHOME)/lib -lblas
 LDSCALA         = -L$(SCALAPACKHOME)/lib -lscalapack

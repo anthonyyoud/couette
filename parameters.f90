@@ -16,39 +16,45 @@ MODULE parameters
   !****************************************************************************
   INTEGER (i1), PARAMETER :: nprow       = 1
   INTEGER (i1), PARAMETER :: npcol       = 1
-  !INTEGER (i1), PARAMETER :: nb          = 1661
+  !INTEGER (i1), PARAMETER :: nb          = 10151
   !****************************************************************************
 
   !****************************************************************************
   !Parameters to set
   !****************************************************************************
   REAL    (r2), PARAMETER :: pi          = 3.14159265358979_r2
-  REAL    (r2), PARAMETER :: alpha       = 3.13_r2
-  REAL    (r2), PARAMETER :: gamma       = (2.0_r2 * pi) / alpha
+  REAL    (r2), PARAMETER :: alpha       = 0.0_r2 !3.1631_r2
+  REAL    (r2), PARAMETER :: gamma       = 0.70_r2 !(2.0_r2 * pi) / alpha
   REAL    (r2), PARAMETER :: eta         = 0.5_r2
-  REAL    (r2), PARAMETER :: Q           = 0.0_r2
-  REAL    (r2), PARAMETER :: Re1         = 100.0_r2
+  REAL    (r2), PARAMETER :: Q           = 100.0_r2
+  REAL    (r2)            :: Re1         = 420.0_r2
+  REAL    (r2), PARAMETER :: Re_incr     = 1.0_r2
+  REAL    (r2), PARAMETER :: growth_tol  = 1E-8_r2
   REAL    (r2), PARAMETER :: Re2         = 0.0_r2 !-1.0_r2*(1.0_r2/eta)*Re1
   REAL    (r2), PARAMETER :: Re1_mod     = 0.0_r2
   REAL    (r2), PARAMETER :: Re2_mod     = 0.0_r2
   REAL    (r2), PARAMETER :: om1         = 0.0_r2
   REAL    (r2), PARAMETER :: om2         = 0.0_r2
   REAL    (r2), PARAMETER :: dt          = 0.0001_r2
-  REAL    (r2), PARAMETER :: seed        = 1e-1_r2
+  REAL    (r2), PARAMETER :: seed        = 1E-1_r2
   REAL    (r2), PARAMETER :: end_time    = 1000.0_r2
-  REAL    (r2), PARAMETER :: tau_init    = 0.0_r2
+  REAL    (r2), PARAMETER :: tau_init    = 1.0_r2
   REAL    (r2), PARAMETER :: tau_step    = 1.0_r2
   REAL    (r2), PARAMETER :: tau_end     = 1.0_r2
   INTEGER (i1), PARAMETER :: nx          = 40
   INTEGER (i1), PARAMETER :: nt          = 20
-  INTEGER (i1), PARAMETER :: nz          = 80
+  INTEGER (i1), PARAMETER :: nz          = 40
   INTEGER (i1), PARAMETER :: save_rate   = 10
-  INTEGER (i1), PARAMETER :: save_rate_2 = 30
+  INTEGER (i1), PARAMETER :: save_rate_2 = 12
   LOGICAL,      PARAMETER :: xsect_save  = .FALSE.
   LOGICAL,      PARAMETER :: save3d      = .FALSE.
   LOGICAL,      PARAMETER :: iso_hel     = .FALSE.
   LOGICAL,      PARAMETER :: restart     = .FALSE.
   LOGICAL,      PARAMETER :: auto_tau    = .FALSE.
+  LOGICAL,      PARAMETER :: auto_Re     = .TRUE.
+  LOGICAL,      PARAMETER :: dec_Re      = .FALSE.
+  LOGICAL,      PARAMETER :: hyst_Re     = .FALSE.
+  
   !****************************************************************************
 
   !****************************************************************************
@@ -69,9 +75,9 @@ MODULE parameters
   !NOTHING BELOW HERE SHOULD BE CHANGED
   !****************************************************************************
   INTEGER (i1), PARAMETER :: Ntot = end_time / dt
-  REAL    (r2), PARAMETER :: delx = 1.0_r2 / REAL(nx,r2)
-  REAL    (r2), PARAMETER :: delt = 2.0_r2*pi / REAL(nt,r2)
-  REAL    (r2), PARAMETER :: delz = gamma / REAL(nz,r2)
+  REAL    (r2), PARAMETER :: delx = 1.0_r2 / nx
+  REAL    (r2), PARAMETER :: delt = 2.0_r2*pi / nt
+  REAL    (r2), PARAMETER :: delz = gamma / nz
   REAL    (r2), PARAMETER :: dx2 = delx ** 2
   REAL    (r2), PARAMETER :: dz2 = delz ** 2
   REAL    (r2), PARAMETER :: rx = dt / delx
@@ -86,8 +92,12 @@ MODULE parameters
   INTEGER (i1), PARAMETER :: xlb = 1
   INTEGER (i1), PARAMETER :: zlb = 0
   REAL    (r2)            :: tau = tau_init
-  REAL    (r2)            :: x_pos = x_par_pos * REAL(nx,r2)
-  REAL    (r2)            :: z_pos = z_par_pos * REAL(nz,r2)
+  REAL    (r2)            :: x_pos = x_par_pos * nx
+  REAL    (r2)            :: z_pos = z_par_pos * nz
+  LOGICAL (r2)            :: init_Re = .TRUE.
+  LOGICAL (r2)            :: zero_Re = .FALSE.
+  LOGICAL (r2)            :: gm_set = .FALSE.
+  LOGICAL (r2)            :: gp_set = .FALSE.
  
   INTEGER (i1), PARAMETER :: laf   = nb*(nx1+nx1)+6*nx1*nx1
   INTEGER (i1), PARAMETER :: b_laf = nb*(nxp1+nxp1)+6*nxp1*nxp1

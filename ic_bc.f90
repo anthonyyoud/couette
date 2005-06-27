@@ -185,7 +185,7 @@ MODULE ic_bc
   END SUBROUTINE inter
 
   SUBROUTINE inter_var(in_var, x_prev, z_prev, nxp, nzp, out_var)
-!Bilinearly interpolate the actual fields from a smaller to a larger grid
+    !Bilinearly interpolate the actual fields onto a new grid
     !See Numerical Recipes in Fortran77 Chap. 3.6 p.116
     USE parameters
     IMPLICIT NONE

@@ -1,5 +1,5 @@
 MODULE current 
-  !Routines to do with solving the Poisson equation for the aximuthal current.
+  !Routines to do with solving the Poisson equation for the azimuthal current.
   IMPLICIT NONE
 
   PRIVATE
@@ -69,18 +69,24 @@ MODULE current
       CASE (SPr)
         CALL PSDBTRS('N', nx1*nzp1, nx1, nx1, 1, j_mat, 1, desc_j, p_vec, 1, &
                       desc_rp, af, laf, work, lwork_sol, info)
-        IF (info /= 0) PRINT*, 'j_infinite_PSDBTRS ', info
+        IF (info /= 0) THEN
+          PRINT*, 'ERROR: SPr solve error cur_inf_PSDBTRS, INFO=', info
+          STOP
+        END IF
       CASE (DPr)
         CALL PDDBTRS('N', nx1*nzp1, nx1, nx1, 1, j_mat, 1, desc_j, p_vec, 1, &
                       desc_rp, af, laf, work, lwork_sol, info)
-        IF (info /= 0) PRINT*, 'j_infinite_PDDBTRS ', info
+        IF (info /= 0) THEN
+          PRINT*, 'ERROR: DPr solve error cur_inf_PDDBTRS, INFO=', info
+          STOP
+        END IF
       CASE DEFAULT
         STOP 'ERROR: Precision selection error - current.f90 infinite P*DBTRS'
     END SELECT
 
     cpcol = 0   !reset current process column
 
-    jn = 0_r2   !set matrix to zero on all processes
+    jn = 0.0_r2   !set matrix to zero on all processes
     DO j = 1, nx1*nzp1, nb
       IF (mycol == cpcol) THEN
         DO k = 1, MIN(nb, nx1*nzp1-j+1)   !transform distributed RHS vector
@@ -168,11 +174,17 @@ MODULE current
       CASE (SPr)
         CALL PSDBTRS('N', nx1*nz1, nx1, nx1, 1, j_mat, 1, desc_j, p_vec, 1, &
                       desc_rp, af, laf, work, lwork_sol, info)
-        IF (info /= 0) PRINT*, 'j_finite_PSDBTRS ', info
+        IF (info /= 0) THEN
+          PRINT*, 'ERROR: SPr solve error cur_fin_PSDBTRS, INFO=', info
+          STOP
+        END IF
       CASE (DPr)
         CALL PDDBTRS('N', nx1*nz1, nx1, nx1, 1, j_mat, 1, desc_j, p_vec, 1, &
                       desc_rp, af, laf, work, lwork_sol, info)
-        IF (info /= 0) PRINT*, 'j_finite_PDDBTRS ', info
+        IF (info /= 0) THEN
+          PRINT*, 'ERROR: DPr solve error cur_fin_PDDBTRS, INFO=', info
+          STOP
+        END IF
       CASE DEFAULT
         STOP 'ERROR: Precision selection error - current.f90 finite P*DBTRS'
     END SELECT

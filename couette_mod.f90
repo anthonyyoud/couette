@@ -46,7 +46,7 @@ PROGRAM couette_mod
              (ABS(tau - 1.0_r2) > EPSILON(tau))) THEN
       WRITE(6, '(A7, f4.2, A15)') 'tau = ', tau, '- Variable tau'
     ELSE
-      WRITE(6, '(A7, f4.2)'), 'tau = ', tau
+      WRITE(6, '(A7, f4.2)') 'tau = ', tau
       STOP 'ERROR: Invalid value of tau'
     END IF   
 
@@ -171,7 +171,7 @@ PROGRAM couette_mod
 
     IF (mycol > 0) THEN
       IF (end_proc == 1) THEN
-        WRITE(6, '(A16, i2)'), 'Ending process ', mycol !end other processes
+        WRITE(6, '(A16, i2)') 'Ending process ', mycol !end other processes
         EXIT
       END IF
     END IF

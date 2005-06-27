@@ -1,6 +1,6 @@
 MODULE stream
   !Routines to do with solving the Poisson equation for the stream function.
-  !Algorithms for the solution of the stream-function Poisson equation are as
+  !Algorithms for the solution of the stream function Poisson equation are as
   !for the current in current.f90
   IMPLICIT NONE
 
@@ -10,7 +10,7 @@ MODULE stream
   CONTAINS
 
   SUBROUTINE p_poisson(Z_mat, psi, p_mat, desc_p, af)
-    !Solve Poisson equation for the stream-function, psi for all tau
+    !Solve Poisson equation for the stream function, psi for all tau
     USE parameters
     USE ic_bc, ONLY : p_BCS, s
     IMPLICIT NONE
@@ -46,11 +46,17 @@ MODULE stream
       CASE (SPr)
         CALL PSDBTRS('N', nx1*nz1, nx1, nx1, 1, p_mat, 1, desc_p, zvec, 1, &
                       desc_z, af, laf, work, lwork_sol, info)
-        IF (info /= 0) PRINT*, 'psi_PSDBTRS ', info
+        IF (info /= 0) THEN
+          PRINT*, 'ERROR: SPr solve error psi_PSDBTRS, INFO=', info
+          STOP
+        END IF
       CASE (DPr)
         CALL PDDBTRS('N', nx1*nz1, nx1, nx1, 1, p_mat, 1, desc_p, zvec, 1, &
                       desc_z, af, laf, work, lwork_sol, info)
-        IF (info /= 0) PRINT*, 'psi_PDDBTRS ', info
+        IF (info /= 0) THEN
+          PRINT*, 'ERROR: DPr solve error psi_PDDBTRS, INFO=', info
+          STOP
+        END IF
       CASE DEFAULT
         STOP 'ERROR: Precision selection error - stream.f90 P*DBTRS'
     END SELECT

@@ -43,6 +43,9 @@ MODULE io
     OPEN (33, STATUS = 'unknown', FILE = 'torque.dat')
     IF (save3d) OPEN (35, STATUS = 'unknown', FILE = 'isosurface.dat')
     OPEN (36, STATUS = 'unknown', FILE = 'energy.dat')
+    IF (auto_Re .OR. hyst_Re) THEN
+      OPEN (37, STATUS = 'unknown', FILE = 'auto_Re.dat')
+    END IF
     OPEN (51, FILE = 'time_tau.dat')
     OPEN (99, FILE = 'RUNNING')
     CLOSE (99)
@@ -61,6 +64,9 @@ MODULE io
     CLOSE (33)
     IF (save3d) CLOSE (35)
     CLOSE (36)
+    IF (auto_Re .OR. hyst_Re) THEN
+      CLOSE (37)
+    END IF
     CLOSE (51)
 
     RETURN
@@ -353,7 +359,9 @@ MODULE io
 
     INTEGER (i1), INTENT(IN) :: p, p_start
     REAL    (r2), INTENT(IN) :: t
-    REAL    (r2)             :: growth_rate, growth_rate_vz
+    REAL    (r2)             :: growth_rate, growth_rate_vz, growth_diff, &
+                                growth_error
+    REAL    (r2), SAVE       :: growth_rate_vz_old
 
     CALL vr_vz(psi%old, vr, vz)   !get radial, axial velocities
     IF (save_part) THEN
@@ -363,11 +371,29 @@ MODULE io
     IF ((p /= p_start) .AND. ((p - p_start) > save_rate)) THEN
       CALL save_growth(t, vr, vrold, vz, vzold, psi%old, ut%new, zt%new, &
                        bt%old, jt%old, growth_rate, growth_rate_vz)
+      growth_diff = ABS(growth_rate_vz - growth_rate_vz_old)
+      growth_error = growth_diff / ABS(growth_rate_vz_old)
+      !print*, Re1, growth_diff, growth_error
+      IF (auto_Re .AND. ((growth_diff < growth_tol) .OR. &
+          (dec_Re .AND. zero_Re .AND. (vz(nx/2,nz/2) < 1E-6_r2)))) THEN
+        CALL increment_Re(growth_rate_vz, t)
+      END IF
+      !WRITE (37, '(4e17.9)') t, growth_rate_vz_old, growth_rate_vz, growth_diff
+      growth_rate_vz_old = growth_rate_vz
       CALL save_energy(vr, ut%new, vz, t)
       IF ((ABS(om1 - 0.0_r2) < EPSILON(om1)) .AND. &
           (ABS(om2 - 0.0_r2) < EPSILON(om2))) THEN
-        IF ((ABS(growth_rate_vz) < 1e-8_r2) .AND. &  !if vr saturated
-            (ABS(vr(nx/2, nz/2)) > 1e-3_r2)) THEN
+        IF (hyst_Re) THEN
+          IF (((ABS(growth_rate_vz) < 1E-6_r2) .AND. &
+               (ABS(vz(nx/2,nz/2)) > 1E-3_r2))) THEN
+            CALL increment_hysteresis(.TRUE., t)
+          ELSE IF ((ABS(growth_rate_vz) > 1E-6_r2) .AND. &
+                       (growth_error < 1E-8_r2)) THEN
+            CALL increment_hysteresis(.FALSE., t)
+          END IF
+        END IF
+        IF ((ABS(growth_rate_vz) < 1E-8_r2) .AND. &  !if vr saturated
+            (ABS(vr(nx/2, nz/2)) > 1E-3_r2)) THEN
           saturated = saturated + 1
           IF (saturated > 4) THEN
             IF ((.NOT. auto_tau) .OR. (tau == tau_end)) THEN  !if tau not auto
@@ -406,7 +432,7 @@ MODULE io
       INQUIRE(FILE='RUNNING', EXIST=run_exist)  !does 'RUNNING' exist?
       IF (.NOT. run_exist) THEN  !if not then finish
         PRINT*
-        WRITE(6, '(A33, i2)'), 'Stop requested.  Ending process ', mycol
+        WRITE(6, '(A33, i2)') 'Stop requested.  Ending process ', mycol
         PRINT*, 'Saving end state...'
         CALL end_state(ut%old, zt%old, psi%old, bt%old, jt%old, p)
         CALL save_xsect(vr, vz, psi%old, ut%new, zt%new, &
@@ -576,6 +602,177 @@ MODULE io
     RETURN
   END SUBROUTINE save_energy
 
+  SUBROUTINE increment_Re(growth_rate, t)
+    !Automatically increment/decrement the Reynolds number to find critical
+    !values based on the sign of the growth rate
+    USE parameters
+    IMPLICIT NONE
+
+    REAL (r2), INTENT(IN) :: growth_rate, t
+    REAL (r2), SAVE       :: Re_minus, Re_plus, growth_minus, growth_plus
+
+    SELECT CASE (dec_RE)
+      CASE (.FALSE.)
+        IF (init_Re) THEN
+          IF (growth_rate < 0.0_r2) THEN
+            growth_minus = growth_rate
+            Re_minus = Re1
+            Re1 = Re1 + Re_incr
+            gm_set = .TRUE.
+          ELSE IF (growth_rate > 0.0_r2) THEN
+            growth_plus = growth_rate
+            Re_plus = Re1
+            Re1 = Re1 - Re_incr
+            gp_set = .TRUE.
+          END IF
+          init_Re = .FALSE.
+        ELSE IF (.NOT. init_Re) THEN
+          IF ((.NOT. gm_set) .OR. (.NOT. gp_set)) THEN
+            IF (.NOT. gp_set) THEN
+              IF (growth_rate < 0.0_r2) THEN
+                growth_minus = growth_rate
+                Re_minus = Re1
+                Re1 = Re1 + Re_incr
+              ELSE IF (growth_rate > 0.0_r2) THEN
+                growth_plus = growth_rate
+                Re_plus = Re1
+                Re1 = 0.5_r2 * (Re1 + Re_minus)
+                gp_set = .TRUE.
+              END IF
+            ELSE IF (.NOT. gm_set) THEN
+              IF (growth_rate > 0.0_r2) THEN
+                growth_plus = growth_rate
+                Re_plus = Re1
+                Re1 = Re1 - Re_incr
+              ELSE IF (growth_rate < 0.0_r2) THEN
+                growth_minus = growth_rate
+                Re_minus = Re1
+                Re1 = 0.5_r2 * (Re1 + Re_plus)
+                gm_set = .TRUE.
+              END IF
+            END IF
+          ELSE
+            IF (growth_rate < 0.0_r2) THEN
+              growth_minus = growth_rate
+              Re_minus = Re1
+              Re1 = 0.5_r2 * (Re1 + Re_plus)
+            ELSE IF (growth_rate > 0.0_r2) THEN
+              growth_plus = growth_rate
+              Re_plus = Re1
+              Re1 = 0.5_r2 * (Re1 + Re_minus)
+            END IF
+          END IF
+        END IF
+      CASE (.TRUE.)
+        IF (init_Re) THEN
+          IF (growth_rate < 0.0_r2) THEN
+            growth_minus = growth_rate
+            Re_minus = Re1
+            Re1 = Re1 - Re_incr
+            gm_set = .TRUE.
+          ELSE IF (growth_rate > 0.0_r2) THEN
+            STOP 'Decreasing Re boundary only but growth rate > 0'
+          END IF
+          init_Re = .FALSE.
+        ELSE IF (.NOT. init_Re) THEN
+          IF (.NOT. gp_set) THEN
+            IF (growth_rate < 0.0_r2) THEN
+              growth_minus = growth_rate
+              Re_minus = Re1
+              Re1 = Re1 - Re_incr
+            ELSE IF (growth_rate > 0.0_r2) THEN
+              growth_plus = growth_rate
+              Re_plus = Re1
+              Re1 = 0.0_r2
+              zero_Re = .TRUE.
+              gp_set = .TRUE.
+            END IF
+          ELSE
+            IF (zero_Re) THEN
+              Re1 = 0.5_r2 * (Re_minus + Re_plus)
+              zero_Re = .FALSE.
+            ELSE IF (.NOT. zero_Re) THEN
+              IF (growth_rate < 0.0_r2) THEN
+                growth_minus = growth_rate
+                Re_minus = Re1
+                Re1 = 0.5_r2 * (Re1 + Re_plus)
+              ELSE IF (growth_rate > 0.0_r2) THEN
+                growth_plus = growth_rate
+                Re_plus = Re1
+                Re1 = 0.0_r2
+                zero_Re = .TRUE.
+              END IF
+            END IF
+          END IF
+        END IF
+    END SELECT
+    
+    WRITE (37, '(6e17.9)') t, Re1, Re_minus, Re_plus, growth_minus, growth_plus
+    
+    IF (ABS(Re1 - Re_minus) < 1E-6_r2) THEN
+      OPEN (99, FILE = 'RUNNING')
+      CLOSE (99, STATUS = 'delete')
+    END IF
+    
+    RETURN
+  END SUBROUTINE
+  
+  SUBROUTINE increment_hysteresis(test, t)
+    !Automatically increment/decrement the Reynolds number to find critical
+    !values in a hysteresis region
+    USE parameters
+    USE variables
+    IMPLICIT NONE
+
+    REAL     (r2), INTENT(IN) :: t
+    LOGICAL,       INTENT(IN) :: test
+    REAL     (r2), SAVE       :: Re_minus, Re_plus
+
+    IF (init_Re) THEN
+      IF (test) THEN
+        Re_plus = Re1
+        Re1 = Re1 - Re_incr
+      END IF
+      init_Re = .FALSE.
+    ELSE IF (.NOT. init_Re) THEN
+      IF (test) THEN
+        IF (.NOT. gm_set) THEN
+          Re_plus = Re1
+          Re1 = Re1 - Re_incr
+        ELSE IF (gm_set) THEN
+          Re_plus = Re1
+          Re1 = 0.5_r2 * (Re_minus + Re_plus)
+        END IF
+      ELSE IF (.NOT. test) THEN
+        Re_minus = Re1
+        Re1 = 0.5_r2 * (Re_minus + Re_plus)
+        gm_set = .TRUE.
+        OPEN (50, FILE = 'end_state.dat', FORM = 'unformatted')
+      
+        READ (50)
+        READ (50)
+        READ (50)
+        READ (50)
+        READ (50) ut%new
+        READ (50) zt%new
+        READ (50) psi%new
+        READ (50) bt%new
+        READ (50) jt%new
+
+        CLOSE (50)
+      END IF
+    END IF
+
+    WRITE (37, '(4e17.9)') t, Re1, Re_minus, Re_plus
+    
+    IF (ABS(Re1 - Re_minus) < 1E-6_r2) THEN
+      OPEN (99, FILE = 'RUNNING')
+      CLOSE (99, STATUS = 'delete')
+    END IF
+
+    RETURN
+  END SUBROUTINE increment_hysteresis
+  
   SUBROUTINE get_timestep()
     !Obsolete: from attempt at adaptive timestep
     USE parameters

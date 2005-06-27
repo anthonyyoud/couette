@@ -47,7 +47,7 @@ MODULE matrices
   END SUBROUTINE matrix_setup
 
   SUBROUTINE psi_mat_setup(p_mat, desc_p, af)
-    !Setup of LHS matrix in solution of stream-function Poisson equation
+    !Setup of LHS matrix in solution of stream function Poisson equation
     USE parameters
     USE ic_bc, ONLY : s
     IMPLICIT NONE
@@ -108,11 +108,17 @@ MODULE matrices
       CASE (SPr)
         CALL PSDBTRF(nx1*nz1, nx1, nx1, p_mat, 1, desc_p, af, laf, &
                      work, lwork_fac, info)
-        IF (info /= 0) PRINT*, 'psi_PSDBTRF ', info
+        IF (info /= 0) THEN
+          PRINT*, 'ERROR: SPr factorisation error psi_PSDBTRF, INFO=', info
+          STOP
+        END IF
       CASE (DPr)
         CALL PDDBTRF(nx1*nz1, nx1, nx1, p_mat, 1, desc_p, af, laf, &
                      work, lwork_fac, info)
-        IF (info /= 0) PRINT*, 'psi_PDDBTRF ', info
+        IF (info /= 0) THEN
+          PRINT*, 'ERROR: DPr factorisation error psi_PDDBTRF, INFO=', info
+          STOP
+        END IF
       CASE DEFAULT
         STOP 'ERROR: Precision selection error - matrices.f90 psi_P*DBTRF'
     END SELECT
@@ -196,11 +202,17 @@ MODULE matrices
       CASE (SPr)
         CALL PSDBTRF(nxp1*nz1, nxp1, nxp1, b_mat, 1, desc_b, af, b_laf, &
                      work, lwork_b_fac, info)
-        IF (info /= 0) PRINT*, 'b_infinite_PSDBTRF ', info
+        IF (info /= 0) THEN
+          PRINT*, 'ERROR: SPr factorisation error mag_inf_PSDBTRF, INFO=', info
+          STOP
+        END IF
       CASE (DPr)
         CALL PDDBTRF(nxp1*nz1, nxp1, nxp1, b_mat, 1, desc_b, af, b_laf, &
                      work, lwork_b_fac, info)
-        IF (info /= 0) PRINT*, 'b_infinite_PDDBTRF ', info
+        IF (info /= 0) THEN
+          PRINT*, 'ERROR: DPr factorisation error mag_inf_PDDBTRF, INFO=', info
+          STOP
+        END IF
       CASE DEFAULT
         STOP 'ERROR: Precision selection error - matrices.f90 b_inf_P*DBTRF'
     END SELECT
@@ -333,11 +345,17 @@ MODULE matrices
       CASE (SPr)
         CALL PSDBTRF(nxp1*nzp1, nxp1, nxp1, b_mat, 1, desc_b, af, b_laf, &
                      work, lwork_b_fac, info)
-        IF (info /= 0) PRINT*, 'b_finite_PSDBTRF ', info
+        IF (info /= 0) THEN
+          PRINT*, 'ERROR: SPr factorisation error mag_fin_PSDBTRF, INFO=', info
+          STOP
+        END IF
       CASE (DPr)
         CALL PDDBTRF(nxp1*nzp1, nxp1, nxp1, b_mat, 1, desc_b, af, b_laf, &
                      work, lwork_b_fac, info)
-        IF (info /= 0) PRINT*, 'b_finite_PDDBTRF ', info
+        IF (info /= 0) THEN
+          PRINT*, 'ERROR: DPr factorisation error mag_fin_PDDBTRF, INFO=', info
+          STOP
+        END IF
       CASE DEFAULT
         STOP 'ERROR: Precision selection error - matrices.f90 b_fin_P*DBTRF'
     END SELECT
@@ -417,11 +435,17 @@ MODULE matrices
       CASE (SPr)
         CALL PSDBTRF(nx1*nzp1, nx1, nx1, j_mat, 1, desc_j, af, laf, &
                      work, lwork_fac, info)
-        IF (info /= 0) PRINT*, 'j_infinite_PSDBTRF ', info
+        IF (info /= 0) THEN
+          PRINT*, 'ERROR: SPr factorisation error cur_inf_PSDBTRF, INFO=', info
+          STOP
+        END IF
       CASE (DPr)
         CALL PDDBTRF(nx1*nzp1, nx1, nx1, j_mat, 1, desc_j, af, laf, &
                      work, lwork_fac, info)
-        IF (info /= 0) PRINT*, 'j_infinite_PDDBTRF ', info
+        IF (info /= 0) THEN
+          PRINT*, 'ERROR: DPr factorisation error cur_inf_PDDBTRF, INFO=', info
+          STOP
+        END IF
       CASE DEFAULT
         STOP 'ERROR: Precision selection error - matrices.f90 j_inf_P*DBTRF'
     END SELECT
@@ -487,11 +511,17 @@ MODULE matrices
       CASE (SPr)
         CALL PSDBTRF(nx1*nz1, nx1, nx1, j_mat, 1, desc_j, af, laf, &
                      work, lwork_fac, info)
-        IF (info /= 0) PRINT*, 'j_infinite_PSDBTRF ', info
+        IF (info /= 0) THEN
+          PRINT*, 'ERROR: SPr factorisation error cur_fin_PSDBTRF, INFO=', info
+          STOP
+        END IF
       CASE (DPr)
         CALL PDDBTRF(nx1*nz1, nx1, nx1, j_mat, 1, desc_j, af, laf, &
                      work, lwork_fac, info)
-        IF (info /= 0) PRINT*, 'j_infinite_PDDBTRF ', info
+        IF (info /= 0) THEN
+          PRINT*, 'ERROR: DPr factorisation error cur_fin_PDDBTRF, INFO=', info
+          STOP
+        END IF
       CASE DEFAULT
         STOP 'ERROR: Precision selection error - matrices.f90 j_inf_P*DBTRF'
     END SELECT
