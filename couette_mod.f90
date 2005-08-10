@@ -65,6 +65,7 @@ PROGRAM couette_mod
 
   IF (mycol == 0) THEN                                           !initial
     CALL ICS(ut%new, zt%new, psi%new, bt%new, jt%new, p_start)   !conditions
+    CALL particle_setup()
 
     IF (.NOT. restart) THEN
       INQUIRE(FILE='end_state.dat', EXIST=state_exist)

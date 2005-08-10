@@ -4,7 +4,8 @@ MODULE variables
   IMPLICIT NONE
 
   PRIVATE
-  PUBLIC :: copy_var, vr_vz, integrate_r, integrate_z, Re_1, Re_2
+  PUBLIC :: copy_var, vr_vz, integrate_r, integrate_z, &
+            particle_setup, Re_1, Re_2
 
   REAL (r2), PARAMETER, PRIVATE   :: c1=3.0_r2/8.0_r2, & !Constants for
                                      c2=7.0_r2/6.0_r2, & !numerical
@@ -55,7 +56,8 @@ MODULE variables
   TYPE (VAR), PUBLIC, SAVE :: ut, zt, psi, bt, jt
   REAL (r2),  PUBLIC, SAVE :: vr(0:nx,0:nz), vz(0:nx,0:nz), &
                               vrold(0:nx,0:nz) = 0.0_r2, &
-                              vzold(0:nx,0:nz) = 0.0_r2
+                              vzold(0:nx,0:nz) = 0.0_r2, &
+                              xold(num_pars), zold(num_pars)
 
   CONTAINS
 
@@ -155,6 +157,31 @@ MODULE variables
     RETURN
   END SUBROUTINE integrate_z
 
+  SUBROUTINE particle_setup()
+    !Set up particle positions
+    USE parameters
+    IMPLICIT NONE
+
+    INTEGER (i1) :: j, k
+    REAL    (r2) :: x_par_pos, z_par_pos
+    
+    CALL random_seed()
+
+    DO j = 1, num_pars
+      CALL random_number(x_par_pos)
+      xold(j) = x_par_pos * nx
+    END DO
+
+    CALL random_seed()
+    
+    DO k = 1, num_pars
+      CALL random_number(z_par_pos)
+      zold(k) = z_par_pos * nz
+    END DO
+
+    RETURN
+  END SUBROUTINE particle_setup
+  
   FUNCTION Re_1(t)
     !Time-dependent Reynolds number of the inner cylinder
     USE parameters

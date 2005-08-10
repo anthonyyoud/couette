@@ -195,19 +195,32 @@ MODULE io
                                 jt(0:nx,0:nz), t
     INTEGER (i1)             :: j, k
 
-    OPEN (32, STATUS = 'unknown', FILE = 'xsect'//itos(p)//'.dat')
+    OPEN (32, STATUS = 'unknown', FILE = 'xsect'//itos(p)//'.dat', &
+          FORM = 'unformatted')
 
-    WRITE (32, '(e17.9)') t
-    WRITE (32, '(2i5)') nx, nz
-    WRITE (32, '(e17.9)') ((ur(j,k), j = 0, nx), k = 0, nz)
-    WRITE (32, '(e17.9)') ((uz(j,k), j = 0, nx), k = 0, nz)
-    WRITE (32, '(e17.9)') ((pn(j,k), j = 0, nx), k = 0, nz)
-    WRITE (32, '(e17.9)') ((ut(j,k), j = 0, nx), k = 0, nz)
-    WRITE (32, '(e17.9)') ((zt(j,k), j = 0, nx), k = 0, nz)
-    WRITE (32, '(e17.9)') ((bt(j,k), j = 0, nx), k = 0, nz)
-    WRITE (32, '(e17.9)') ((jt(j,k), j = 0, nx), k = 0, nz)
-    WRITE (32, '(e17.9)') (x(j), j = 0, nx)
-    WRITE (32, '(e17.9)') (z(k), k = 0, nz)
+    !WRITE (32, '(e17.9)') t
+    !WRITE (32, '(2i5)') nx, nz
+    !WRITE (32, '(e17.9)') ((ur(j,k), j = 0, nx), k = 0, nz)
+    !WRITE (32, '(e17.9)') ((uz(j,k), j = 0, nx), k = 0, nz)
+    !WRITE (32, '(e17.9)') ((pn(j,k), j = 0, nx), k = 0, nz)
+    !WRITE (32, '(e17.9)') ((ut(j,k), j = 0, nx), k = 0, nz)
+    !WRITE (32, '(e17.9)') ((zt(j,k), j = 0, nx), k = 0, nz)
+    !WRITE (32, '(e17.9)') ((bt(j,k), j = 0, nx), k = 0, nz)
+    !WRITE (32, '(e17.9)') ((jt(j,k), j = 0, nx), k = 0, nz)
+    !WRITE (32, '(e17.9)') (x(j), j = 0, nx)
+    !WRITE (32, '(e17.9)') (z(k), k = 0, nz)
+    
+    WRITE (32) t
+    WRITE (32) nx, nz
+    WRITE (32) ur
+    WRITE (32) uz
+    WRITE (32) pn
+    WRITE (32) ut
+    WRITE (32) zt
+    WRITE (32) bt
+    WRITE (32) jt
+    WRITE (32) x
+    WRITE (32) z
 
     CLOSE (32)
 
@@ -365,7 +378,7 @@ MODULE io
 
     CALL vr_vz(psi%old, vr, vz)   !get radial, axial velocities
     IF (save_part) THEN
-      CALL particle(vr, vrold, vz, vzold, x_pos, z_pos) !save particle
+      CALL particle(vr, vrold, vz, vzold) !save particle
     END IF                                              !path
     CALL save_torque(t, ut%new)
     IF ((p /= p_start) .AND. ((p - p_start) > save_rate)) THEN
@@ -516,16 +529,19 @@ MODULE io
     RETURN
   END SUBROUTINE save_time_tau
 
-  SUBROUTINE particle (vr, vrold, vz, vzold, xold, zold)
+  SUBROUTINE particle (vr, vrold, vz, vzold)
     !Calculate and save a particle path
     USE parameters
+    USE variables, ONLY : xold, zold
     IMPLICIT NONE
 
     REAL    (r2), INTENT(IN)    :: vr(0:nx, 0:nz), vz(0:nx, 0:nz), &
                                    vrold(0:nx, 0:nz), vzold(0:nx, 0:nz)
-    REAL    (r2), INTENT(INOUT) :: xold, zold
-    INTEGER (i1)                :: xmin, xplu, zmin, zplu, j
-    REAL    (r2)                :: cc1, cc2, rvel, zvel, xnew, znew, del_t
+    INTEGER (i1)                :: xmin(num_pars), xplu(num_pars), &
+                                   zmin(num_pars), zplu(num_pars), i, j
+    REAL    (r2)                :: cc1(num_pars), cc2(num_pars), &
+                                   rvel(num_pars), zvel(num_pars), &
+                                   xnew(num_pars), znew(num_pars), del_t
 
     del_t = dt / 1.0_r2
 
@@ -538,15 +554,21 @@ MODULE io
       cc1 = (xold - xmin) / (xplu - xmin)
       cc2 = (zold - zmin) / (zplu - zmin)
 
-      rvel = (1.0_r2 - cc1) * (1.0_r2 - cc2) * vrold(xmin, zmin) + &
-             cc1 * (1.0_r2 - cc2) * vrold(xplu, zmin) + &
-             cc1 * cc2 * vrold(xplu, zplu) + &
-             (1.0_r2 - cc1) * cc2 * vrold(xmin, zplu)
+      DO i = 1, num_pars
+        rvel(i) = (1.0_r2 - cc1(i)) * (1.0_r2 - cc2(i)) * &
+                  vrold(xmin(i), zmin(i)) + &
+                  cc1(i)* (1.0_r2 - cc2(i)) * vrold(xplu(i), zmin(i)) + &
+                  cc1(i) * cc2(i) * vrold(xplu(i), zplu(i)) + &
+                  (1.0_r2 - cc1(i)) * cc2(i) * vrold(xmin(i), zplu(i))
+      END DO
 
-      zvel = (1.0_r2 - cc1) * (1.0_r2 - cc2) * vzold(xmin, zmin) + &
-             cc1 * (1.0_r2 - cc2) * vzold(xplu, zmin) + &
-             cc1 * cc2 * vzold(xplu, zplu) + &
-             (1.0_r2 - cc1) * cc2 * vzold(xmin, zplu)
+      DO i = 1, num_pars
+        zvel(i) = (1.0_r2 - cc1(i)) * (1.0_r2 - cc2(i)) * &
+                  vzold(xmin(i), zmin(i)) + &
+                  cc1(i) * (1.0_r2 - cc2(i)) * vzold(xplu(i), zmin(i)) + &
+                  cc1(i) * cc2(i) * vzold(xplu(i), zplu(i)) + &
+                  (1.0_r2 - cc1(i)) * cc2(i) * vzold(xmin(i), zplu(i))
+      END DO
 
       xnew = xold + del_t * rvel
       znew = zold + del_t * zvel
@@ -554,7 +576,11 @@ MODULE io
       zold = znew
     END DO
 
-    WRITE (24, '(2e17.9)') xnew / nx, znew * gamma / nz
+    WRITE (24, '(10e17.9)') xnew(1) / nx, znew(1) * gamma / nz, &
+                            xnew(2) / nx, znew(2) * gamma / nz, &
+                            xnew(3) / nx, znew(3) * gamma / nz, &
+                            xnew(4) / nx, znew(4) * gamma / nz, &
+                            xnew(5) / nx, znew(5) * gamma / nz
 
     RETURN
   END SUBROUTINE particle
