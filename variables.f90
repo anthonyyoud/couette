@@ -5,7 +5,7 @@ MODULE variables
 
   PRIVATE
   PUBLIC :: copy_var, vr_vz, integrate_r, integrate_z, &
-            particle_setup, Re_1, Re_2
+            particle_setup
 
   REAL (r2), PARAMETER, PRIVATE   :: c1=3.0_r2/8.0_r2, & !Constants for
                                      c2=7.0_r2/6.0_r2, & !numerical
@@ -182,30 +182,4 @@ MODULE variables
     RETURN
   END SUBROUTINE particle_setup
   
-  FUNCTION Re_1(t)
-    !Time-dependent Reynolds number of the inner cylinder
-    USE parameters
-    IMPLICIT NONE
-                                                                                
-    REAL (r2), INTENT(IN) :: t
-    REAL (r2)             :: Re_1
-
-    Re_1 = Re1 + Re1_mod * COS(om1 * t)
-                                                                                
-    RETURN
-  END FUNCTION Re_1
-
-  FUNCTION Re_2(t)
-    !Time-dependent Reynolds number of the outer cylinder
-    USE parameters
-    IMPLICIT NONE
-                                                                                
-    REAL (r2), INTENT(IN) :: t
-    REAL (r2)             :: Re_2
-
-    Re_2 = Re2 + Re2_mod * COS(om2 * t)
-                                                                                
-    RETURN
-  END FUNCTION Re_2
-
 END MODULE variables

@@ -4,7 +4,7 @@ MODULE ic_bc
   IMPLICIT NONE
 
   PRIVATE
-  PUBLIC :: get_xzs, ICS, u_BCS, z_BCS, p_BCS, b_BCS, j_BCS
+  PUBLIC :: get_xzs, ICS, u_BCS, z_BCS, p_BCS, b_BCS, j_BCS, Re_1, Re_2
 
   REAL (r2), PUBLIC :: x(0:nx), x_(0:nx), th(0:nt), z(0:nz), s(0:nx) 
                                                 !finite-difference mesh
@@ -222,14 +222,22 @@ MODULE ic_bc
     REAL    (r2), INTENT(OUT) :: u(0:nx,0:nz)
     INTEGER (i1)              :: k
 
-    u(0,:) = Re1 + Re1_mod * COS(om1 * t) + &
-             eps1 * Re1 * (1.0_r2 / eta - 1.0_r2) * COS(freq1 * z(:))
-    u(nx,:) = Re2 + Re2_mod * COS(om2 * t) - &
-             eps2 * COS(freq2 * z(:))
+    !u(0,:) = Re1 + Re1_mod * COS(om1 * t) + &
+    !         eps1 * Re1 * (1.0_r2 / eta - 1.0_r2) * COS(freq1 * z(:))
+    !u(nx,:) = Re2 + Re2_mod * COS(om2 * t) - &
+    !         eps2 * COS(freq2 * z(:))
 
+    u(0,:) = Re_1(t)
+    u(nx,:) = Re_2(t)
+    
     IF (ABS(tau - 1.0_r2) < EPSILON(tau)) THEN
-      u(:,0) = 0.0_r2
-      u(:,nz) = 0.0_r2
+      IF (rot_ends) THEN
+        u(:,0) = Re_1(t)
+        u(:,nz) = Re_1(t)
+      ELSE
+        u(:,0) = 0.0_r2
+        u(:,nz) = 0.0_r2
+      END IF
     END IF
 
     RETURN
@@ -309,6 +317,32 @@ MODULE ic_bc
 
     RETURN
   END SUBROUTINE j_BCS
+
+  FUNCTION Re_1(t)
+    !Time-dependent Reynolds number of the inner cylinder
+    USE parameters
+    IMPLICIT NONE
+                      
+    REAL (r2), INTENT(IN) :: t
+    REAL (r2)             :: Re_1 
+
+    Re_1 = Re1 + Re1_mod * COS(om1 * t)
+                                                          
+    RETURN                    
+  END FUNCTION Re_1
+
+  FUNCTION Re_2(t)
+    !Time-dependent Reynolds number of the outer cylinder
+    USE parameters
+    IMPLICIT NONE
+
+    REAL (r2), INTENT(IN) :: t
+    REAL (r2)             :: Re_2
+
+    Re_2 = Re2 + Re2_mod * COS(om2 * t)
+
+    RETURN
+  END FUNCTION Re_2
 
   FUNCTION f1(index)
     USE parameters

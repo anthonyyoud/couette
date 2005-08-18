@@ -24,14 +24,14 @@ MODULE parameters
   !****************************************************************************
   REAL    (r2), PARAMETER :: pi          = 3.14159265358979_r2
   REAL    (r2), PARAMETER :: alpha       = 0.0_r2 !3.1631_r2
-  REAL    (r2), PARAMETER :: gamma       = 12.30_r2 !(2.0_r2 * pi) / alpha
+  REAL    (r2), PARAMETER :: gamma       = 14.00_r2 !(2.0_r2 * pi) / alpha
   REAL    (r2), PARAMETER :: eta         = 0.75_r2
   REAL    (r2), PARAMETER :: Q           = 0.0_r2
   REAL    (r2)            :: Re1         = 0.0_r2
   REAL    (r2), PARAMETER :: Re_incr     = 1.0_r2
   REAL    (r2), PARAMETER :: growth_tol  = 1E-8_r2
   REAL    (r2), PARAMETER :: Re2         = 0.0_r2 !-1.0_r2*(1.0_r2/eta)*Re1
-  REAL    (r2), PARAMETER :: Re1_mod     = 100.0_r2
+  REAL    (r2), PARAMETER :: Re1_mod     = 110.0_r2
   REAL    (r2), PARAMETER :: Re2_mod     = 0.0_r2
   REAL    (r2), PARAMETER :: om1         = 3.0_r2
   REAL    (r2), PARAMETER :: om2         = 0.0_r2
@@ -43,13 +43,14 @@ MODULE parameters
   REAL    (r2), PARAMETER :: tau_end     = 1.0_r2
   INTEGER (i1), PARAMETER :: nx          = 20
   INTEGER (i1), PARAMETER :: nt          = 20
-  INTEGER (i1), PARAMETER :: nz          = 246
+  INTEGER (i1), PARAMETER :: nz          = 280
   INTEGER (i1), PARAMETER :: save_rate   = 10
   INTEGER (i1), PARAMETER :: save_rate_2 = 104
+  LOGICAL,      PARAMETER :: rot_ends    = .TRUE.
   LOGICAL,      PARAMETER :: xsect_save  = .FALSE.
   LOGICAL,      PARAMETER :: save3d      = .FALSE.
   LOGICAL,      PARAMETER :: iso_hel     = .FALSE.
-  LOGICAL,      PARAMETER :: restart     = .FALSE.
+  LOGICAL,      PARAMETER :: restart     = .TRUE.
   LOGICAL,      PARAMETER :: auto_tau    = .FALSE.
   LOGICAL,      PARAMETER :: auto_Re     = .FALSE.
   LOGICAL,      PARAMETER :: dec_Re      = .FALSE.

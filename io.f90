@@ -130,7 +130,8 @@ MODULE io
   SUBROUTINE save_torque(t, v)
     !Save torques on inner and outer cylinders as well as torque due to CCF
     USE parameters
-    USE variables, ONLY : integrate_z, Re_1, Re_2
+    USE variables, ONLY : integrate_z
+    USE ic_bc, ONLY : Re_1, Re_2
     IMPLICIT NONE
 
     REAL    (r2), INTENT(IN) :: t, v(0:nx,0:nz)
@@ -166,8 +167,7 @@ MODULE io
   SUBROUTINE get_CCF(t, uc)
     !(Dimensionless) Circular Couette flow
     USE parameters
-    USE ic_bc, ONLY : s
-    USE variables, ONLY : Re_1, Re_2
+    USE ic_bc, ONLY : s, Re_1, Re_2
     IMPLICIT NONE
 
     REAL (r2), INTENT(IN)  :: t
@@ -588,7 +588,7 @@ MODULE io
   SUBROUTINE energy_CCF(t, Eccf)
     !Explicitly integrated (dimensionless) form of the kinetic energy in CCF
     USE parameters
-    USE variables, ONLY : Re_1, Re_2
+    USE ic_bc, ONLY : Re_1, Re_2
     IMPLICIT NONE
 
     REAL (r2), INTENT(IN)  :: t
