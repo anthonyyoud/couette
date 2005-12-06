@@ -232,8 +232,8 @@ MODULE ic_bc
     
     IF (ABS(tau - 1.0_r2) < EPSILON(tau)) THEN
       IF (rot_ends) THEN
-        u(:,0) = Re_1(t)
-        u(:,nz) = Re_1(t)
+        u(:,0) = Re_1(t) * s(:) / eta
+        u(:,nz) = 0.0_r2 !Re_1(t) * s(:) / eta
       ELSE
         u(:,0) = 0.0_r2
         u(:,nz) = 0.0_r2

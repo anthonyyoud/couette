@@ -9,6 +9,6 @@ make clean; make
 #Setup dir
 mv couette_mod.out $1
 cp parameters.f90 $1
-cp run_script.sh $1
+cp pbs_run_script.sh $1
 
 cd $1

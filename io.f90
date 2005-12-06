@@ -47,6 +47,9 @@ MODULE io
       OPEN (37, STATUS = 'unknown', FILE = 'auto_Re.dat')
     END IF
     OPEN (51, FILE = 'time_tau.dat')
+    IF (divergence) THEN
+      OPEN (97, FILE = 'divergence.dat')
+    END IF
     OPEN (99, FILE = 'RUNNING')
     CLOSE (99)
 
@@ -68,6 +71,9 @@ MODULE io
       CLOSE (37)
     END IF
     CLOSE (51)
+    IF (divergence) THEN
+      CLOSE (97)
+    END IF
 
     RETURN
   END SUBROUTINE close_files

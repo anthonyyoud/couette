@@ -77,12 +77,14 @@ MODULE variables
   SUBROUTINE vr_vz(p, vr, vz)
     !Calculate radial and axial velocity components from the stream function
     USE parameters
-    USE ic_bc, ONLY : s
+    USE ic_bc, ONLY : x, z, s
+    USE derivs, ONLY : deriv_x, deriv_z
     IMPLICIT NONE
 
     REAL    (r2), INTENT(IN)  :: p(0:nx,0:nz)
     REAL    (r2), INTENT(OUT) :: vr(0:nx,0:nz), vz(0:nx,0:nz)
     INTEGER (i1)              :: j, k
+    REAL    (r2)              :: vrx(0:nx,0:nz), vzz(0:nx,0:nz), div
 
     DO k = 1, nz1
       vr(:,k) = (-1.0_r2 / (2.0_r2 * s(:) * delz)) * (p(:,k+1) - p(:,k-1))
@@ -106,6 +108,30 @@ MODULE variables
                   !(-3.0_r2 * p(0,k) + 4.0_r2 * p(1,k) - p(2,k))
     vz(nx,:) = 0.0_r2 !(1.0_r2 / (2.0_r2 * s(nx) * delx)) * &
                   !(3.0_r2 * p(nx,k) - 4.0_r2 * p(nx1,k) + p(nx-2,k))
+
+
+    IF (divergence) THEN
+      !DO k = 0, nz
+      !  DO j = 0, nx
+      !    vr(j,k) = z(k)**3
+      !    vz(j,k) = x(j)
+      !  END DO
+      !END DO
+
+      CALL deriv_x(vr, vrx)
+      CALL deriv_z(vz, vzz)
+      
+      div = 0.0_r2
+      
+      DO k = 0, nz
+        DO j = 1, nx1
+          div = div + one_eta * vrx(j,k) / s(j) + 0.5_r2 * vrx(j,k) / delx + &
+                       0.5_r2 * vzz(j,k) / delz
+        END DO
+      END DO
+    END IF
+    
+    WRITE (97, '(e17.9)') div
 
     RETURN
   END SUBROUTINE vr_vz
