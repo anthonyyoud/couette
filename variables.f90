@@ -129,9 +129,9 @@ MODULE variables
                        0.5_r2 * vzz(j,k) / delz
         END DO
       END DO
-    END IF
     
-    WRITE (97, '(e17.9)') div
+      WRITE (97, '(e17.9)') div
+    END IF
 
     RETURN
   END SUBROUTINE vr_vz

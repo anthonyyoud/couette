@@ -3,8 +3,9 @@ OBJECTS		= parameters.o ic_bc.o derivs.o variables.o stream.o \
                   magnetic.o current.o matrices.o io.o linear.o \
                   nonlinear.o solve.o couette_mod.o
 FFLAGS	        = -O2 -w95 -tpp7 -xW -unroll -vec_report0
+#FFLAGS	        = -O0 -w95
 #FFLAGS	        = -pg -d0 -CA -CB -CS -CU -CV
-LINKFLAGS	= -static
+LINKFLAGS	= 
 #LINKFLAGS	= -i_dynamic
 COMPILER	= mpif90
 LDBLAS          = -L$(BLASHOME)/lib -lblas

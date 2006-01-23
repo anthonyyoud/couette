@@ -23,27 +23,27 @@ MODULE parameters
   !Parameters to set
   !****************************************************************************
   REAL    (r2), PARAMETER :: pi          = 3.14159265358979_r2
-  REAL    (r2), PARAMETER :: alpha       = 3.1631_r2
-  REAL    (r2), PARAMETER :: gamma       = (2.0_r2 * pi) / alpha
-  REAL    (r2), PARAMETER :: eta         = 0.615_r2
-  REAL    (r2), PARAMETER :: Q           = 0.0_r2
-  REAL    (r2)            :: Re1         = 150.0_r2
+  REAL    (r2), PARAMETER :: alpha       = 0.0_r2 !3.1631_r2
+  REAL    (r2), PARAMETER :: gamma       = 10.0_r2 !(2.0_r2 * pi) / alpha
+  REAL    (r2), PARAMETER :: eta         = 0.5_r2
+  REAL    (r2), PARAMETER :: Q           = 10.0_r2
+  REAL    (r2)            :: Re1         = 190.0_r2
   REAL    (r2), PARAMETER :: Re_incr     = 1.0_r2
   REAL    (r2), PARAMETER :: growth_tol  = 1E-8_r2
-  REAL    (r2), PARAMETER :: Re2         = 0.0_r2 !-1.0_r2*(1.0_r2/eta)*Re1
+  REAL    (r2), PARAMETER :: Re2         = 102.6_r2 !-1.0_r2*(1.0_r2/eta)*Re1
   REAL    (r2), PARAMETER :: Re1_mod     = 0.0_r2
   REAL    (r2), PARAMETER :: Re2_mod     = 0.0_r2
   REAL    (r2), PARAMETER :: om1         = 0.0_r2
   REAL    (r2), PARAMETER :: om2         = 0.0_r2
-  REAL    (r2), PARAMETER :: dt          = 0.0001_r2
+  REAL    (r2), PARAMETER :: dt          = 0.00001_r2
   REAL    (r2), PARAMETER :: seed        = 1E-1_r2
   REAL    (r2), PARAMETER :: end_time    = 1000.0_r2
-  REAL    (r2), PARAMETER :: tau_init    = 0.0_r2
+  REAL    (r2), PARAMETER :: tau_init    = 1.0_r2
   REAL    (r2), PARAMETER :: tau_step    = 1.0_r2
   REAL    (r2), PARAMETER :: tau_end     = 1.0_r2
   INTEGER (i1), PARAMETER :: nx          = 40
   INTEGER (i1), PARAMETER :: nt          = 20
-  INTEGER (i1), PARAMETER :: nz          = 80
+  INTEGER (i1), PARAMETER :: nz          = 400
   INTEGER (i1), PARAMETER :: save_rate   = 10
   INTEGER (i1), PARAMETER :: save_rate_2 = 104
   LOGICAL,      PARAMETER :: rot_ends    = .FALSE.
@@ -55,7 +55,7 @@ MODULE parameters
   LOGICAL,      PARAMETER :: auto_Re     = .FALSE.
   LOGICAL,      PARAMETER :: dec_Re      = .FALSE.
   LOGICAL,      PARAMETER :: hyst_Re     = .FALSE.
-  LOGICAL,      PARAMETER :: divergence  = .TRUE.
+  LOGICAL,      PARAMETER :: divergence  = .FALSE.
   !****************************************************************************
 
   !****************************************************************************
