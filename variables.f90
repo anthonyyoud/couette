@@ -1,108 +1,108 @@
-MODULE variables
+module variables
   !Set up types and other routines to manipulate variables.
-  USE parameters
-  IMPLICIT NONE
+  use parameters
+  implicit none
 
-  PRIVATE
-  PUBLIC :: copy_var, vr_vz, integrate_r, integrate_z, &
+  private
+  public :: copy_var, vr_vz, integrate_r, integrate_z, &
             particle_setup
 
-  REAL (r2), PARAMETER, PRIVATE   :: c1=3.0_r2/8.0_r2, & !Constants for
+  real (r2), parameter, private   :: c1=3.0_r2/8.0_r2, & !Constants for
                                      c2=7.0_r2/6.0_r2, & !numerical
                                      c3=23.0_r2/24.0_r2  !integration
 
-  TYPE, PUBLIC :: VAR
+  type, public :: var
     !variables
-    REAL (r2) :: new(0:nx,0:nz)
-    REAL (r2) :: old(0:nx,0:nz)
-    REAL (r2) :: old2(0:nx,0:nz)
-    REAL (r2) :: inter(0:nx,0:nz)
-    REAL (r2) :: nlin_new(0:nx,0:nz)
-    REAL (r2) :: nlin_old(0:nx,0:nz)
-  END TYPE VAR
+    real (r2) :: new(0:nx,0:nz)
+    real (r2) :: old(0:nx,0:nz)
+    real (r2) :: old2(0:nx,0:nz)
+    real (r2) :: inter(0:nx,0:nz)
+    real (r2) :: nlin_new(0:nx,0:nz)
+    real (r2) :: nlin_old(0:nx,0:nz)
+  end type var
 
-  TYPE, PUBLIC :: DERIV
+  type, public :: deriv
     !derivatives
-    REAL (r2) :: x(0:nx,0:nz)
-    REAL (r2) :: xx(0:nx,0:nz)
-    REAL (r2) :: z(0:nx,0:nz)
-    REAL (r2) :: zz(0:nx,0:nz)
-    REAL (r2) :: zx(0:nx,0:nz)
-    REAL (r2) :: zxx(0:nx,0:nz)
-    REAL (r2) :: zzz(0:nx,0:nz)
-  END TYPE DERIV
+    real (r2) :: x(0:nx,0:nz)
+    real (r2) :: xx(0:nx,0:nz)
+    real (r2) :: z(0:nx,0:nz)
+    real (r2) :: zz(0:nx,0:nz)
+    real (r2) :: zx(0:nx,0:nz)
+    real (r2) :: zxx(0:nx,0:nz)
+    real (r2) :: zzz(0:nx,0:nz)
+  end type deriv
 
-  TYPE, PUBLIC :: MAT_COMP
+  type, public :: mat_comp
     !matrix components
-    REAL (r2) :: lo(2:nx1)
-    REAL (r2) :: di(nx1)
-    REAL (r2) :: up(nx-2)
-  END TYPE MAT_COMP
+    real (r2) :: lo(2:nx1)
+    real (r2) :: di(nx1)
+    real (r2) :: up(nx-2)
+  end type mat_comp
 
-  TYPE, PUBLIC :: UZ_MAT_COMP
+  type, public :: uz_mat_comp
     !matrix components for u in the z-direction
-    REAL (r2) :: lo(nz)
-    REAL (r2) :: di(0:nz)
-    REAL (r2) :: up(0:nz1)
-  END TYPE UZ_MAT_COMP
+    real (r2) :: lo(nz)
+    real (r2) :: di(0:nz)
+    real (r2) :: up(0:nz1)
+  end type uz_mat_comp
 
-  TYPE, PUBLIC :: ZZ_MAT_COMP
+  type, public :: zz_mat_comp
     !matrix components for Z in the z-direction
-    REAL (r2) :: lo(2:nz1)
-    REAL (r2) :: di(nz1)
-    REAL (r2) :: up(nz-2)
-  END TYPE ZZ_MAT_COMP
+    real (r2) :: lo(2:nz1)
+    real (r2) :: di(nz1)
+    real (r2) :: up(nz-2)
+  end type zz_mat_comp
 
-  TYPE (VAR), PUBLIC, SAVE :: ut, zt, psi, bt, jt
-  REAL (r2),  PUBLIC, SAVE :: vr(0:nx,0:nz), vz(0:nx,0:nz), &
+  type (var), public, save :: ut, zt, psi, bt, jt
+  real (r2),  public, save :: vr(0:nx,0:nz), vz(0:nx,0:nz), &
                               vrold(0:nx,0:nz) = 0.0_r2, &
                               vzold(0:nx,0:nz) = 0.0_r2, &
                               xold(num_pars), zold(num_pars)
 
-  CONTAINS
+  contains
 
-  SUBROUTINE copy_var(var_out, var_in)
+  subroutine copy_var(var_out, var_in)
     !Copy a variable
-    USE parameters
-    IMPLICIT NONE
+    use parameters
+    implicit none
 
-    REAL (r2), INTENT(IN)  :: var_in(0:nx,0:nz)
-    REAL (r2), INTENT(OUT) :: var_out(0:nx,0:nz)
+    real (r2), intent(in)  :: var_in(0:nx,0:nz)
+    real (r2), intent(out) :: var_out(0:nx,0:nz)
 
     var_out = var_in
 
-    RETURN
-  END SUBROUTINE copy_var
+    return
+  end subroutine copy_var
 
-  SUBROUTINE vr_vz(p, vr, vz)
+  subroutine vr_vz(p, vr, vz)
     !Calculate radial and axial velocity components from the stream function
-    USE parameters
-    USE ic_bc, ONLY : x, z, s
-    USE derivs, ONLY : deriv_x, deriv_z
-    IMPLICIT NONE
+    use parameters
+    use ic_bc, only : x, z, s
+    use derivs, only : deriv_x, deriv_z
+    implicit none
 
-    REAL    (r2), INTENT(IN)  :: p(0:nx,0:nz)
-    REAL    (r2), INTENT(OUT) :: vr(0:nx,0:nz), vz(0:nx,0:nz)
-    INTEGER (i1)              :: j, k
-    REAL    (r2)              :: vrx(0:nx,0:nz), vzz(0:nx,0:nz), div
+    real    (r2), intent(in)  :: p(0:nx,0:nz)
+    real    (r2), intent(out) :: vr(0:nx,0:nz), vz(0:nx,0:nz)
+    integer (i1)              :: j, k
+    real    (r2)              :: vrx(0:nx,0:nz), vzz(0:nx,0:nz), div
 
-    DO k = 1, nz1
+    do k = 1, nz1
       vr(:,k) = (-1.0_r2 / (2.0_r2 * s(:) * delz)) * (p(:,k+1) - p(:,k-1))
-    END DO
+    end do
 
-    IF (ABS(tau - 1.0_r2) > EPSILON(tau)) THEN
+    if (abs(tau - 1.0_r2) > epsilon(tau)) then
       vr(:,0) = (-1.0_r2 / (2.0_r2 * s(:) * delz)) * &
                 (-3.0_r2 * p(:,0) + 4.0_r2 * p(:,1) - p(:,2))
       vr(:,nz) = (-1.0_r2 / (2.0_r2 * s(:) * delz)) * &
                  (3.0_r2 * p(:,nz) - 4.0_r2 * p(:,nz1) + p(:,nz-2))
-    ELSE
+    else
       vr(:,0) = 0.0_r2
       vr(:,nz) = 0.0_r2
-    END IF
+    end if
 
-    DO j = 1, nx1
+    do j = 1, nx1
       vz(j,:) = (1.0_r2 / (2.0_r2 * s(j) * delx)) * (p(j+1,:) - p(j-1,:))
-    END DO
+    end do
 
     vz(0,:) = 0.0_r2 !(1.0_r2 / (2.0_r2 * s(0) * delx)) * &
                   !(-3.0_r2 * p(0,k) + 4.0_r2 * p(1,k) - p(2,k))
@@ -110,102 +110,102 @@ MODULE variables
                   !(3.0_r2 * p(nx,k) - 4.0_r2 * p(nx1,k) + p(nx-2,k))
 
 
-    IF (divergence) THEN
-      !DO k = 0, nz
-      !  DO j = 0, nx
+    if (divergence) then
+      !do k = 0, nz
+      !  do j = 0, nx
       !    vr(j,k) = z(k)**3
       !    vz(j,k) = x(j)
-      !  END DO
-      !END DO
+      !  end do
+      !end do
 
-      CALL deriv_x(vr, vrx)
-      CALL deriv_z(vz, vzz)
+      call deriv_x(vr, vrx)
+      call deriv_z(vz, vzz)
       
       div = 0.0_r2
       
-      DO k = 0, nz
-        DO j = 1, nx1
+      do k = 0, nz
+        do j = 1, nx1
           div = div + one_eta * vrx(j,k) / s(j) + 0.5_r2 * vrx(j,k) / delx + &
                        0.5_r2 * vzz(j,k) / delz
-        END DO
-      END DO
+        end do
+      end do
     
-      WRITE (97, '(e17.9)') div
-    END IF
+      write (97, '(e17.9)') div
+    end if
 
-    RETURN
-  END SUBROUTINE vr_vz
+    return
+  end subroutine vr_vz
 
-  SUBROUTINE integrate_r(in_var, r_int)
+  subroutine integrate_r(in_var, r_int)
     !Integrate a (2D) variable in r
-    USE parameters
-    USE ic_bc, ONLY : s
-    IMPLICIT NONE
+    use parameters
+    use ic_bc, only : s
+    implicit none
                                                                                 
-    REAL    (r2), INTENT(IN)  :: in_var(0:nx,0:nz)
-    REAL    (r2), INTENT(OUT) :: r_int(0:nz)
-    INTEGER (i1)              :: j, k
-    REAL    (r2)              :: var(0:nx,0:nz)
+    real    (r2), intent(in)  :: in_var(0:nx,0:nz)
+    real    (r2), intent(out) :: r_int(0:nz)
+    integer (i1)              :: j, k
+    real    (r2)              :: var(0:nx,0:nz)
                                                                                 
-    DO j = 0, nx
+    do j = 0, nx
       var(j,:) = in_var(j,:) * s(j) / (1.0_r2 - eta)
-    END DO
+    end do
 
-    DO k = 0, nz
+    do k = 0, nz
       r_int(k) = (c1 * var(0,k) + &
                   c2 * var(1,k) + &
                   c3 * var(2,k) + &
-                  SUM(var(3:nx-3,k)) + &
+                  sum(var(3:nx-3,k)) + &
                   c3 * var(nx-2,k) + &
                   c2 * var(nx-1,k) + &
                   c1 * var(nx,k)) * delx
-    END DO
+    end do
                                                                                 
-    RETURN
-  END SUBROUTINE integrate_r
+    return
+  end subroutine integrate_r
 
-  SUBROUTINE integrate_z(in_var, z_int)
+  subroutine integrate_z(in_var, z_int)
     !Integrate a (1D) variable in z
-    USE parameters
-    IMPLICIT NONE
+    use parameters
+    implicit none
                                                                                 
-    REAL    (r2), INTENT(IN)  :: in_var(0:nz)
-    REAL    (r2), INTENT(OUT) :: z_int
+    real    (r2), intent(in)  :: in_var(0:nz)
+    real    (r2), intent(out) :: z_int
                                                                                 
     z_int = (c1 * in_var(0) + &
              c2 * in_var(1) + &
              c3 * in_var(2) + &
-             SUM(in_var(3:nz-3)) + &
+             sum(in_var(3:nz-3)) + &
              c3 * in_var(nz-2) + &
              c2 * in_var(nz-1) + &
              c1 * in_var(nz)) * delz
                                                                                 
-    RETURN
-  END SUBROUTINE integrate_z
+    return
+  end subroutine integrate_z
 
-  SUBROUTINE particle_setup()
+  subroutine particle_setup()
     !Set up particle positions
-    USE parameters
-    IMPLICIT NONE
+    use parameters
+    implicit none
 
-    INTEGER (i1) :: j, k
-    REAL    (r2) :: x_par_pos, z_par_pos
+    integer (i1) :: j, k
+    real    (r2) :: x_par_pos, z_par_pos
     
-    CALL random_seed()
+    call random_seed()
 
-    DO j = 1, num_pars
-      CALL random_number(x_par_pos)
+    do j = 1, num_pars
+      call random_number(x_par_pos)
       xold(j) = x_par_pos * nx
-    END DO
+    end do
 
-    CALL random_seed()
+    call random_seed()
     
-    DO k = 1, num_pars
-      CALL random_number(z_par_pos)
+    do k = 1, num_pars
+      call random_number(z_par_pos)
       zold(k) = z_par_pos * nz
-    END DO
+    end do
 
-    RETURN
-  END SUBROUTINE particle_setup
+    return
+  end subroutine particle_setup
   
-END MODULE variables
+end module variables

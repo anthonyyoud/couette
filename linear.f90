@@ -1,38 +1,38 @@
-MODULE linear
+module linear
   !Routines to get the linear parts of the right-hand side of the azimuthal
   !velocity/vorticity equations.
-  IMPLICIT NONE
+  implicit none
 
-  PRIVATE
-  PUBLIC :: get_rhs_ux, get_rhs_Zx
+  private
+  public :: get_rhs_ux, get_rhs_Zx
 
-  CONTAINS
+  contains
 
-  SUBROUTINE get_rhs_ux(uo, u)
+  subroutine get_rhs_ux(uo, u)
     !Get the linear part for the right-hand side of the tridiagonal system for u
-    USE parameters
-    USE variables
-    USE derivs
-    USE ic_bc, ONLY : s
-    IMPLICIT NONE
+    use parameters
+    use variables
+    use derivs
+    use ic_bc, only : s
+    implicit none
 
-    REAL    (r2),   INTENT(IN)  :: uo(0:nx,0:nz)
-    REAL    (r2),   INTENT(OUT) :: u(0:nx,0:nz)
-    INTEGER (i1)                :: j, k
-    TYPE    (DERIV)             :: du
+    real    (r2),   intent(in)  :: uo(0:nx,0:nz)
+    real    (r2),   intent(out) :: u(0:nx,0:nz)
+    integer (i1)                :: j, k
+    type    (deriv)             :: du
 
-    CALL deriv_x(uo, du%x)
-    CALL deriv_xx(uo, du%xx)   !get derivatives
-    CALL deriv_zz(uo, du%zz)
+    call deriv_x(uo, du%x)
+    call deriv_xx(uo, du%xx)   !get derivatives
+    call deriv_zz(uo, du%zz)
 
-    DO k = 1, nz1
+    do k = 1, nz1
       u(1:nx1,k) = uo(1:nx1,k) + 0.5_r2 * rxx * du%xx(1:nx1,k) + &
                    one_eta * rx * 0.25_r2 * du%x(1:nx1,k) / s(1:nx1) - &
                    one_eta**2 * dt * 0.5_r2 * uo(1:nx1,k) / s(1:nx1)**2 + &
                    0.5_r2 * rzz * du%zz(1:nx1,k)
-    END DO
+    end do
 
-    IF (ABS(tau - 1.0_r2) > EPSILON(tau)) THEN
+    if (abs(tau - 1.0_r2) > epsilon(tau)) then
       u(1:nx1,0) = uo(1:nx1,0) + 0.5_r2 * rxx * du%xx(1:nx1,0) + &
                    one_eta * rx * 0.25_r2 * du%x(1:nx1,0) / s(1:nx1) - &
                    one_eta**2 * dt * 0.5_r2 * uo(1:nx1,0) / s(1:nx1)**2 + &
@@ -42,36 +42,36 @@ MODULE linear
                     one_eta * rx * 0.25_r2 * du%x(1:nx1,nz) / s(1:nx1) - &
                     one_eta**2 * dt * 0.5_r2 * uo(1:nx1,nz) / s(1:nx1)**2 + &
                     0.5_r2 * rzz * du%zz(1:nx1,nz)
-    END IF
+    end if
 
-    RETURN
-  END SUBROUTINE get_rhs_ux
+    return
+  end subroutine get_rhs_ux
 
-  SUBROUTINE get_rhs_Zx(zo, zn)
+  subroutine get_rhs_Zx(zo, zn)
     !Get linear part for the right-hand side of the tridiagonal system for Z
-    USE parameters
-    USE variables
-    USE derivs
-    USE ic_bc, ONLY : s
-    IMPLICIT NONE
+    use parameters
+    use variables
+    use derivs
+    use ic_bc, only : s
+    implicit none
 
-    REAL    (r2),   INTENT(IN)  :: zo(0:nx,0:nz)
-    REAL    (r2),   INTENT(OUT) :: zn(0:nx,0:nz)
-    INTEGER (i1)                :: j, k
-    TYPE    (DERIV)             :: dz
+    real    (r2),   intent(in)  :: zo(0:nx,0:nz)
+    real    (r2),   intent(out) :: zn(0:nx,0:nz)
+    integer (i1)                :: j, k
+    type    (deriv)             :: dz
 
-    CALL deriv_x(zo, dz%x)
-    CALL deriv_xx(zo, dz%xx)   !get derivatives
-    CALL deriv_zz(zo, dz%zz)
+    call deriv_x(zo, dz%x)
+    call deriv_xx(zo, dz%xx)   !get derivatives
+    call deriv_zz(zo, dz%zz)
 
-    DO k = 1, nz1
+    do k = 1, nz1
       zn(1:nx1,k) = zo(1:nx1,k) + 0.5_r2 * rxx * dz%xx(1:nx1,k) + &
                     one_eta * rx * 0.25_r2 * dz%x(1:nx1,k) / s(1:nx1) - &
                     one_eta**2 * dt * 0.5_r2 * zo(1:nx1,k) / s(1:nx1)**2 + &
                     0.5_r2 * rzz * dz%zz(1:nx1,k)
-    END DO
+    end do
 
-    RETURN
-  END SUBROUTINE get_rhs_Zx
+    return
+  end subroutine get_rhs_Zx
 
-END MODULE linear
+end module linear

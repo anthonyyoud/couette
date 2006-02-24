@@ -1,25 +1,25 @@
-MODULE stream
+module stream
   !Routines to do with solving the Poisson equation for the stream function.
   !Algorithms for the solution of the stream function Poisson equation are as
   !for the current in current.f90
-  IMPLICIT NONE
+  implicit none
 
-  PRIVATE
-  PUBLIC :: p_poisson
+  private
+  public :: p_poisson
 
-  CONTAINS
+  contains
 
-  SUBROUTINE p_poisson(Z_mat, psi, p_mat, desc_p, af)
+  subroutine p_poisson(Z_mat, psi, p_mat, desc_p, af)
     !Solve Poisson equation for the stream function, psi for all tau
-    USE parameters
-    USE ic_bc, ONLY : p_BCS, s
-    IMPLICIT NONE
+    use parameters
+    use ic_bc, only : p_BCS, s
+    implicit none
 
-    INTEGER (i1), INTENT(IN)  :: desc_p(7)
-    REAL    (r2), INTENT(IN)  :: af(laf), Z_mat(0:nx,0:nz), p_mat(p_M,p_N)
-    REAL    (r2), INTENT(OUT) :: psi(0:nx,0:nz)
-    INTEGER (i1)              :: i, j, k, info, cpcol, desc_z(7)
-    REAL    (r2)              :: zvec(nb), work(lwork_sol)
+    integer (i1), intent(in)  :: desc_p(7)
+    real    (r2), intent(in)  :: af(laf), Z_mat(0:nx,0:nz), p_mat(p_M,p_N)
+    real    (r2), intent(out) :: psi(0:nx,0:nz)
+    integer (i1)              :: i, j, k, info, cpcol, desc_z(7)
+    real    (r2)              :: zvec(nb), work(lwork_sol)
 
     desc_z(1) = 502
     desc_z(2) = ictxt
@@ -30,62 +30,62 @@ MODULE stream
 
     cpcol = 0
 
-    DO j = 1, nx1*nz1, nb
-      IF (mycol == cpcol) THEN
-        DO k = 1, MIN(nb, nx1*nz1-j+1)
+    do j = 1, nx1*nz1, nb
+      if (mycol == cpcol) then
+        do k = 1, min(nb, nx1*nz1-j+1)
           i = k + j - 1
-          zvec(k) = -s(MODULO(i-1, nx1) + 1) * dx2 * dz2 * &
-                     Z_mat(MODULO(i-1, nx1) + 1, (i-1)/nx1 + 1)
-        END DO
-      END IF
-      IF (cpcol == npcol) EXIT
+          zvec(k) = -s(modulo(i-1, nx1) + 1) * dx2 * dz2 * &
+                     Z_mat(modulo(i-1, nx1) + 1, (i-1)/nx1 + 1)
+        end do
+      end if
+      if (cpcol == npcol) exit
       cpcol = cpcol + 1
-    END DO
+    end do
 
-    SELECT CASE (r2)
-      CASE (SPr)
-        CALL PSDBTRS('N', nx1*nz1, nx1, nx1, 1, p_mat, 1, desc_p, zvec, 1, &
+    select case (r2)
+      case (SPr)
+        call PSDBTRS('N', nx1*nz1, nx1, nx1, 1, p_mat, 1, desc_p, zvec, 1, &
                       desc_z, af, laf, work, lwork_sol, info)
-        IF (info /= 0) THEN
-          PRINT*, 'ERROR: SPr solve error psi_PSDBTRS, INFO=', info
-          STOP
-        END IF
-      CASE (DPr)
-        CALL PDDBTRS('N', nx1*nz1, nx1, nx1, 1, p_mat, 1, desc_p, zvec, 1, &
+        if (info /= 0) then
+          print*, 'ERROR: SPr solve error psi_PSDBTRS, INFO=', info
+          stop
+        end if
+      case (DPr)
+        call PDDBTRS('N', nx1*nz1, nx1, nx1, 1, p_mat, 1, desc_p, zvec, 1, &
                       desc_z, af, laf, work, lwork_sol, info)
-        IF (info /= 0) THEN
-          PRINT*, 'ERROR: DPr solve error psi_PDDBTRS, INFO=', info
-          STOP
-        END IF
-      CASE DEFAULT
-        STOP 'ERROR: Precision selection error - stream.f90 P*DBTRS'
-    END SELECT
+        if (info /= 0) then
+          print*, 'ERROR: DPr solve error psi_PDDBTRS, INFO=', info
+          stop
+        end if
+      case default
+        stop 'ERROR: Precision selection error - stream.f90 P*DBTRS'
+    end select
 
     cpcol = 0
 
     psi = 0.0_r2
-    DO j = 1, nx1*nz1, nb
-      IF (mycol == cpcol) THEN
-        DO k = 1, MIN(nb, nx1*nz1-j+1)
+    do j = 1, nx1*nz1, nb
+      if (mycol == cpcol) then
+        do k = 1, min(nb, nx1*nz1-j+1)
           i = k + j - 1
-          psi(MODULO(i-1, nx1) + 1, (i-1)/nx1 + 1) = zvec(k)
-        END DO
-      END IF
-      IF (cpcol == npcol) EXIT
+          psi(modulo(i-1, nx1) + 1, (i-1)/nx1 + 1) = zvec(k)
+        end do
+      end if
+      if (cpcol == npcol) exit
       cpcol = cpcol + 1
-    END DO
+    end do
 
-    CALL SLTIMER(6)
-    IF (npcol > 1) THEN
-      CALL DGSUM2D(ictxt, 'A', ' ', nxp1, nzp1, psi, nxp1, 0, 0)
-    END IF
-    CALL SLTIMER(6)
+    call SLTIMER(6)
+    if (npcol > 1) then
+      call DGSUM2D(ictxt, 'A', ' ', nxp1, nzp1, psi, nxp1, 0, 0)
+    end if
+    call SLTIMER(6)
 
-    IF (mycol == 0) THEN
-      CALL p_BCS(psi)
-    END IF
+    if (mycol == 0) then
+      call p_BCS(psi)
+    end if
 
-    RETURN
-  END SUBROUTINE p_poisson
+    return
+  end subroutine p_poisson
 
-END MODULE stream
+end module stream

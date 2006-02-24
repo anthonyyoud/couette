@@ -1,83 +1,83 @@
-MODULE derivs
+module derivs
   !Routines which calculate finite-difference derivatives.  These only
   !calculate the numerator of the derivatives; the denominator dx, dz etc. is
   !included in other routines whenever the derivative is used.
-  IMPLICIT NONE
+  implicit none
 
-  PRIVATE
-  PUBLIC :: deriv_x, deriv_z, deriv_xx, deriv_zz
+  private
+  public :: deriv_x, deriv_z, deriv_xx, deriv_zz
 
-  CONTAINS
+  contains
 
-  SUBROUTINE deriv_x(f, fx)
+  subroutine deriv_x(f, fx)
     !First x derivative
-    USE parameters
-    IMPLICIT NONE
+    use parameters
+    implicit none
 
-    REAL    (r2), INTENT(IN)  :: f(0:nx,0:nz)
-    REAL    (r2), INTENT(OUT) :: fx(0:nx,0:nz)
-    INTEGER (i1)              :: j, k
+    real    (r2), intent(in)  :: f(0:nx,0:nz)
+    real    (r2), intent(out) :: fx(0:nx,0:nz)
+    integer (i1)              :: j, k
 
-    DO j = 1, nx1
+    do j = 1, nx1
       fx(j,:) = f(j+1,:) - f(j-1,:)
-    END DO
+    end do
 
-    RETURN
-  END SUBROUTINE deriv_x
+    return
+  end subroutine deriv_x
 
-  SUBROUTINE deriv_xx(f, fxx)
+  subroutine deriv_xx(f, fxx)
     !Second x derivative
-    USE parameters
-    IMPLICIT NONE
+    use parameters
+    implicit none
 
-    REAL    (r2), INTENT(IN)  :: f(0:nx,0:nz)
-    REAL    (r2), INTENT(OUT) :: fxx(0:nx,0:nz)
-    INTEGER (i1)              :: j, k
+    real    (r2), intent(in)  :: f(0:nx,0:nz)
+    real    (r2), intent(out) :: fxx(0:nx,0:nz)
+    integer (i1)              :: j, k
 
-    DO j = 1, nx1
+    do j = 1, nx1
       fxx(j,:) = f(j+1,:) - 2.0_r2 * f(j,:) + f(j-1,:)
-    END DO
+    end do
 
-    RETURN
-  END SUBROUTINE deriv_xx
+    return
+  end subroutine deriv_xx
 
-  SUBROUTINE deriv_z(f, fz)
+  subroutine deriv_z(f, fz)
     !First z derivative
-    USE parameters
-    IMPLICIT NONE
+    use parameters
+    implicit none
 
-    REAL    (r2), INTENT(IN)  :: f(0:nx,0:nz)
-    REAL    (r2), INTENT(OUT) :: fz(0:nx,0:nz)
-    INTEGER (i1)              :: j, k
+    real    (r2), intent(in)  :: f(0:nx,0:nz)
+    real    (r2), intent(out) :: fz(0:nx,0:nz)
+    integer (i1)              :: j, k
 
-    DO k = 1, nz1
+    do k = 1, nz1
       fz(1:nx1,k) = f(1:nx1,k+1) - f(1:nx1,k-1)
       fz(1:nx1,0) = -f(1:nx1,2) + 4.0_r2 * f(1:nx1,1) - 3.0_r2 * f(1:nx1,0)
       fz(1:nx1,nz) = f(1:nx1,nz-2) - 4.0_r2 * f(1:nx1,nz1) + 3.0_r2 * &
                      f(1:nx1,nz)   !forward/backward difference at boundaries
-    END DO
+    end do
 
-    RETURN
-  END SUBROUTINE deriv_z
+    return
+  end subroutine deriv_z
 
-  SUBROUTINE deriv_zz(f, fzz)
+  subroutine deriv_zz(f, fzz)
     !Second z derivative
-    USE parameters
-    IMPLICIT NONE
+    use parameters
+    implicit none
 
-    REAL    (r2), INTENT(IN)  :: f(0:nx,0:nz)
-    REAL    (r2), INTENT(OUT) :: fzz(0:nx,0:nz)
-    INTEGER (i1)              :: j, k
+    real    (r2), intent(in)  :: f(0:nx,0:nz)
+    real    (r2), intent(out) :: fzz(0:nx,0:nz)
+    integer (i1)              :: j, k
 
-    DO k = 1, nz1
+    do k = 1, nz1
       fzz(1:nx1,k) = f(1:nx1,k+1) - 2.0_r2 * f(1:nx1,k) + f(1:nx1,k-1)
       fzz(1:nx1,0) = -f(1:nx1,3) + 4.0_r2 * f(1:nx1,2) - &
                      5.0_r2 * f(1:nx1,1) + 2.0_r2 * f(1:nx1,0) !forward/backward
       fzz(1:nx1,nz) = -f(1:nx1,nz-3) + 4.0_r2 * f(1:nx1,nz-2) - & !difference at
                       5.0_r2 * f(1:nx1,nz1) + 2.0_r2 * f(1:nx1,nz)  !boundaries
-    END DO
+    end do
 
-    RETURN
-  END SUBROUTINE deriv_zz
+    return
+  end subroutine deriv_zz
 
-END MODULE derivs
+end module derivs

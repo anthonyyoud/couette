@@ -1,26 +1,26 @@
-MODULE magnetic 
+module magnetic 
   !Routines to do with solving the Poisson equation for the azimuthal magnetic
   !field.
   !Algorithms for the solution of the magnetic Poisson equation are as
   !for the current in current.f90
-  IMPLICIT NONE
+  implicit none
 
-  PRIVATE
-  PUBLIC :: b_poisson, fin_b_poisson
+  private
+  public :: b_poisson, fin_b_poisson
 
-  CONTAINS
+  contains
 
-  SUBROUTINE b_poisson(u_mat, bn, b_mat, desc_b, af)
+  subroutine b_poisson(u_mat, bn, b_mat, desc_b, af)
     !Solve Poisson equation for azimuthal magnetic field when tau=0
-    USE parameters
-    USE ic_bc, ONLY : b_BCS
-    IMPLICIT NONE
+    use parameters
+    use ic_bc, only : b_BCS
+    implicit none
 
-    INTEGER (i1), INTENT(IN)  :: desc_b(7)
-    REAL    (r2), INTENT(IN)  :: af(b_laf), u_mat(0:nx,0:nz), b_mat(b_M,b_N)
-    REAL    (r2), INTENT(OUT) :: bn(0:nx,0:nz)
-    INTEGER (i1)              :: i, j, k, info, cpcol, desc_u(7)
-    REAL    (r2)              :: u_vec(nb), work(lwork_b_sol)
+    integer (i1), intent(in)  :: desc_b(7)
+    real    (r2), intent(in)  :: af(b_laf), u_mat(0:nx,0:nz), b_mat(b_M,b_N)
+    real    (r2), intent(out) :: bn(0:nx,0:nz)
+    integer (i1)              :: i, j, k, info, cpcol, desc_u(7)
+    real    (r2)              :: u_vec(nb), work(lwork_b_sol)
 
     desc_u(1) = 502
     desc_u(2) = ictxt
@@ -31,85 +31,85 @@ MODULE magnetic
 
     cpcol = 0
 
-    DO j = 0, nxp1*nz1-1, nb
-      IF (mycol == cpcol) THEN
-        DO k = 1, MIN(nb, nxp1*nz1-j)
+    do j = 0, nxp1*nz1-1, nb
+      if (mycol == cpcol) then
+        do k = 1, min(nb, nxp1*nz1-j)
           i = k + j - 1
           u_vec(k) = 0.5_r2 * dx2 * delz * &
-                     (u_mat(MODULO(i, nxp1), i/nxp1) - &
-                      u_mat(MODULO(i, nxp1), i/nxp1 + 2))
-        END DO
-      END IF
-      IF (cpcol == npcol) EXIT
+                     (u_mat(modulo(i, nxp1), i/nxp1) - &
+                      u_mat(modulo(i, nxp1), i/nxp1 + 2))
+        end do
+      end if
+      if (cpcol == npcol) exit
       cpcol = cpcol + 1
-    END DO
+    end do
 
-    SELECT CASE (r2)
-      CASE (SPr)
-        CALL PSDBTRS('N', nxp1*nz1, nxp1, nxp1, 1, b_mat, 1, desc_b, u_vec, 1, &
+    select case (r2)
+      case (SPr)
+        call PSDBTRS('N', nxp1*nz1, nxp1, nxp1, 1, b_mat, 1, desc_b, u_vec, 1, &
                       desc_u, af, b_laf, work, lwork_b_sol, info)
-        IF (info /= 0) THEN
-          PRINT*, 'ERROR: SPr solve error mag_inf_PSDBTRS, INFO=', info
-          STOP
-        END IF
-      CASE (DPr)
-        CALL PDDBTRS('N', nxp1*nz1, nxp1, nxp1, 1, b_mat, 1, desc_b, u_vec, 1, &
+        if (info /= 0) then
+          print*, 'ERROR: SPr solve error mag_inf_PSDBTRS, INFO=', info
+          stop
+        end if
+      case (DPr)
+        call PDDBTRS('N', nxp1*nz1, nxp1, nxp1, 1, b_mat, 1, desc_b, u_vec, 1, &
                       desc_u, af, b_laf, work, lwork_b_sol, info)
-        IF (info /= 0) THEN
-          PRINT*, 'ERROR: DPr solve error mag_inf_PDDBTRS, INFO=', info
-          STOP
-        END IF
-      CASE DEFAULT
-        STOP 'ERROR: Precision selection error - magnetic.f90 infinite P*DBTRS'
-    END SELECT
+        if (info /= 0) then
+          print*, 'ERROR: DPr solve error mag_inf_PDDBTRS, INFO=', info
+          stop
+        end if
+      case default
+        stop 'ERROR: Precision selection error - magnetic.f90 infinite P*DBTRS'
+    end select
 
     cpcol = 0
 
     bn = 0.0_r2
-    DO j = 0, nxp1*nz1-1, nb
-      IF (mycol == cpcol) THEN
-        DO k = 1, MIN(nb, nxp1*nz1-j)
+    do j = 0, nxp1*nz1-1, nb
+      if (mycol == cpcol) then
+        do k = 1, min(nb, nxp1*nz1-j)
           i = k + j - 1
-          bn(MODULO(i, nxp1), i/nxp1 + 1) = u_vec(k)
-        END DO
-      END IF
-      IF (cpcol == npcol) EXIT
+          bn(modulo(i, nxp1), i/nxp1 + 1) = u_vec(k)
+        end do
+      end if
+      if (cpcol == npcol) exit
       cpcol = cpcol + 1
-    END DO
+    end do
 
-    CALL SLTIMER(8)
-    IF (npcol > 1) THEN
-      CALL DGSUM2D(ictxt, 'A', ' ', nxp1, nzp1, bn, nxp1, 0, 0)
-    END IF
-    CALL SLTIMER(8)
+    call SLTIMER(8)
+    if (npcol > 1) then
+      call DGSUM2D(ictxt, 'A', ' ', nxp1, nzp1, bn, nxp1, 0, 0)
+    end if
+    call SLTIMER(8)
 
-    IF (mycol == 0) THEN
-      CALL b_BCS(bn)
-    END IF
+    if (mycol == 0) then
+      call b_BCS(bn)
+    end if
 
-    RETURN
-  END SUBROUTINE b_poisson
+    return
+  end subroutine b_poisson
 
-  SUBROUTINE fin_b_poisson(u_mat, bn, b_mat, desc_b, af)
+  subroutine fin_b_poisson(u_mat, bn, b_mat, desc_b, af)
     !Solve Poisson equation for azimuthal magnetic field when tau/=0
-    USE parameters
-    USE derivs, ONLY : deriv_z
-    IMPLICIT NONE
+    use parameters
+    use derivs, only : deriv_z
+    implicit none
 
-    INTEGER (i1), INTENT(IN)  :: desc_b(7)
-    REAL    (r2), INTENT(IN)  :: af(b_laf), u_mat(0:nx,0:nz), b_mat(b_M,b_N)
-    REAL    (r2), INTENT(OUT) :: bn(0:nx,0:nz)
-    INTEGER (i1)              :: i, j, k, info, cpcol, desc_u(7)
-    REAL    (r2)              :: u_vec(nb), u_mat_z(0:nx,0:nz), &
+    integer (i1), intent(in)  :: desc_b(7)
+    real    (r2), intent(in)  :: af(b_laf), u_mat(0:nx,0:nz), b_mat(b_M,b_N)
+    real    (r2), intent(out) :: bn(0:nx,0:nz)
+    integer (i1)              :: i, j, k, info, cpcol, desc_u(7)
+    real    (r2)              :: u_vec(nb), u_mat_z(0:nx,0:nz), &
                                  work(lwork_b_sol)
 
-    IF (mycol == 0) THEN
-      CALL deriv_z(u_mat, u_mat_z)
-    END IF
+    if (mycol == 0) then
+      call deriv_z(u_mat, u_mat_z)
+    end if
 
-    IF (npcol > 1) THEN
-      CALL DGEBR2D(ictxt, 'A', ' ', nxp1, nzp1, u_mat_z, nxp1, 0, 0)
-    END IF
+    if (npcol > 1) then
+      call DGEBR2D(ictxt, 'A', ' ', nxp1, nzp1, u_mat_z, nxp1, 0, 0)
+    end if
 
     desc_u(1) = 502
     desc_u(2) = ictxt
@@ -120,58 +120,58 @@ MODULE magnetic
 
     cpcol = 0
 
-    DO j = 0, nxp1*nzp1-1, nb
-      IF (mycol == cpcol) THEN
-        DO k = 1, MIN(nb, nxp1*nzp1-j)
+    do j = 0, nxp1*nzp1-1, nb
+      if (mycol == cpcol) then
+        do k = 1, min(nb, nxp1*nzp1-j)
           i = k + j - 1
           u_vec(k) = -0.5_r2 * dx2 * delz * &
-                      u_mat_z(MODULO(i, nxp1), i/nxp1)
-        END DO
-      END IF
-      IF (cpcol == npcol) EXIT
+                      u_mat_z(modulo(i, nxp1), i/nxp1)
+        end do
+      end if
+      if (cpcol == npcol) exit
       cpcol = cpcol + 1
-    END DO
+    end do
 
-    SELECT CASE (r2)
-      CASE (SPr)
-        CALL PSDBTRS('N', nxp1*nzp1, nxp1, nxp1, 1, b_mat, 1, desc_b, u_vec, 1, &
+    select case (r2)
+      case (SPr)
+        call PSDBTRS('N', nxp1*nzp1, nxp1, nxp1, 1, b_mat, 1, desc_b, u_vec, 1, &
                       desc_u, af, b_laf, work, lwork_b_sol, info)
-        IF (info /= 0) THEN
-          PRINT*, 'ERROR: SPr solve error mag_fin_PSDBTRS, INFO=', info
-          STOP
-        END IF
-      CASE (DPr)
-        CALL PDDBTRS('N', nxp1*nzp1, nxp1, nxp1, 1, b_mat, 1, desc_b, u_vec, 1, &
+        if (info /= 0) then
+          print*, 'ERROR: SPr solve error mag_fin_PSDBTRS, INFO=', info
+          stop
+        end if
+      case (DPr)
+        call PDDBTRS('N', nxp1*nzp1, nxp1, nxp1, 1, b_mat, 1, desc_b, u_vec, 1, &
                       desc_u, af, b_laf, work, lwork_b_sol, info)
-        IF (info /= 0) THEN
-          PRINT*, 'ERROR: DPr solve error mag_fin_PDDBTRS, INFO=', info
-          STOP
-        END IF
-      CASE DEFAULT
-        STOP 'ERROR: Precision selection error - magnetic.f90 finite P*DBTRS'
-    END SELECT
+        if (info /= 0) then
+          print*, 'ERROR: DPr solve error mag_fin_PDDBTRS, INFO=', info
+          stop
+        end if
+      case default
+        stop 'ERROR: Precision selection error - magnetic.f90 finite P*DBTRS'
+    end select
 
     cpcol = 0
 
     bn = 0.0_r2
-    DO j = 0, nxp1*nzp1-1, nb
-      IF (mycol == cpcol) THEN
-        DO k = 1, MIN(nb, nxp1*nzp1-j)
+    do j = 0, nxp1*nzp1-1, nb
+      if (mycol == cpcol) then
+        do k = 1, min(nb, nxp1*nzp1-j)
           i = k + j - 1
-          bn(MODULO(i, nxp1), i/nxp1) = u_vec(k)
-        END DO
-      END IF
-      IF (cpcol == npcol) EXIT
+          bn(modulo(i, nxp1), i/nxp1) = u_vec(k)
+        end do
+      end if
+      if (cpcol == npcol) exit
       cpcol = cpcol + 1
-    END DO
+    end do
 
-    CALL SLTIMER(8)
-    IF (npcol > 1) THEN
-      CALL DGSUM2D(ictxt, 'A', ' ', nxp1, nzp1, bn, nxp1, 0, 0)
-    END IF
-    CALL SLTIMER(8)
+    call SLTIMER(8)
+    if (npcol > 1) then
+      call DGSUM2D(ictxt, 'A', ' ', nxp1, nzp1, bn, nxp1, 0, 0)
+    end if
+    call SLTIMER(8)
 
-    RETURN
-  END SUBROUTINE fin_b_poisson
+    return
+  end subroutine fin_b_poisson
 
-END MODULE magnetic
+end module magnetic

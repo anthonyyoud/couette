@@ -1,40 +1,40 @@
-MODULE nonlinear
+module nonlinear
   !Routines to get the nonlinear parts of the right-hand side of the azimuthal
   !velocity/vorticity equations.
-  IMPLICIT NONE
+  implicit none
 
-  PRIVATE
-  PUBLIC :: get_nlin_ux, get_nlin_Zx
+  private
+  public :: get_nlin_ux, get_nlin_Zx
 
-  CONTAINS
+  contains
 
-  SUBROUTINE get_nlin_ux(uo, uo2, po, po2, bo, bo2, u_nl_n)
+  subroutine get_nlin_ux(uo, uo2, po, po2, bo, bo2, u_nl_n)
     !Get nonlinear part for the right-hand side of the tridiagonal system for u
-    USE parameters
-    USE variables
-    USE derivs
-    USE ic_bc, ONLY : s 
-    IMPLICIT NONE
+    use parameters
+    use variables
+    use derivs
+    use ic_bc, only : s 
+    implicit none
 
-    REAL    (r2),   INTENT(IN)  :: uo(0:nx,0:nz), uo2(0:nx,0:nz), &
+    real    (r2),   intent(in)  :: uo(0:nx,0:nz), uo2(0:nx,0:nz), &
                                    po(0:nx,0:nz), po2(0:nx,0:nz), &
                                    bo(0:nx,0:nz), bo2(0:nx,0:nz)
-    REAL    (r2),   INTENT(OUT) :: u_nl_n(0:nx,0:nz) 
-    INTEGER (i1)                :: j, k  
-    TYPE    (DERIV)             :: du, du2, dp, dp2, db, db2
+    real    (r2),   intent(out) :: u_nl_n(0:nx,0:nz) 
+    integer (i1)                :: j, k  
+    type    (deriv)             :: du, du2, dp, dp2, db, db2
 
-    CALL deriv_x(uo, du%x)
-    CALL deriv_x(uo2, du2%x)
-    CALL deriv_z(uo, du%z)
-    CALL deriv_z(uo2, du2%z)
-    CALL deriv_x(po, dp%x)
-    CALL deriv_x(po2, dp2%x)   !get derivatives
-    CALL deriv_z(po, dp%z)
-    CALL deriv_z(po2, dp2%z)
-    CALL deriv_z(bo, db%z)
-    CALL deriv_z(bo2, db2%z)
+    call deriv_x(uo, du%x)
+    call deriv_x(uo2, du2%x)
+    call deriv_z(uo, du%z)
+    call deriv_z(uo2, du2%z)
+    call deriv_x(po, dp%x)
+    call deriv_x(po2, dp2%x)   !get derivatives
+    call deriv_z(po, dp%z)
+    call deriv_z(po2, dp2%z)
+    call deriv_z(bo, db%z)
+    call deriv_z(bo2, db2%z)
 
-    DO k = 1, nz1
+    do k = 1, nz1
       u_nl_n(1:nx1,k) = (-0.125_r2 * rx / (s(1:nx1) * delz)) * &
                         (3.0_r2 * (dp%x(1:nx1,k) * du%z(1:nx1,k) - &
                         dp%z(1:nx1,k) * du%x(1:nx1,k)) - &
@@ -45,9 +45,9 @@ MODULE nonlinear
                         uo2(1:nx1,k) * dp2%z(1:nx1,k)) + &
                         0.25_r2 * rz * Q * (3.0_r2 * db%z(1:nx1,k) - &
                         db2%z(1:nx1,k))
-    END DO
+    end do
 
-    IF (ABS(tau - 1.0_r2) > EPSILON(tau)) THEN
+    if (abs(tau - 1.0_r2) > epsilon(tau)) then
       u_nl_n(1:nx1,0) = (-0.125_r2 * rx / (s(1:nx1) * delz)) * &
                         (-3.0_r2 * dp%z(1:nx1,0) * du%x(1:nx1,0) + &
                         dp2%z(1:nx1,0) * du2%x(1:nx1,0)) + &
@@ -65,41 +65,41 @@ MODULE nonlinear
                          uo2(1:nx1,nz) * dp2%z(1:nx1,nz)) + &
                          0.25_r2 * rz * Q * (3.0_r2 * db%z(1:nx1,nz) - &
                          db2%z(1:nx1,nz))
-    END IF
+    end if
 
-    RETURN
-  END SUBROUTINE get_nlin_ux
+    return
+  end subroutine get_nlin_ux
 
-  SUBROUTINE get_nlin_Zx(t, uo, uo2, po, po2, zo, zo2, jo, jo2, z_nl_n)
+  subroutine get_nlin_Zx(t, uo, uo2, po, po2, zo, zo2, jo, jo2, z_nl_n)
     !Get nonlinear part for the right-hand side of the tridiagonal system for Z
-    USE parameters
-    USE variables
-    USE derivs
-    USE ic_bc, ONLY : s
-    IMPLICIT NONE
+    use parameters
+    use variables
+    use derivs
+    use ic_bc, only : s
+    implicit none
 
-    REAL    (r2),   INTENT(IN)  :: t, uo(0:nx,0:nz), uo2(0:nx,0:nz), &
+    real    (r2),   intent(in)  :: t, uo(0:nx,0:nz), uo2(0:nx,0:nz), &
                                    po(0:nx,0:nz), po2(0:nx,0:nz), &
                                    zo(0:nx,0:nz), zo2(0:nx,0:nz), &
                                    jo(0:nx,0:nz), jo2(0:nx,0:nz)
-    REAL    (r2),   INTENT(OUT) :: z_nl_n(0:nx,0:nz)
-    INTEGER (i1)                :: j, k
-    TYPE    (DERIV)             :: du, du2, dp, dp2, dz, dz_2, dj, dj2
+    real    (r2),   intent(out) :: z_nl_n(0:nx,0:nz)
+    integer (i1)                :: j, k
+    type    (deriv)             :: du, du2, dp, dp2, dz, dz_2, dj, dj2
 
-    CALL deriv_z(uo, du%z)
-    CALL deriv_z(uo2, du2%z)
-    CALL deriv_x(po, dp%x)
-    CALL deriv_x(po2, dp2%x)
-    CALL deriv_z(po, dp%z)
-    CALL deriv_z(po2, dp2%z)
-    CALL deriv_x(zo, dz%x)    !get derivatives
-    CALL deriv_x(zo2, dz_2%x)
-    CALL deriv_z(zo, dz%z)
-    CALL deriv_z(zo2, dz_2%z)
-    CALL deriv_z(jo, dj%z)
-    CALL deriv_z(jo2, dj2%z)
+    call deriv_z(uo, du%z)
+    call deriv_z(uo2, du2%z)
+    call deriv_x(po, dp%x)
+    call deriv_x(po2, dp2%x)
+    call deriv_z(po, dp%z)
+    call deriv_z(po2, dp2%z)
+    call deriv_x(zo, dz%x)    !get derivatives
+    call deriv_x(zo2, dz_2%x)
+    call deriv_z(zo, dz%z)
+    call deriv_z(zo2, dz_2%z)
+    call deriv_z(jo, dj%z)
+    call deriv_z(jo2, dj2%z)
 
-    DO k = 1, nz1
+    do k = 1, nz1
       z_nl_n(1:nx1,k) = (one_eta * rz * 0.5_r2 / s(1:nx1)) * &
                         (3.0_r2 * uo(1:nx1,k) * du%z(1:nx1,k) - &
                         uo2(1:nx1,k) * du2%z(1:nx1,k)) - &
@@ -113,9 +113,9 @@ MODULE nonlinear
                         dp2%z(1:nx1,k) * dz_2%x(1:nx1,k))) + &
                         0.25_r2 * rz * Q * (3.0_r2 * dj%z(1:nx1,k) - &
                         dj2%z(1:nx1,k))
-    END DO
+    end do
 
-    RETURN
-  END SUBROUTINE get_nlin_Zx
+    return
+  end subroutine get_nlin_Zx
 
-END MODULE nonlinear
+end module nonlinear
