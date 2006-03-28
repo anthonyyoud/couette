@@ -94,7 +94,7 @@ module solve
 
     real    (r2),          intent(in)    :: t, uo(0:nx,0:nz)
     real    (r2),          intent(inout) :: u(0:nx,0:nz)
-    type    (uzcge|update_mat_comp), intent(in)    :: uz
+    type    (uz_mat_comp), intent(in)    :: uz
     integer (i1)                         :: j, k
     real    (r2)                         :: uz_rhs(0:nz), uz_rhs_t1(nz1), &
                                             up(nz-2), di(nz1), lo(2:nz1)
