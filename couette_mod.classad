@@ -1,0 +1,12 @@
+universe = vanilla
+executable = couette_mod
+Requirements = OpSys == "LINUX" && FileSystemDomain == "MATH_STATS"
+Rank = KFlops
+log = logfile
+output = outfile
+error = errfile
+notification = Never
+notify_user = a.j.youd@ncl.ac.uk
+should_transfer_files = yes
+when_to_transfer_output = on_exit_or_evict
+queue

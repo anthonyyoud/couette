@@ -10,7 +10,7 @@ module io
 
   contains
 
-  FUNCTION itos(n)
+  function itos(n)
     !Function to convert an integer into a string of length 7
     use parameters, only : i1
     implicit none
@@ -37,19 +37,19 @@ module io
     use parameters
     implicit none
 
-    open (20, status = 'unknown', file = 'u_growth.dat')
-    open (22, status = 'unknown', file = 'max_psi.dat')
-    open (24, status = 'unknown', file = 'particle.dat')
-    open (33, status = 'unknown', file = 'torque.dat')
-    if (save3d) open (35, status = 'unknown', file = 'isosurface.dat')
-    open (36, status = 'unknown', file = 'energy.dat')
-    if (auto_Re .or. hyst_Re) then
-      open (37, status = 'unknown', file = 'auto_Re.dat')
-    end if
-    open (51, file = 'time_tau.dat')
-    if (divergence) then
-      open (97, file = 'divergence.dat')
-    end if
+    !open (20, status = 'unknown', file = 'u_growth.dat')
+    !open (22, status = 'unknown', file = 'max_psi.dat')
+    !open (24, status = 'unknown', file = 'particle.dat')
+    !open (33, status = 'unknown', file = 'torque.dat')
+    !if (save3d) open (35, status = 'unknown', file = 'isosurface.dat')
+    !open (36, status = 'unknown', file = 'energy.dat')
+    !if (auto_Re .or. hyst_Re) then
+    !  open (37, status = 'unknown', file = 'auto_Re.dat')
+    !end if
+    !open (51, file = 'time_tau.dat')
+    !if (divergence) then
+    !  open (97, file = 'divergence.dat')
+    !end if
     open (99, file = 'RUNNING')
     close (99)
 
@@ -61,19 +61,19 @@ module io
     use parameters
     implicit none
 
-    close (20)
-    close (22)
-    close (24)
-    close (33)
-    if (save3d) close (35)
-    close (36)
-    if (auto_Re .or. hyst_Re) then
-      close (37)
-    end if
-    close (51)
-    if (divergence) then
-      close (97)
-    end if
+    !close (20)
+    !close (22)
+    !close (24)
+    !close (33)
+    !if (save3d) close (35)
+    !close (36)
+    !if (auto_Re .or. hyst_Re) then
+    !  close (37)
+    !end if
+    !close (51)
+    !if (divergence) then
+    !  close (97)
+    !end if
 
     return
   end subroutine close_files
@@ -95,17 +95,22 @@ module io
 
     !growth rate of vortices
     growth = log(abs(ur(nx/2,nz/2)/ur_prev(nx/2,nz/2))) / (dt * save_rate)
-    growth_vz = log(abs(uz(nx/2,nz/2)/uz_prev(nx/2,nz/2))) / (dt * save_rate)
+    growth_vz = log(abs(uz(nx/2,3*nz/4)/uz_prev(nx/2,3*nz/4))) / &
+                (dt * save_rate)
+    !growth_vz = log(abs(uz(nx/2,nz/2)/uz_prev(nx/2,nz/2))) / &
+    !            (dt * save_rate)
 
     xpos = nx/2
     zpos = nz/2   !position at which to save fields
 
+    open (20, status = 'unknown', position = 'append', file = 'u_growth.dat')
     write(20, '(12e17.9)') t, ur(nx/2,nz/2), ur(nx/2,0), &
                            growth, growth_vz, &
                            uz(xpos,zpos), &
                            pn(nx/4,3*nz/4), v(nx/2,nz/2), &
                            zn(nx/2,nz/4), bn(nx/2,nz/4), jn(nx/2,nz/2), &
                            Re1 + Re1_mod * cos(om1 * t)
+    close (20)
 
     if (maxval(ur) > max_ur) then
       max_ur = maxval(ur)
@@ -128,7 +133,9 @@ module io
       min_p = minval(pn)
     end if
 
-    !write (22, '(7e17.9)') t, max_p, min_p, max_ur, min_ur, max_uz, min_uz
+    open (22, status = 'unknown', position = 'append', file = 'max_psi.dat')
+      !write (22, '(7e17.9)') t, max_p, min_p, max_ur, min_ur, max_uz, min_uz
+    close (22)
 
     return
   end subroutine save_growth
@@ -165,7 +172,9 @@ module io
     Gc = 4.0_r2 * pi * eta * gamma * uc(0) / &
          ((1.0_r2 - eta**2) * one_eta)
     
+    open (33, status = 'unknown', file = 'torque.dat')
     write (33, '(5e17.9)') t, G1, G2, Gc, G1 / Gc
+    close (33)
 
     return
   end subroutine save_torque
@@ -245,7 +254,7 @@ module io
     integer (i1)             :: j, k, l
     real    (r2)             :: hel(0:nx,0:nz)
 
-    !open (35, status = 'unknown', file = 'p3d'//itos(p)//'.dat')
+    open (35, status = 'unknown', position = 'append', file = 'isosurface.dat')
 
     if (iso_hel) call helicity(u_r, u_t, u_z, hel)
 
@@ -273,7 +282,7 @@ module io
 
     write(35,*)
 
-    !close(35)
+    close(35)
 
     return
   end subroutine save_3d
@@ -411,13 +420,14 @@ module io
             call increment_hysteresis(.false., t)
           end if
         end if
-        if ((abs(growth_rate_vz) < 1E-8_r2) .and. &  !if vr saturated
+        if ((abs(growth_rate) < 1E-8_r2) .and. &  !if vr saturated
             (abs(vr(nx/2, nz/2)) > 1E-3_r2)) then
           saturated = saturated + 1
           if (saturated > 4) then
-            if ((.not. auto_tau) .or. (tau == tau_end)) then  !if tau not auto
-              call save_time_tau(tau, t)                     !or tau at end
-              call end_state(ut%old, zt%old, psi%old, bt%old, jt%old, p) !finish
+            if ((.not. auto_tau) .or. (tau == tau_end)) then
+              !if tau not auto or tau at end finish
+              call save_time_tau(tau, t)
+              call end_state(ut%old, zt%old, psi%old, bt%old, jt%old, p, 1)
             else if (tau < 1.0_r2) then
               call save_time_tau(tau, t)
               tau = tau + tau_step   !increment tau
@@ -447,24 +457,18 @@ module io
     real    (r2), intent(in) :: t
     logical                  :: run_exist
 
-    if (mycol == 0) then
-      inquire(file='RUNNING', exist=run_exist)  !does 'RUNNING' exist?
-      if (.not. run_exist) then  !if not then finish
-        print*
-        write(6, '(A33, i2)') 'Stop requested.  Ending process ', mycol
-        print*, 'Saving end state...'
-        call end_state(ut%old, zt%old, psi%old, bt%old, jt%old, p)
-        call save_xsect(vr, vz, psi%old, ut%new, zt%new, &
-                        bt%old, jt%old, t, p)
-        call save_surface(psi%old, ut%old, zt%old, &
-                          vr, vz, bt%old, jt%old, p, t)
-        end_proc = 1  !flag to send to all processes
-      end if
+    inquire(file='RUNNING', exist=run_exist)  !does 'RUNNING' exist?
+    if (.not. run_exist) then  !if not then finish
+      print*
+      write(6, '(A33, i2)') 'Stop requested.'
+      print*, 'Saving end state...'
+      call end_state(ut%old, zt%old, psi%old, bt%old, jt%old, p, 1)
+      call save_xsect(vr, vz, psi%old, ut%new, zt%new, &
+                      bt%old, jt%old, t, p)
+      call save_surface(psi%old, ut%old, zt%old, &
+                        vr, vz, bt%old, jt%old, p, t)
+      end_proc = 1  !flag to send to all processes
     end if
-
-    call SLTIMER(3)                                         !tell all other
-    call IGEBR2D(ictxt, 'A', ' ', 1, 1, end_proc, 1, 0, 0)  !processes to finish
-    call SLTIMER(3)                                         !if end_proc=1
 
     return
   end subroutine terminate
@@ -492,12 +496,12 @@ module io
     return
   end subroutine save_run
 
-  subroutine end_state(u, zn, pn, bn, jn, p)
+  subroutine end_state(u, zn, pn, bn, jn, p, flag)
     !Save variables for use in a restarted run
     use parameters
     implicit none
 
-    integer (i1), intent(in) :: p
+    integer (i1), intent(in) :: p, flag
     real    (r2), intent(in) :: u(0:nx,0:nz), zn(0:nx,0:nz), &
                                 pn(0:nx,0:nz), bn(0:nx,0:nz), &
                                 jn(0:nx,0:nz)
@@ -517,8 +521,10 @@ module io
 
     close (50)
 
-    open (99, file = 'RUNNING')  !delete 'RUNNING' to finish run
-    close (99, status = 'delete')
+    if (flag == 1) then
+      open (99, file = 'RUNNING')  !delete 'RUNNING' to finish run
+      close (99, status = 'delete')
+    end if
 
     return
   end subroutine end_state
@@ -530,7 +536,9 @@ module io
 
     real (r2), intent(in) :: tau, t
 
-    write(51, '(2e17.9)') t, tau
+    open (51, status = 'unknown', position = 'append', file = 'time_tau.dat')
+    write (51, '(2e17.9)') t, tau
+    close (51)
 
     return
   end subroutine save_time_tau
@@ -582,11 +590,13 @@ module io
       zold = znew
     end do
 
+    open (24, status = 'unknown', position = 'append', file = 'particle.dat')
     write (24, '(10e17.9)') xnew(1) / nx, znew(1) * gamma / nz, &
                             xnew(2) / nx, znew(2) * gamma / nz, &
                             xnew(3) / nx, znew(3) * gamma / nz, &
                             xnew(4) / nx, znew(4) * gamma / nz, &
                             xnew(5) / nx, znew(5) * gamma / nz
+    close (24)
 
     return
   end subroutine particle
@@ -619,17 +629,32 @@ module io
     implicit none
 
     real (r2), intent(in)  :: ur(0:nx,0:nz), ut(0:nx,0:nz), uz(0:nx,0:nz), t
-    real (r2)              :: u2(0:nx,0:nz), int_r(0:nz), int_z, E, Eccf
+    real (r2)              :: u2(0:nx,0:nz), int_r(0:nz), int_z, &
+                              Er, Et, Ez, E, Eccf
 
     u2 = ur**2 + ut**2 + uz**2
 
     call energy_CCF(t, Eccf)
+
+    call integrate_r(ur**2, int_r)
+    call integrate_z(int_r, int_z)
+    Er = pi * int_z
+
+    call integrate_r(ut**2, int_r)
+    call integrate_z(int_r, int_z)
+    Et = pi * int_z
+
+    call integrate_r(uz**2, int_r)
+    call integrate_z(int_r, int_z)
+    Ez = pi * int_z
+
     call integrate_r(u2, int_r)
     call integrate_z(int_r, int_z)
-
     E = pi * int_z
 
-    write (36, '(3e17.9)') t, Eccf, E
+    open (36, status = 'unknown', position = 'append', file = 'energy.dat')
+    write (36, '(6e17.9)') t, Eccf, Er, Et, Ez, E
+    close (36)
 
     return
   end subroutine save_energy
@@ -739,7 +764,9 @@ module io
         end if
     end select
     
+    open (37, status = 'unknown', position = 'append', file = 'auto_Re.dat')
     write (37, '(6e17.9)') t, Re1, Re_minus, Re_plus, growth_minus, growth_plus
+    close (37)
     
     if (abs(Re1 - Re_minus) < 1E-6_r2) then
       open (99, file = 'RUNNING')

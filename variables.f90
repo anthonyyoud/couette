@@ -130,7 +130,10 @@ module variables
         end do
       end do
     
+      open (97, status = 'unknown', position = 'append', &
+                file = 'divergence.dat')
       write (97, '(e17.9)') div
+      close (97)
     end if
 
     return

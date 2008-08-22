@@ -4,7 +4,8 @@ module ic_bc
   implicit none
 
   private
-  public :: get_xzs, ICS, u_BCS, z_BCS, p_BCS, b_BCS, j_BCS, Re_1, Re_2
+  public :: get_xzs, ICS, u_BCS, z_BCS, p_BCS, b_BCS, j_BCS, Re_1, Re_2, &
+            state_restart
 
   real (r2), public :: x(0:nx), x_(0:nx), th(0:nt), z(0:nz), s(0:nx) 
                                                 !finite-difference mesh
@@ -98,7 +99,7 @@ module ic_bc
                                  bn(0:nx,0:nz), jn(0:nx,0:nz)
     integer (i1)              :: j, k, nx_prev, nz_prev, alloc_err
     real    (r2)              :: dt_prev
-    real    (r2), ALLOCATABLE :: u_prev(:,:), z_prev(:,:), p_prev(:,:), &
+    real    (r2), allocatable :: u_prev(:,:), z_prev(:,:), p_prev(:,:), &
                                  b_prev(:,:), j_prev(:,:)
 
     open (50, file = 'end_state.dat', form='unformatted')
@@ -318,7 +319,7 @@ module ic_bc
     return
   end subroutine j_BCS
 
-  FUNCTION Re_1(t)
+  function Re_1(t)
     !Time-dependent Reynolds number of the inner cylinder
     use parameters
     implicit none
@@ -331,7 +332,7 @@ module ic_bc
     return                    
   end function Re_1
 
-  FUNCTION Re_2(t)
+  function Re_2(t)
     !Time-dependent Reynolds number of the outer cylinder
     use parameters
     implicit none
@@ -344,7 +345,7 @@ module ic_bc
     return
   end function Re_2
 
-  FUNCTION f1(index)
+  function f1(index)
     use parameters
     implicit none
 
@@ -356,7 +357,7 @@ module ic_bc
     return
   end function f1   
 
-  FUNCTION f2(index)
+  function f2(index)
     use parameters
     implicit none
 

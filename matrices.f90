@@ -46,484 +46,437 @@ module matrices
     return
   end subroutine matrix_setup
 
-  subroutine psi_mat_setup(p_mat, desc_p, af)
+  subroutine psi_mat_setup(p_mat, IPIV)
     !Setup of LHS matrix in solution of stream function Poisson equation
     use parameters
     use ic_bc, only : s
     implicit none
 
-    integer (i1), intent(out) :: desc_p(7)
-    real    (r2), intent(out) :: p_mat(p_M,p_N), af(laf)
-    integer (i1)              :: i, j, k, info, cpcol
-    real    (r2)              :: alp(0:nx), gam(0:nx), beta, delta, &
-                                 work(lwork_fac)
+    real    (r2), intent(out) :: p_mat(2*nx1+nx1+1,nx1*nz1)
+    integer (i1), intent(out) :: IPIV(nx1*nz1)
+    integer (i1)              :: j, k, info
+    real    (r2)              :: alp(0:nx), gam(0:nx), beta, delta
 
-    alp(:) = dz2 + 0.5_r2 * delx * dz2 * one_eta / s(:)   !coefficients
-    gam(:) = dz2 - 0.5_r2 * delx * dz2 * one_eta / s(:)   !in matrix
+    alp = dz2 + 0.5_r2 * delx * dz2 * one_eta / s   !coefficients
+    gam = dz2 - 0.5_r2 * delx * dz2 * one_eta / s   !in matrix
     beta = -2.0_r2 * (dz2 + dx2)
     delta = dx2
 
-    desc_p(1) = 501
-    desc_p(2) = ictxt
-    desc_p(3) = nx1*nz1   !ScaLAPACK descriptor vector for LHS matrix
-    desc_p(4) = nb
-    desc_p(5) = 0
-    desc_p(6) = 2*nx1+1
-
-    cpcol = 0
-
-    !distribute the matrix over the process grid using the block-column
-    !distribution for banded matrices
-    do j = 1, nx1*nz1, nb
-      if (mycol == cpcol) then
-        do k = 1, min(nb, nx1*nz1-j+1)
-          i = k + j - 1
-          p_mat(nx,k) = beta   !diagonal
-          if (i /= 1) then
-            p_mat(nx1,k) = gam(modulo(i-1, nx1))   !upper-diagonal
-            if(modulo(i-1, nx1) == 0) then
-              p_mat(nx1,k) = 0.0_r2   !upper-diagonal, BCS
-            end if
-          end if
-          if (i /= nx1*nz1) then
-            p_mat(nxp1,k) = alp(modulo(i, nx1) + 1) !lower-diagonal
-            if (modulo(i, nx1) == 0) then
-              p_mat(nxp1,k) = 0.0_r2   !lower-diagonal, BCS
-            end if
-          end if
-          if (i > nx1) then
-            p_mat(1,k) = delta  !upper band
-          end if
-          if (i <= nx1*nz1-nx1) then
-            p_mat(2*nx1+1,k) = delta   !lower band
-          end if
-        end do
-      end if
-      if (cpcol == npcol) exit
-      cpcol = cpcol + 1
+    do j = 1, nx1*nz1
+      p_mat(2*nx1+1,j) = beta   !diagonal
     end do
 
-    !LU factorisation of the matrix for use in PD/PSDBTRS to solve
+    do j = 1, nx1*nz1-1
+      p_mat(2*nx1,j+1) = gam(mod(j, nx1))   !upper-diagonal
+    end do
+
+    do j = nx1, nx1*nz1-nx1, nx1
+      p_mat(2*nx1,j+1) = 0.0_r2   !upper-diagonal, BCS
+    end do
+
+    do j = 2, nx1*nz1
+       p_mat(2*nx1+2,j-1) = alp(mod(j-1, nx1) + 1) !lower-diagonal
+    end do
+    
+    do j = nx, nx1*nz1-nx1+1, nx1
+       p_mat(2*nx1+2,j-1) = 0.0_r2   !lower-diagonal, BCS
+    end do
+    
+    do j = 1, nx1*nz1-nx1
+       p_mat(2*nx1+1-nx1,j+nx1) = delta  !upper band
+    end do
+    
+    do j = nx, nx1*nz1
+       p_mat(2*nx1+1+nx1,j-nx1) = delta  !lower band
+    end do
+
+    !LU factorisation of the matrix for use in D/SGBTRS to solve
     select case (r2)
       case (SPr)
-        call PSDBTRF(nx1*nz1, nx1, nx1, p_mat, 1, desc_p, af, laf, &
-                     work, lwork_fac, info)
+        call SGBTRF(nx1*nz1, nx1*nz1, nx1, nx1, p_mat, 2*nx1+nx1+1, IPIV, info)
         if (info /= 0) then
-          print*, 'ERROR: SPr factorisation error psi_PSDBTRF, INFO=', info
+          print*, 'ERROR: SPr factorisation error psi_SGBTRF, INFO=', info
           stop
         end if
       case (DPr)
-        call PDDBTRF(nx1*nz1, nx1, nx1, p_mat, 1, desc_p, af, laf, &
-                     work, lwork_fac, info)
+        call DGBTRF(nx1*nz1, nx1*nz1, nx1, nx1, p_mat, 2*nx1+nx1+1, IPIV, info)
         if (info /= 0) then
-          print*, 'ERROR: DPr factorisation error psi_PDDBTRF, INFO=', info
+          print*, 'ERROR: DPr factorisation error psi_DGBTRF, INFO=', info
           stop
         end if
       case default
-        stop 'ERROR: Precision selection error - matrices.f90 psi_P*DBTRF'
+        stop 'ERROR: Precision selection error - matrices.f90 psi_*GBTRF'
     end select
 
     return
   end subroutine psi_mat_setup
 
-  subroutine b_mat_setup(b_mat, desc_b, af)
+  subroutine b_mat_setup(b_mat, IPIV)
     !Setup of LHS matrix in solution of magnetic Poisson equation.
     !Algorithm as for stream-function above.
     use parameters
     use ic_bc, only : s
     implicit none
 
-    integer (i1), intent(out) :: desc_b(7)
-    real    (r2), intent(out) :: b_mat(b_M,b_N), af(b_laf)
-    integer (i1)              :: i, j, k, info, cpcol
-    real    (r2)              :: alp(0:nx), beta(0:nx), gam(0:nx), delta, &
-                                 work(lwork_b_fac)
+    real    (r2), intent(out) :: b_mat(2*nxp1+nxp1+1,0:nxp1*nz1-1)
+    integer (i1), intent(out) :: IPIV(nxp1*nz1)
+    integer (i1)              :: j, k, info
+    real    (r2)              :: alp(0:nx), beta(0:nx), gam(0:nx), delta
 
     alp(:) = dz2 - 0.5_r2 * delx * dz2 * one_eta / s(:)
     beta(:) = -2.0_r2 * (dz2 + dx2) - dx2 * dz2 * one_eta**2 / s(:)**2
     gam(:) = dz2 + 0.5_r2 * delx * dz2 * one_eta / s(:)
     delta = dx2
 
-    desc_b(1) = 501
-    desc_b(2) = ictxt
-    desc_b(3) = nxp1*nz1
-    desc_b(4) = nb
-    desc_b(5) = 0
-    desc_b(6) = 2*nxp1+1
-
-    cpcol = 0
-
-    do j = 0, nxp1*nz1-1, nb
-      if (mycol == cpcol) then
-        do k = 1, min(nb, nxp1*nz1-j)
-          i = k + j - 1
-          b_mat(nx+2,k) = beta(modulo(i, nxp1))   !diagonal
-          if (modulo(i, nxp1) == 0) then
-            b_mat(nx+2,k) = (2.0_r2 * alp(0) * delx * one_eta / &
-                             s(0)) + beta(0)   !diagonal, BCS
-          end if
-          if (modulo(i+1, nxp1) == 0) then
-            b_mat(nx+2,k) = (-2.0_r2 * gam(nx) * delx * one_eta / &
-                             s(nx)) + beta(nx) !diagonal, BCS
-          end if
-          if (i /= 0) then
-            b_mat(nxp1,k) = gam(modulo(i-1, nxp1))   !upper-diagonal
-            if(modulo(i, nxp1) == 0) then
-              b_mat(nxp1,k) = 0.0_r2   !upper-diagonal, BCS
-            end if
-            if(modulo(i-1, nxp1) == 0) then
-              b_mat(nxp1,k) = alp(0) + gam(0)   !upper-diagonal, BCS
-            end if
-          end if
-          if (i /= nxp1*nz1-1) then
-            if (modulo(i+1, nxp1) /= 0) then
-              b_mat(nx+3,k) = alp(modulo(i+1,nxp1))   !lower-diagonal
-            end if
-            if (modulo(i+1, nxp1) == 0) then
-              b_mat(nx+3,k) = 0.0_r2   !lower-diagonal, BCS
-            end if
-            if (modulo(i+2, nxp1) == 0) then
-              b_mat(nx+3,k) = alp(nx) + gam(nx)   !lower-diagonal, BCS
-            end if
-          end if
-          if (i > nx) then
-            b_mat(1,k) = delta   !upper band
-          end if
-          if (i < nxp1*nz1-nxp1) then
-            b_mat(2*nxp1+1,k) = delta   !lower band
-          end if
-        end do
-      end if
-      if (cpcol == npcol) exit
-      cpcol = cpcol + 1
+    do j = 0, nxp1*nz1-1
+      b_mat(2*nx+3,j) = beta(mod(j, nxp1))  !diagonal
+    end do
+    
+    do j = 0, nxp1*nz1-2
+      b_mat(2*nx+2,j+1) = gam(mod(j, nxp1))  !upper-diagonal
+    end do
+    
+    do j = 1, nxp1*nz1-1
+      b_mat(2*nx+4,j-1) = alp(mod(j, nxp1))  !lower-diagonal
+    end do
+    
+    do j = 0, nxp1*nz1-nxp1-1
+      b_mat(nx+2,j+nxp1) = delta  !lower band
+    end do
+    
+    do j = nxp1, nxp1*nz1-1
+      b_mat(3*nx+4,j-nxp1) = delta  !upper band
+    end do
+    
+    do j = nx, nxp1*nz1-nxp1-1, nxp1
+      b_mat(2*nx+2,j+1) = 0.0_r2  
+    end do
+    
+    do j = nxp1, nxp1*nz1-nxp1, nxp1
+      b_mat(2*nx+4,j-1) = 0.0_r2
+    end do
+    
+    do j = 0, nxp1*nz1-nxp1, nxp1
+      b_mat(2*nx+3,j) = (2.0_r2 * alp(0) * delx * (1.0_r2 - eta) / &
+                         s(0)) + beta(0)
+    end do
+    
+    do j = nx, nxp1*nz1-1, nxp1
+      b_mat(2*nx+3,j) = (-2.0_r2 * gam(nx) * delx * (1.0_r2 - eta) / &
+                         s(nx)) + beta(nx)
+    end do
+    
+    do j = 0, nxp1*nz1-nxp1, nxp1
+      b_mat(2*nx+2,j+1) = alp(0) + gam(0)
+    end do
+    
+    do j = nx, nxp1*nz1-1, nxp1
+      b_mat(2*nx+4,j-1) = alp(nx) + gam(nx)
     end do
 
     select case (r2)
       case (SPr)
-        call PSDBTRF(nxp1*nz1, nxp1, nxp1, b_mat, 1, desc_b, af, b_laf, &
-                     work, lwork_b_fac, info)
+        call SGBTRF(nxp1*nz1, nxp1*nz1, nxp1, nxp1, b_mat, 2*nxp1+nxp1+1, &
+                    IPIV, info)
         if (info /= 0) then
-          print*, 'ERROR: SPr factorisation error mag_inf_PSDBTRF, INFO=', info
+          print*, 'ERROR: SPr factorisation error mag_inf_SGBTRF, INFO=', info
           stop
         end if
       case (DPr)
-        call PDDBTRF(nxp1*nz1, nxp1, nxp1, b_mat, 1, desc_b, af, b_laf, &
-                     work, lwork_b_fac, info)
+        call DGBTRF(nxp1*nz1, nxp1*nz1, nxp1, nxp1, b_mat, 2*nxp1+nxp1+1, &
+                    IPIV, info)
         if (info /= 0) then
-          print*, 'ERROR: DPr factorisation error mag_inf_PDDBTRF, INFO=', info
+          print*, 'ERROR: DPr factorisation error mag_inf_DGBTRF, INFO=', info
           stop
         end if
       case default
-        stop 'ERROR: Precision selection error - matrices.f90 b_inf_P*DBTRF'
+        stop 'ERROR: Precision selection error - matrices.f90 b_inf_*GBTRF'
     end select
 
     return
   end subroutine b_mat_setup
 
-  subroutine fin_b_mat_setup(b_mat, desc_b, af)
+  subroutine fin_b_mat_setup(b_mat, IPIV)
     use parameters
     use ic_bc, only : s
     implicit none
 
-    integer (i1), intent(out) :: desc_b(7)
-    real    (r2), intent(out) :: b_mat(b_M,b_N), af(b_laf)
-    integer (i1)              :: i, j, k, info, cpcol
-    real    (r2)              :: alp(0:nx), beta(0:nx), gam(0:nx), delta, &
-                                 work(lwork_b_fac)
+    real    (r2), intent(out) :: b_mat(2*nxp1+nxp1+1,0:nxp1*nzp1-1)
+    integer (i1), intent(out) :: IPIV(nxp1*nzp1)
+    integer (i1)              :: j, k, info
+    real    (r2)              :: alp(0:nx), beta(0:nx), gam(0:nx), delta
 
     alp(:) = dz2 - 0.5_r2 * delx * dz2 * one_eta / s(:)
     beta(:) = -2.0_r2 * (dz2 + dx2) - dx2 * dz2 * one_eta**2 / s(:)**2
     gam(:) = dz2 + 0.5_r2 * delx * dz2 * one_eta / s(:)
     delta = dx2
 
-    desc_b(1) = 501
-    desc_b(2) = ictxt
-    desc_b(3) = nxp1*nzp1
-    desc_b(4) = nb
-    desc_b(5) = 0
-    desc_b(6) = 2*nxp1+1
-
-    cpcol = 0
-
-    do j = 0, nxp1*nzp1-1, nb
-      if (mycol == cpcol) then
-        do k = 1, min(nb, nxp1*nzp1-j)
-          i = k + j - 1
-          !diagonal
-          b_mat(nx+2,k) = beta(modulo(i, nxp1))
-          !diagonal, j=0
-          if (modulo(i, nxp1) == 0) then
-            b_mat(nx+2,k) = (2.0_r2 * alp(0) * delx * one_eta / &
-                             s(0)) + beta(0)
-          end if
-          !diagonal, k=0
-          if (i < nxp1) then
-            b_mat(nx+2,k) = beta(modulo(i, nxp1)) - &
-                            2.0_r2 * delta * delz * (1.0_r2 - tau) / tau
-          end if
-          !diagonal, j=nx
-          if (modulo(i+1, nxp1) == 0) then
-            b_mat(nx+2,k) = (-2.0_r2 * gam(nx) * delx * one_eta / &
-                             s(nx)) + beta(nx)
-          end if
-          !diagonal, k=nz
-          if (i > nxp1*nzp1-nxp1) then
-            b_mat(nx+2,k) = beta(modulo(i, nxp1)) - &
-                            2.0_r2 * delta * delz * (1.0_r2 - tau) / tau
-          end if
-          !diagonal, j=0, k=0
-          if (i == 0) then
-            b_mat(nx+2,k) = beta(0) - &
-                            2.0_r2 * delta * delz * (1.0_r2 - tau) / tau + &
-                           (2.0_r2 * alp(0) * delx * one_eta / s(0))
-          end if
-          !diagonal, j=0, k=nz
-          if (i == nxp1*nzp1-nxp1) then
-            b_mat(nx+2,k) = beta(0) - &
-                            2.0_r2 * delta * delz * (1.0_r2 - tau) / tau + &
-                           (2.0_r2 * alp(0) * delx * one_eta / s(0))
-          end if
-          !diagonal, j=nx, k=0
-          if (i == nx) then
-            b_mat(nx+2,k) = beta(nx) - &
-                            2.0_r2 * delta * delz * (1.0_r2 - tau) / tau - &
-                           (2.0_r2 * gam(nx) * delx * one_eta / s(nx))
-          end if
-          !diagonal, j=nx, k=nz
-          if (i == nxp1*nzp1-1) then
-            b_mat(nx+2,k) = beta(nx) - &
-                            2.0_r2 * delta * delz * (1.0_r2 - tau) / tau - &
-                           (2.0_r2 * gam(nx) * delx * one_eta / s(nx))
-          end if
-          if (i /= 0) then
-            !super-diagonal
-            b_mat(nxp1,k) = gam(modulo(i-1, nxp1))
-            !super-diagonal, j=nx, so j=0 not present
-            if(modulo(i, nxp1) == 0) then
-              b_mat(nxp1,k) = 0.0_r2
-            end if
-            !super-diagonal, j=0
-            if(modulo(i-1, nxp1) == 0) then
-              b_mat(nxp1,k) = alp(0) + gam(0)
-            end if
-          end if
-          if (i /= nxp1*nzp1-1) then
-            !sub-diagonal
-            if (modulo(i+1, nxp1) /= 0) then
-              b_mat(nx+3,k) = alp(modulo(i+1, nxp1))
-            end if
-            !sub-diagonal, j=0, so j=nx not present
-            if (modulo(i+1, nxp1) == 0) then
-              b_mat(nx+3,k) = 0.0_r2
-            end if
-            !sub-diagonal, j=nx
-            if (modulo(i+2, nxp1) == 0) then
-              b_mat(nx+3,k) = alp(nx) + gam(nx)
-            end if
-          end if
-          !upper branch
-          if (i > nx) then
-            b_mat(1,k) = delta
-            if (i < 2*nxp1) then
-              b_mat(1,k) = 2.0_r2 * delta
-            end if
-          end if
-          !lower branch
-          if (i < nxp1*nzp1-nxp1) then
-            b_mat(2*nxp1+1,k) = delta
-            if (i >= nxp1*nzp1-2*nxp1) then
-              b_mat(2*nxp1+1,k) = 2.0_r2 * delta
-            end if
-          end if
-        end do
-      end if
-      if (cpcol == npcol) exit
-      cpcol = cpcol + 1
+    !diagonal
+    do j = 0, nxp1*nzp1-1
+      b_mat(2*nx+3,j) = beta(mod(j, nxp1))
+    end do
+    
+    !upper diagonal
+    do j = 0, nxp1*nzp1-2
+      b_mat(2*nx+2,j+1) = gam(mod(j, nxp1))
+    end do
+    
+    !lower diagonal
+    do j = 1, nxp1*nzp1-1
+      b_mat(2*nx+4,j-1) = alp(mod(j, nxp1))
+    end do
+    
+    !upper diagonal branch
+    do j = 0, nxp1*nzp1-nxp1-1
+      b_mat(nx+2,j+nxp1) = delta
+    end do
+    
+    !lower diagonal branch
+    do j = nxp1, nxp1*nzp1-1
+      b_mat(3*nx+4,j-nxp1) = delta
+    end do
+    
+    !upper diagonal, j=nx, so j=0 not present
+    do j = nx, nxp1*nzp1-nxp1-1, nxp1
+      b_mat(2*nx+2,j+1) = 0.0_r2
+    end do
+    
+    !lower diagonal, j=0, so j=nx not present
+    do j = nxp1, nxp1*nzp1-nxp1, nxp1
+      b_mat(2*nx+4,j-1) = 0.0_r2
+    end do
+    
+    !diagonal, j=0
+    do j = 0, nxp1*nzp1-nxp1, nxp1
+      b_mat(2*nx+3,j) = (2.0_r2 * alp(0) * delx * (1.0_r2 - eta) / &
+                         s(0)) + beta(0)
+    end do
+    
+    !diagonal, k=0
+    do j = 0, nx
+      b_mat(2*nx+3,j) = beta(mod(j, nxp1)) - &
+                        2.0_r2 * delta * delz * (1.0_r2 - tau) / tau
+    end do
+    
+    !diagonal, j=nx
+    do j = nx, nxp1*nzp1-1, nxp1
+      b_mat(2*nx+3,j) = (-2.0_r2 * gam(nx) * delx * (1.0_r2 - eta) / s(nx)) + &
+                         beta(nx)
+    end do
+    
+    !diagonal, k=nz
+    do j = nxp1*nzp1-nxp1, nxp1*nzp1-1
+      b_mat(2*nx+3,j) = beta(mod(j, nxp1)) - &
+                        2.0_r2 * delta * delz * (1.0_r2 - tau) / tau
+    end do
+    
+    !diagonal, j=0, k=0
+    b_mat(2*nx+3,0) = beta(0) - &
+                      2.0_r2 * delta * delz * (1.0_r2 - tau) / tau + &
+                     (2.0_r2 * alp(0) * delx * (1.0_r2 - eta) / s(0))
+    
+    !diagonal, j=0, k=nz
+    b_mat(2*nx+3,nxp1*nzp1-nxp1) = beta(0) - &
+                                   2.0_r2 * delta * delz * (1.0_r2 - tau) / &
+                                   tau + &
+                                  (2.0_r2 * alp(0) * delx * (1.0_r2 - eta) / &
+                                  s(0))
+    
+    !diagonal, j=nx, k=0
+    b_mat(2*nx+3,nx) = beta(nx) - &
+                      2.0_r2 * delta * delz * (1.0_r2 - tau) / tau - &
+                     (2.0_r2 * gam(nx) * delx * (1.0_r2 - eta) / s(nx))
+    
+    !diagonal, j=nx, k=nz
+    b_mat(2*nx+3,nxp1*nzp1-1) = beta(nx) - &
+                                2.0_r2 * delta * delz * (1.0_r2 - tau) / &
+                                tau - &
+                               (2.0_r2 * gam(nx) * delx * (1.0_r2 - eta) / &
+                                s(nx))
+    
+    !upper diagonal, j=0
+    do j = 0, nxp1*nzp1-nxp1, nxp1
+      b_mat(2*nx+2,j+1) = alp(0) + gam(0)
+    end do
+    
+    !lower diagonal, j=nx
+    do j = nx, nxp1*nzp1-1, nxp1
+      b_mat(2*nx+4,j-1) = alp(nx) + gam(nx)
+    end do
+    
+    !upper diagonal branch, k=0
+    do j = 0, nx
+      b_mat(nx+2,j+nxp1) = 2.0_r2 * delta
+    end do
+    
+    !lower diagonal branch, k=nz
+    do j = nxp1*nzp1-nxp1, nxp1*nzp1-1
+      b_mat(3*nx+4,j-nxp1) = 2.0_r2 * delta
     end do
 
     select case (r2)
       case (SPr)
-        call PSDBTRF(nxp1*nzp1, nxp1, nxp1, b_mat, 1, desc_b, af, b_laf, &
-                     work, lwork_b_fac, info)
+        call SGBTRF(nxp1*nzp1, nxp1*nzp1, nxp1, nxp1, b_mat, 2*nxp1+nxp1+1, &
+                    IPIV, info)
         if (info /= 0) then
-          print*, 'ERROR: SPr factorisation error mag_fin_PSDBTRF, INFO=', info
+          print*, 'ERROR: SPr factorisation error mag_fin_SGBTRF, INFO=', info
           stop
         end if
       case (DPr)
-        call PDDBTRF(nxp1*nzp1, nxp1, nxp1, b_mat, 1, desc_b, af, b_laf, &
-                     work, lwork_b_fac, info)
+        call DGBTRF(nxp1*nzp1, nxp1*nzp1, nxp1, nxp1, b_mat, 2*nxp1+nxp1+1, &
+                    IPIV, info)
         if (info /= 0) then
-          print*, 'ERROR: DPr factorisation error mag_fin_PDDBTRF, INFO=', info
+          print*, 'ERROR: DPr factorisation error mag_fin_DGBTRF, INFO=', info
           stop
         end if
       case default
-        stop 'ERROR: Precision selection error - matrices.f90 b_fin_P*DBTRF'
+        stop 'ERROR: Precision selection error - matrices.f90 b_fin_*GBTRF'
     end select
 
     return
   end subroutine fin_b_mat_setup
 
-  subroutine j_mat_setup(j_mat, desc_j, af)
+  subroutine j_mat_setup(j_mat, IPIV)
     use parameters
     use ic_bc, only : s
     implicit none
 
-    integer (i1), intent(out) :: desc_j(7)
-    real    (r2), intent(out) :: j_mat(j_M,j_N), af(laf)
-    integer (i1)              :: i, j, k, info, cpcol
-    real    (r2)              :: alp(0:nx), beta(0:nx), gam(0:nx), delta, &
-                                 work(lwork_fac)
+    real    (r2), intent(out) :: j_mat(2*nx1+nx1+1,nx1*nzp1)
+    integer (i1), intent(out) :: IPIV(nx1*nzp1)
+    integer (i1)              :: j, k, info
+    real    (r2)              :: alp(0:nx), beta(0:nx), gam(0:nx), delta
 
     alp(:) = dz2 - 0.5_r2 * delx * dz2 * one_eta / s(:)
     beta(:) = -2.0_r2 * (dz2 + dx2) - dx2 * dz2 * one_eta**2 / s(:)**2
     gam(:) = dz2 + 0.5_r2 * delx * dz2 * one_eta / s(:)
     delta = dx2
 
-    desc_j(1) = 501
-    desc_j(2) = ictxt
-    desc_j(3) = nx1*nzp1
-    desc_j(4) = nb
-    desc_j(5) = 0
-    desc_j(6) = 2*nx1+1
-
-    cpcol = 0
-
-    do j = 1, nx1*nzp1, nb
-      if (mycol == cpcol) then
-        do k = 1, min(nb, nx1*nzp1-j+1)
-          i = k + j - 1
-          j_mat(nx,k) = beta(modulo(i-1, nx1) + 1)   !diagonal
-          if (i <= nx1) then
-            j_mat(nx,k) = beta(modulo(i-1, nx1) + 1) - &  !extra diagonal due
-                          2.0_r2 * delta * delz * tau / (1.0_r2 - tau) !to tau
-          end if
-          if (i >= nx1*nzp1-nx1+1) then
-            j_mat(nx,k) = beta(modulo(i-1, nx1) + 1) - &  !extra diagonal due
-                          2.0_r2 * delta * delz * tau / (1.0_r2 - tau) !to tau
-          end if
-          if (i /= 1) then
-            j_mat(nx1,k) = gam(modulo(i-1, nx1))   !upper-diagonal
-            if(modulo(i-1, nx1) == 0) then
-              j_mat(nx1,k) = 0.0_r2  !upper-diagonal, BCS
-            end if
-          end if
-          if (i /= nx1*nzp1) then
-            j_mat(nxp1,k) = alp(modulo(i,nx1) + 1)   !lower-diagonal
-            if (modulo(i, nx1) == 0) then
-              j_mat(nxp1,k) = 0.0_r2   !lower-diagonal, BCS
-            end if
-          end if
-          if (i > nx1) then
-            j_mat(1,k) = delta   !upper band
-            if (i <= 2*nx1) then
-              j_mat(1,k) = 2.0_r2 * delta   !upper band, BCS
-            end if
-          end if
-          if (i <= nx1*nzp1-nx1) then
-            j_mat(2*nx1+1,k) = delta   !lower band
-            if (i > nx1*nzp1-2*nx1) then
-              j_mat(2*nx1+1,k) = 2.0_r2 * delta   !lower band, BCS
-            end if
-          end if
-        end do
-      end if
-      if (cpcol == npcol) exit
-      cpcol = cpcol + 1
+    do j = 1, nx1*nzp1
+      j_mat(2*nx-1,j) = beta(mod(j-1, nx1)+1)
+    end do
+    
+    do j = 1, nx1
+      j_mat(2*nx-1,j) = beta(mod(j-1, nx1)+1) - &
+                        2.0_r2 * delta * delz * tau / (1.0_r2 - tau)
+    end do
+    
+    do j = nx1*nzp1-nx1+1, nx1*nzp1
+      j_mat(2*nx-1,j) = beta(mod(j-1, nx1)+1) - &
+                        2.0_r2 * delta * delz * tau / (1.0_r2 - tau)
+    end do
+    
+    do j = 1, nx1*nzp1-1
+      j_mat(2*nx-2,j+1) = gam(mod(j, nx1))
+    end do
+    
+    do j = nx1, nx1*nzp1-nx1, nx1
+      j_mat(2*nx-2,j+1) = 0.0_r2
+    end do
+    
+    do j = 2, nx1*nzp1
+      j_mat(2*nx,j-1) = alp(mod(j-1, nx1) + 1)
+    end do
+    
+    do j = nx, nx1*nzp1-nx1+1, nx1
+      j_mat(2*nx,j-1) = 0.0_r2
+    end do
+    
+    do j = 1, nx1*nzp1-nx1
+      j_mat(nx,j+nx1) = delta
+    end do
+    
+    do j = nx, nx1*nzp1
+      j_mat(3*nx-2,j-nx1) = delta
+    end do
+    
+    do j = 1, nx1
+      j_mat(nx,j+nx1) = 2.0_r2 * delta
+    end do
+    
+    do j = nx1*nzp1-nx1+1, nx1*nzp1
+      j_mat(3*nx-2,j-nx1) = 2.0_r2 * delta
     end do
 
     select case (r2)
       case (SPr)
-        call PSDBTRF(nx1*nzp1, nx1, nx1, j_mat, 1, desc_j, af, laf, &
-                     work, lwork_fac, info)
+        call SGBTRF(nx1*nzp1, nx1*nzp1, nx1, nx1, j_mat, 2*nx1+nx1+1, IPIV, &
+                    info)
         if (info /= 0) then
-          print*, 'ERROR: SPr factorisation error cur_inf_PSDBTRF, INFO=', info
+          print*, 'ERROR: SPr factorisation error cur_inf_SGBTRF, INFO=', info
           stop
         end if
       case (DPr)
-        call PDDBTRF(nx1*nzp1, nx1, nx1, j_mat, 1, desc_j, af, laf, &
-                     work, lwork_fac, info)
+        call DGBTRF(nx1*nzp1, nx1*nzp1, nx1, nx1, j_mat, 2*nx1+nx1+1, IPIV, &
+                    info)
         if (info /= 0) then
-          print*, 'ERROR: DPr factorisation error cur_inf_PDDBTRF, INFO=', info
+          print*, 'ERROR: DPr factorisation error cur_inf_DGBTRF, INFO=', info
           stop
         end if
       case default
-        stop 'ERROR: Precision selection error - matrices.f90 j_inf_P*DBTRF'
+        stop 'ERROR: Precision selection error - matrices.f90 j_inf_*GBTRF'
     end select
 
     return
   end subroutine j_mat_setup
 
-  subroutine fin_j_mat_setup(j_mat, desc_j, af)
+  subroutine fin_j_mat_setup(j_mat, IPIV)
     use parameters
     use ic_bc, only : s
     implicit none
 
-    integer (i1), intent(out) :: desc_j(7)
-    real    (r2), intent(out) :: j_mat(j_M,j_N), af(laf)
-    integer (i1)              :: i, j, k, info, cpcol
-    real    (r2)              :: alp(0:nx), beta(0:nx), gam(0:nx), delta, &
-                                 work(lwork_fac)
+    real    (r2), intent(out) :: j_mat(2*nx1+nx1+1,nx1*nz1)
+    integer (i1), intent(out) :: IPIV(nx1*nz1)
+    integer (i1)              :: j, k, info
+    real    (r2)              :: alp(0:nx), beta(0:nx), gam(0:nx), delta
 
     alp(:) = dz2 - 0.5_r2 * delx * dz2 * one_eta / s(:)
     beta(:) = -2.0_r2 * (dz2 + dx2) - dx2 * dz2 * one_eta**2 / s(:)**2
     gam(:) = dz2 + 0.5_r2 * delx * dz2 * one_eta / s(:)
     delta = dx2
 
-    desc_j(1) = 501
-    desc_j(2) = ictxt
-    desc_j(3) = nx1*nz1
-    desc_j(4) = nb
-    desc_j(5) = 0
-    desc_j(6) = 2*nx1+1
-
-    cpcol = 0
-
-    do j = 1, nx1*nz1, nb
-      if (mycol == cpcol) then
-        do k = 1, min(nb, nx1*nz1-j+1)
-          i = k + j - 1
-          j_mat(nx,k) = beta(modulo(i-1, nx1) + 1)   !diagonal
-          if (i /= 1) then
-            j_mat(nx1,k) = gam(modulo(i-1, nx1))   !upper-diagonal
-            if(modulo(i-1, nx1) == 0) then
-              j_mat(nx1,k) = 0.0_r2   !upper-diagonal, BCS
-            end if
-          end if
-          if (i /= nx1*nz1) then
-            j_mat(nxp1,k) = alp(modulo(i, nx1) + 1)   !lower-diagonal
-            if (modulo(i, nx1) == 0) then
-              j_mat(nxp1,k) = 0.0_r2   !lower-diagonal, BCS
-            end if
-          end if
-          if (i > nx1) then
-            j_mat(1,k) = delta   !upper band
-          end if
-          if (i <= nx1*nz1-nx1) then
-            j_mat(2*nx1+1,k) = delta   !lower band
-          end if
-        end do
-      end if
-      if (cpcol == npcol) exit
-      cpcol = cpcol + 1
+    do j = 1, nx1*nz1
+      j_mat(2*nx-1,j) = beta(mod(j-1, nx1)+1)
+    end do
+    
+    do j = 1, nx1*nz1-1
+      j_mat(2*nx-2,j+1) = gam(mod(j, nx1))
+    end do
+    
+    do j = nx1, nx1*nz1-nx1, nx1
+      j_mat(2*nx-2,j+1) = 0.0_r2
+    end do
+    
+    do j = 2, nx1*nz1
+      j_mat(2*nx,j-1) = alp(mod(j-1, nx1) + 1)
+    end do
+    
+    do j = nx, nx1*nz1-nx1+1, nx1
+      j_mat(2*nx,j-1) = 0.0_r2
+    end do
+    
+    do j = 1, nx1*nz1-nx1
+      j_mat(nx,j+nx1) = delta
+    end do
+    
+    do j = nx, nx1*nz1
+      j_mat(3*nx-2,j-nx1) = delta
     end do
 
     select case (r2)
       case (SPr)
-        call PSDBTRF(nx1*nz1, nx1, nx1, j_mat, 1, desc_j, af, laf, &
-                     work, lwork_fac, info)
+        call SGBTRF(nx1*nz1, nx1*nz1, nx1, nx1, j_mat, 2*nx1+nx1+1, IPIV, info)
         if (info /= 0) then
-          print*, 'ERROR: SPr factorisation error cur_fin_PSDBTRF, INFO=', info
+          print*, 'ERROR: SPr factorisation error cur_fin_SGBTRF, INFO=', info
           stop
         end if
       case (DPr)
-        call PDDBTRF(nx1*nz1, nx1, nx1, j_mat, 1, desc_j, af, laf, &
-                     work, lwork_fac, info)
+        call DGBTRF(nx1*nz1, nx1*nz1, nx1, nx1, j_mat, 2*nx1+nx1+1, IPIV, info)
         if (info /= 0) then
-          print*, 'ERROR: DPr factorisation error cur_fin_PDDBTRF, INFO=', info
+          print*, 'ERROR: DPr factorisation error cur_fin_DGBTRF, INFO=', info
           stop
         end if
       case default
-        stop 'ERROR: Precision selection error - matrices.f90 j_inf_P*DBTRF'
+        stop 'ERROR: Precision selection error - matrices.f90 j_inf_*GBTRF'
     end select
 
     return
