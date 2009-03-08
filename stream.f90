@@ -15,12 +15,12 @@ module stream
     use ic_bc, only : p_BCS, s
     implicit none
 
-    real    (r2), intent(in)  :: Z_mat(0:nx,0:nz), &
-                                 p_mat(2*nx1+nx1+1,nx1*nz1)
-    real    (r2), intent(out) :: psi(0:nx,0:nz)
-    integer (i1), intent(in)  :: IPIV(nx1*nz1)
-    integer (i1)              :: j, k, info
-    real    (r2)              :: zvec(nx1*nz1)
+    real, intent(in) :: Z_mat(0:nx,0:nz), &
+                        p_mat(2*nx1+nx1+1,nx1*nz1)
+    real, intent(out) :: psi(0:nx,0:nz)
+    integer, intent(in) :: IPIV(nx1*nz1)
+    integer :: j, k, info
+    real :: zvec(nx1*nz1)
 
     do k = 1, nz1
       do j = 1, nx1
@@ -28,24 +28,12 @@ module stream
       end do
     end do
 
-    select case (r2)
-      case (SPr)
-        call SGBTRS('N', nx1*nz1, nx1, nx1, 1, p_mat, 2*nx1+nx1+1, &
-                     IPIV, zvec, nx1*nz1, info)
-        if (info /= 0) then
-          print*, 'ERROR: SPr solve error psi_SGBTRS, INFO=', info
-          stop
-        end if
-      case (DPr)
-        call DGBTRS('N', nx1*nz1, nx1, nx1, 1, p_mat, 2*nx1+nx1+1, &
-                     IPIV, zvec, nx1*nz1, info)
-        if (info /= 0) then
-          print*, 'ERROR: DPr solve error psi_DGBTRS, INFO=', info
-          stop
-        end if
-      case default
-        stop 'ERROR: Precision selection error - stream.f90 *GBTRS'
-    end select
+    call SGBTRS('N', nx1*nz1, nx1, nx1, 1, p_mat, 2*nx1+nx1+1, &
+                 IPIV, zvec, nx1*nz1, info)
+    if (info /= 0) then
+      print*, 'ERROR: SPr solve error psi_SGBTRS, INFO=', info
+      stop
+    end if
 
     do k = 1, nz1
       do j = 1, nx1

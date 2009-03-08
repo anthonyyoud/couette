@@ -14,23 +14,23 @@ program couette_mod
   use current
   implicit none
   
-  integer (i1)                      :: j, k, p=0, p_start=0, alloc_err=0
-  integer (i1), dimension(nx1*nz1) :: p_pivot
-  integer (i1),         allocatable :: b_pivot(:), j_pivot(:)
-  real    (r2)                      :: t=0.0_r2
-  real    (r2),         allocatable :: b_mat(:,:), j_mat(:,:)
-  real    (r2), dimension(2*nx1+nx1+1, nx1*nz1) :: p_mat
-  type    (mat_comp)                :: Ux, Zx
-  type    (uz_mat_comp)             :: Uz
-  type    (zz_mat_comp)             :: Zz
-  logical                           :: state_exist
+  integer :: j, k, p=0, p_start=0, alloc_err=0
+  integer, dimension(nx1*nz1) :: p_pivot
+  integer, allocatable :: b_pivot(:), j_pivot(:)
+  real :: t=0.0
+  real, allocatable :: b_mat(:,:), j_mat(:,:)
+  real, dimension(2*nx1+nx1+1, nx1*nz1) :: p_mat
+  type (mat_comp) :: Ux, Zx
+  type (uz_mat_comp) :: Uz
+  type (zz_mat_comp) :: Zz
+  logical :: state_exist
  
-  if (abs(tau - 0.0_r2) < epsilon(tau)) then
+  if (abs(tau - 0.0) < epsilon(tau)) then
     write(6, '(A7, f4.2, A20)') 'tau = ', tau, '- Infinite cylinder'
-  else if (abs(tau - 1.0_r2) < epsilon(tau)) then
+  else if (abs(tau - 1.0) < epsilon(tau)) then
     write(6, '(A7, f4.2, A22)') 'tau = ', tau, '- Finite aspect ratio'
-  else if ((abs(tau - 0.0_r2) > epsilon(tau)) .and. &
-           (abs(tau - 1.0_r2) > epsilon(tau))) then
+  else if ((abs(tau - 0.0) > epsilon(tau)) .and. &
+           (abs(tau - 1.0) > epsilon(tau))) then
     write(6, '(A7, f4.2, A15)') 'tau = ', tau, '- Variable tau'
   else
     write(6, '(A7, f4.2)') 'tau = ', tau
@@ -56,9 +56,9 @@ program couette_mod
       !exit if not doing restart but end_state.dat exists
       if (state_exist) stop 'ERROR: restart=.false. but end_state.dat exists.'
       print*, 'Setting up BCS...'
-      call u_BCS(ut%new, 0.0_r2)
+      call u_BCS(ut%new, 0.0)
       call p_BCS(psi%new)
-      call z_BCS(zt%new, psi%new, 0.0_r2)   !get boundary conditions
+      call z_BCS(zt%new, psi%new, 0.0)   !get boundary conditions
       call b_BCS(bt%new)
       call j_BCS(jt%new)
     end if
@@ -72,22 +72,22 @@ program couette_mod
 
   print*, 'Allocating matrix dimensions...'
 
-  if (abs(tau - 0.0_r2) < epsilon(tau)) then
+  if (abs(tau - 0.0) < epsilon(tau)) then
     allocate(b_mat(2*nxp1+nxp1+1,0:nxp1*nz1-1), stat=alloc_err)
     if (alloc_err /= 0) stop 'ERROR: b_mat allocation error'
     allocate(j_mat(2*nx1+nx1+1,nx1*nzp1), stat=alloc_err)
     if (alloc_err /= 0) stop 'ERROR: j_mat allocation error'
     allocate(b_pivot(nxp1*nz1))
     allocate(j_pivot(nx1*nzp1))
-  else if (abs(tau - 1.0_r2) < epsilon(tau)) then   !or infinite cylinders
+  else if (abs(tau - 1.0) < epsilon(tau)) then   !or infinite cylinders
     allocate(b_mat(2*nxp1+nxp1+1,0:nxp1*nzp1-1), stat=alloc_err)
     if (alloc_err /= 0) stop 'ERROR: b_mat allocation error'
     allocate(j_mat(2*nx1+nx1+1,nx1*nz1), stat=alloc_err)
     if (alloc_err /= 0) stop 'ERROR: j_mat allocation error'
     allocate(b_pivot(nxp1*nzp1))
     allocate(j_pivot(nx1*nz1))
-  else if ((abs(tau - 0.0_r2) > epsilon(tau)) .and. &
-           (abs(tau - 1.0_r2) > epsilon(tau))) then
+  else if ((abs(tau - 0.0) > epsilon(tau)) .and. &
+           (abs(tau - 1.0) > epsilon(tau))) then
     allocate(b_mat(2*nxp1+nxp1+1,0:nxp1*nzp1-1), stat=alloc_err)
     if (alloc_err /= 0) stop 'ERROR: b_mat allocation error'
     allocate(j_mat(2*nx1+nx1+1,nx1*nzp1), stat=alloc_err)
@@ -103,14 +103,14 @@ program couette_mod
 
   call psi_mat_setup(p_mat, p_pivot)
 
-  if (abs(tau - 0.0_r2) < epsilon(tau)) then
+  if (abs(tau - 0.0) < epsilon(tau)) then
     call b_mat_setup(b_mat, b_pivot)
     call j_mat_setup(j_mat, j_pivot)
-  else if (abs(tau - 1.0_r2) < epsilon(tau)) then     !left-hand side matrices
+  else if (abs(tau - 1.0) < epsilon(tau)) then     !left-hand side matrices
     call fin_b_mat_setup(b_mat, b_pivot)              !for stream-function,
     call fin_j_mat_setup(j_mat, j_pivot)              !current and magnetic
-  else if ((abs(tau - 0.0_r2) > epsilon(tau)) .and. & !Poisson equations
-           (abs(tau - 1.0_r2) > epsilon(tau))) then
+  else if ((abs(tau - 0.0) > epsilon(tau)) .and. & !Poisson equations
+           (abs(tau - 1.0) > epsilon(tau))) then
     call fin_b_mat_setup(b_mat, b_pivot)
     call j_mat_setup(j_mat, j_pivot)
   else
@@ -161,6 +161,7 @@ program couette_mod
     if (save3d) then   !save 3D surface
       if (mod(p, save_rate_2) == 0) then
         call save_3d(vr, ut%new, vz, psi%old, p)
+        call save_vapor_3d(vr, ut%new, vz, psi%old, p)
       end if
     end if
 
@@ -202,14 +203,14 @@ program couette_mod
    
     !solve Poisson equations depending on tau
     call p_poisson(zt%new, psi%new, p_mat, p_pivot)
-    if (abs(tau - 0.0_r2) < epsilon(tau)) then
+    if (abs(tau - 0.0) < epsilon(tau)) then
       call b_poisson(ut%new, bt%new, b_mat, b_pivot)
       call j_poisson(psi%new, jt%new, j_mat, j_pivot)
-    else if (abs(tau - 1.0_r2) < epsilon(tau)) then
+    else if (abs(tau - 1.0) < epsilon(tau)) then
       call fin_b_poisson(ut%new, bt%new, b_mat, b_pivot)
       call fin_j_poisson(psi%new, jt%new, j_mat, j_pivot)
-    else if ((abs(tau - 0.0_r2) > epsilon(tau)) .and. &
-             (abs(tau - 1.0_r2) > epsilon(tau))) then
+    else if ((abs(tau - 0.0) > epsilon(tau)) .and. &
+             (abs(tau - 1.0) > epsilon(tau))) then
       call fin_b_poisson(ut%new, bt%new, b_mat, b_pivot)
       call j_poisson(psi%new, jt%new, j_mat, j_pivot)
     else

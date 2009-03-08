@@ -6,20 +6,18 @@ module io
   private
   public :: open_files, close_files, save_xsect, save_3d, &
             save_surface, write_data, terminate, save_run, &
-            end_state
+            end_state, save_vapor_3d
 
   contains
 
   function itos(n)
     !Function to convert an integer into a string of length 7
-    use parameters, only : i1
     implicit none
 
-    integer (i1), intent(in) :: n
-    integer (i1)             :: i, n_, d(7)
-    character(7)             :: itos
-    character                :: c(0:9) = (/'0','1','2','3','4','5',&
-                                           '6','7','8','9'/)
+    integer, intent(in) :: n
+    integer :: i, n_, d(7)
+    character(7) :: itos
+    character :: c(0:9) = (/'0','1','2','3','4','5','6','7','8','9'/)
 
     n_ = n
     do i = 7, 1, -1
@@ -84,14 +82,14 @@ module io
     use parameters
     implicit none
 
-    real    (r2), intent(in)  :: t, ur(0:nx,0:nz), uz(0:nx,0:nz), &
-                                 pn(0:nx,0:nz), bn(0:nx,0:nz), &
-                                 jn(0:nx,0:nz), v(0:nx,0:nz), &
-                                 zn(0:nx,0:nz), ur_prev(0:nx,0:nz), &
-                                 uz_prev(0:nx,0:nz)
-    real    (r2), intent(out) :: growth, growth_vz
-    integer (i1)              :: zpos, xpos
-    real    (r2), save        :: min_p, max_p, min_ur, max_ur, min_uz, max_uz
+    real, intent(in)  :: t, ur(0:nx,0:nz), uz(0:nx,0:nz), &
+                         pn(0:nx,0:nz), bn(0:nx,0:nz), &
+                         jn(0:nx,0:nz), v(0:nx,0:nz), &
+                         zn(0:nx,0:nz), ur_prev(0:nx,0:nz), &
+                         uz_prev(0:nx,0:nz)
+    real, intent(out) :: growth, growth_vz
+    integer :: zpos, xpos
+    real, save :: min_p, max_p, min_ur, max_ur, min_uz, max_uz
 
     !growth rate of vortices
     growth = log(abs(ur(nx/2,nz/2)/ur_prev(nx/2,nz/2))) / (dt * save_rate)
@@ -147,30 +145,30 @@ module io
     use ic_bc, only : Re_1, Re_2
     implicit none
 
-    real    (r2), intent(in) :: t, v(0:nx,0:nz)
-    real    (r2)             :: A1G1, A1G2, A2G1, A2G2, G1, G2, Gc, &
-                                uc(0:nx), var1(0:nz), var2(0:nz), &
-                                z_int1, z_int2
+    real, intent(in) :: t, v(0:nx,0:nz)
+    real :: A1G1, A1G2, A2G1, A2G2, G1, G2, Gc, &
+            uc(0:nx), var1(0:nz), var2(0:nz), &
+            z_int1, z_int2
 
     call get_CCF(t, uc)
     
-    A1G1 = (2.0_r2 * pi * eta**2) / one_eta**2
-    A1G2 = (2.0_r2 * pi) / one_eta**2
+    A1G1 = (2.0 * pi * eta**2) / one_eta**2
+    A1G2 = (2.0 * pi) / one_eta**2
 
     A2G1 = Re_1(t) * one_eta * gamma / eta
     A2G2 = Re_2(t) * one_eta * gamma
 
-    var1(:) = (0.5_r2 * (-3.0_r2 * v(0,:) + 4.0_r2 * v(1,:) - v(2,:))) / delx
-    var2(:) = (0.5_r2 * (v(nx-2,:) - 4.0_r2 * v(nx1,:) + &
-               3.0_r2 * v(nx,:))) / delx
+    var1(:) = (0.5 * (-3.0 * v(0,:) + 4.0 * v(1,:) - v(2,:))) / delx
+    var2(:) = (0.5 * (v(nx-2,:) - 4.0 * v(nx1,:) + &
+               3.0 * v(nx,:))) / delx
 
     call integrate_z(var1, z_int1)
     call integrate_z(var2, z_int2)
 
     G1 = A1G1 * (A2G1 - z_int1)
     G2 = A1G2 * (A2G2 - z_int2)
-    Gc = 4.0_r2 * pi * eta * gamma * uc(0) / &
-         ((1.0_r2 - eta**2) * one_eta)
+    Gc = 4.0 * pi * eta * gamma * uc(0) / &
+         ((1.0 - eta**2) * one_eta)
     
     open (33, status = 'unknown', file = 'torque.dat')
     write (33, '(5e17.9)') t, G1, G2, Gc, G1 / Gc
@@ -185,12 +183,12 @@ module io
     use ic_bc, only : s, Re_1, Re_2
     implicit none
 
-    real (r2), intent(in)  :: t
-    real (r2), intent(out) :: uc(0:nx)
-    real (r2)              :: A, B
+    real, intent(in) :: t
+    real, intent(out) :: uc(0:nx)
+    real :: A, B
   
-    A = (Re_2(t) - eta * Re_1(t)) / (1.0_r2 + eta)
-    B = eta * (Re_1(t) - eta * Re_2(t)) / ((1.0_r2 + eta) * one_eta**2)
+    A = (Re_2(t) - eta * Re_1(t)) / (1.0 + eta)
+    B = eta * (Re_1(t) - eta * Re_2(t)) / ((1.0 + eta) * one_eta**2)
 
     uc = A * s / one_eta + B * one_eta / s
 
@@ -203,12 +201,12 @@ module io
     use ic_bc, only : x, z
     implicit none
 
-    integer (i1), intent(in) :: p
-    real    (r2), intent(in) :: ur(0:nx,0:nz), uz(0:nx,0:nz), &
-                                pn(0:nx,0:nz), ut(0:nx,0:nz), &
-                                zt(0:nx,0:nz), bt(0:nx,0:nz), &
-                                jt(0:nx,0:nz), t
-    integer (i1)             :: j, k
+    integer, intent(in) :: p
+    real, intent(in) :: ur(0:nx,0:nz), uz(0:nx,0:nz), &
+                        pn(0:nx,0:nz), ut(0:nx,0:nz), &
+                        zt(0:nx,0:nz), bt(0:nx,0:nz), &
+                        jt(0:nx,0:nz), t
+    integer :: j, k
 
     open (32, status = 'unknown', file = 'xsect'//itos(p)//'.dat', &
           form = 'unformatted')
@@ -248,11 +246,11 @@ module io
     use ic_bc, only : x_, th, z
     implicit none
 
-    integer (i1), intent(in) :: p
-    real    (r2), intent(in) :: u_r(0:nx,0:nz), u_t(0:nx,0:nz), &
-                                u_z(0:nx,0:nz), pn(0:nx,0:nz)
-    integer (i1)             :: j, k, l
-    real    (r2)             :: hel(0:nx,0:nz)
+    integer, intent(in) :: p
+    real, intent(in) :: u_r(0:nx,0:nz), u_t(0:nx,0:nz), &
+                        u_z(0:nx,0:nz), pn(0:nx,0:nz)
+    integer :: j, k, l
+    real :: hel(0:nx,0:nz)
 
     open (35, status = 'unknown', position = 'append', file = 'isosurface.dat')
 
@@ -287,6 +285,57 @@ module io
     return
   end subroutine save_3d
 
+  subroutine save_vapor_3d(u_r, u_t, u_z, pn, p)
+    !Save 3D isosurface for use in VAPOR
+    use parameters
+    use ic_bc, only : x_, th, z
+    implicit none
+
+    integer, intent(in) :: p
+    real, intent(in) :: u_r(0:nx,0:nz), u_t(0:nx,0:nz), &
+                        u_z(0:nx,0:nz), pn(0:nx,0:nz)
+    real, dimension(0:nx,0:nt,0:nz) :: ur, ut, uz, psi
+    integer :: i, j, k, l
+
+    do j=0,nt
+      psi(:,j,:) = pn
+      ur(:,j,:) = u_r
+      ut(:,j,:) = u_t
+      uz(:,j,:) = u_z
+    end do
+
+    open (28, status = 'unknown', &
+              file = 'stream'//itos(p)//'.dat', &
+              form = 'unformatted')
+    
+    write (28) nxp1
+    write (28) ntp1
+    write (28) nzp1
+    write (28) x_
+    write (28) th
+    write (28) z
+    write (28) ur
+    write (28) ut
+    write (28) uz
+    write (28) psi
+
+    close (28)
+
+    !open (27, file='inter.dat', status='unknown')
+    !
+    !do i=0,nr1
+    !  do j=0,nth1
+    !    write (27, '(3e17.9)') x_(i)*cos(th(j)), x_(i)*sin(th(j)), &
+    !                           rthetacross(i,j)
+    !  end do
+    !  write (27, *)
+    !end do
+    !
+    !close (27)
+
+    return
+  end subroutine save_vapor_3d
+
   subroutine helicity(u_r, u_t, u_z, hel)
     !Calculate helicity u.(curl u)
     use parameters
@@ -294,11 +343,11 @@ module io
     use derivs, only : deriv_x, deriv_z
     implicit none
 
-    real    (r2), intent(in)  :: u_r(0:nx,0:nz), u_t(0:nx,0:nz), u_z(0:nx,0:nz)
-    real    (r2), intent(out) :: hel(0:nx, 0:nz)
-    integer (i1)              :: k
-    real    (r2)              :: u_r_z(0:nx,0:nz), u_t_z(0:nx,0:nz), &
-                                 u_t_x(0:nx,0:nz), u_z_x(0:nx,0:nz)
+    real, intent(in) :: u_r(0:nx,0:nz), u_t(0:nx,0:nz), u_z(0:nx,0:nz)
+    real, intent(out) :: hel(0:nx, 0:nz)
+    integer :: k
+    real :: u_r_z(0:nx,0:nz), u_t_z(0:nx,0:nz), &
+            u_t_x(0:nx,0:nz), u_z_x(0:nx,0:nz)
 
     call deriv_z(u_r, u_r_z)
     call deriv_z(u_t, u_t_z)
@@ -306,7 +355,7 @@ module io
     call deriv_x(u_z, u_z_x)
 
     do k = 0, nz
-      hel(:,k) = 0.5_r2 * delx * (-u_r(:,k) * u_t_z(:,k) + &
+      hel(:,k) = 0.5 * delx * (-u_r(:,k) * u_t_z(:,k) + &
                                    u_t(:,k) * u_r_z(:,k) - &
                                    u_t(:,k) * u_z_x(:,k) + &
                                    u_z(:,k) * u_t_x(:,k)) + &
@@ -322,12 +371,12 @@ module io
     use ic_bc, only : x, z
     implicit none
 
-    integer (i1), intent(in) :: p
-    real    (r2), intent(in) :: t, pn(0:nx,0:nz), v(0:nx,0:nz), &
-                                zn(0:nx,0:nz), bn(0:nx,0:nz), &
-                                jn(0:nx,0:nz), ur(0:nx,0:nz), &
-                                uz(0:nx,0:nz)
-    integer (i1)             :: j, k
+    integer, intent(in) :: p
+    real, intent(in) :: t, pn(0:nx,0:nz), v(0:nx,0:nz), &
+                        zn(0:nx,0:nz), bn(0:nx,0:nz), &
+                        jn(0:nx,0:nz), ur(0:nx,0:nz), &
+                        uz(0:nx,0:nz)
+    integer :: j, k
 
     open (19, status = 'unknown', file = 'p'//itos(p)//'.dat')
     !open (70, status = 'unknown', file = 'sin.dat')
@@ -385,11 +434,10 @@ module io
     use variables
     implicit none
 
-    integer (i1), intent(in) :: p, p_start
-    real    (r2), intent(in) :: t
-    real    (r2)             :: growth_rate, growth_rate_vz, growth_diff, &
-                                growth_error
-    real    (r2), save       :: growth_rate_vz_old
+    integer, intent(in) :: p, p_start
+    real, intent(in) :: t
+    real :: growth_rate, growth_rate_vz, growth_diff, growth_error
+    real, save :: growth_rate_vz_old
 
     call vr_vz(psi%old, vr, vz)   !get radial, axial velocities
     if (save_part) then
@@ -403,32 +451,32 @@ module io
       growth_error = growth_diff / abs(growth_rate_vz_old)
       !print*, Re1, growth_diff, growth_error
       if (auto_Re .and. ((growth_diff < growth_tol) .or. &
-          (dec_Re .and. zero_Re .and. (vz(nx/2,nz/2) < 1E-6_r2)))) then
+          (dec_Re .and. zero_Re .and. (vz(nx/2,nz/2) < 1E-6)))) then
         call increment_Re(growth_rate_vz, t)
       end if
       !write (37, '(4e17.9)') t, growth_rate_vz_old, growth_rate_vz, growth_diff
       growth_rate_vz_old = growth_rate_vz
       call save_energy(vr, ut%new, vz, t)
-      if ((abs(om1 - 0.0_r2) < epsilon(om1)) .and. &
-          (abs(om2 - 0.0_r2) < epsilon(om2))) then
+      if ((abs(om1 - 0.0) < epsilon(om1)) .and. &
+          (abs(om2 - 0.0) < epsilon(om2))) then
         if (hyst_Re) then
-          if (((abs(growth_rate_vz) < 1E-6_r2) .and. &
-               (abs(vz(nx/2,nz/2)) > 1E-3_r2))) then
+          if (((abs(growth_rate_vz) < 1E-6) .and. &
+               (abs(vz(nx/2,nz/2)) > 1E-3))) then
             call increment_hysteresis(.true., t)
-          else if ((abs(growth_rate_vz) > 1E-6_r2) .and. &
-                       (growth_error < 1E-8_r2)) then
+          else if ((abs(growth_rate_vz) > 1E-6) .and. &
+                       (growth_error < 1E-8)) then
             call increment_hysteresis(.false., t)
           end if
         end if
-        if ((abs(growth_rate) < 1E-8_r2) .and. &  !if vr saturated
-            (abs(vr(nx/2, nz/2)) > 1E-3_r2)) then
+        if ((abs(growth_rate) < 1E-8) .and. &  !if vr saturated
+            (abs(vr(nx/2, nz/2)) > 1E-3)) then
           saturated = saturated + 1
           if (saturated > 4) then
             if ((.not. auto_tau) .or. (tau == tau_end)) then
               !if tau not auto or tau at end finish
               call save_time_tau(tau, t)
               call end_state(ut%old, zt%old, psi%old, bt%old, jt%old, p, 1)
-            else if (tau < 1.0_r2) then
+            else if (tau < 1.0) then
               call save_time_tau(tau, t)
               tau = tau + tau_step   !increment tau
               print*, 'tau = ', tau
@@ -453,9 +501,9 @@ module io
     use variables
     implicit none
 
-    integer (i1), intent(in) :: p
-    real    (r2), intent(in) :: t
-    logical                  :: run_exist
+    integer, intent(in) :: p
+    real , intent(in) :: t
+    logical :: run_exist
 
     inquire(file='RUNNING', exist=run_exist)  !does 'RUNNING' exist?
     if (.not. run_exist) then  !if not then finish
@@ -479,9 +527,9 @@ module io
     use variables
     implicit none
 
-    integer (i1), intent(in) :: p
-    real    (r2), intent(in) :: t
-    logical                  :: save_exist
+    integer, intent(in) :: p
+    real, intent(in) :: t
+    logical :: save_exist
 
     inquire(file='save', exist=save_exist)   !does 'SAVE' exist?
     if (save_exist) then   !if so then save fields
@@ -501,11 +549,11 @@ module io
     use parameters
     implicit none
 
-    integer (i1), intent(in) :: p, flag
-    real    (r2), intent(in) :: u(0:nx,0:nz), zn(0:nx,0:nz), &
-                                pn(0:nx,0:nz), bn(0:nx,0:nz), &
-                                jn(0:nx,0:nz)
-    integer (i1)             :: j, k
+    integer, intent(in) :: p, flag
+    real, intent(in) :: u(0:nx,0:nz), zn(0:nx,0:nz), &
+                        pn(0:nx,0:nz), bn(0:nx,0:nz), &
+                        jn(0:nx,0:nz)
+    integer :: j, k
 
     open (50, file = 'end_state.dat', form='unformatted')
 
@@ -531,10 +579,9 @@ module io
 
   subroutine save_time_tau (tau, t)
     !Save the times at which tau is incremented
-    use parameters, only : r2
     implicit none
 
-    real (r2), intent(in) :: tau, t
+    real, intent(in) :: tau, t
 
     open (51, status = 'unknown', position = 'append', file = 'time_tau.dat')
     write (51, '(2e17.9)') t, tau
@@ -549,39 +596,39 @@ module io
     use variables, only : xold, zold
     implicit none
 
-    real    (r2), intent(in)    :: vr(0:nx, 0:nz), vz(0:nx, 0:nz), &
-                                   vrold(0:nx, 0:nz), vzold(0:nx, 0:nz)
-    integer (i1)                :: xmin(num_pars), xplu(num_pars), &
-                                   zmin(num_pars), zplu(num_pars), i, j
-    real    (r2)                :: cc1(num_pars), cc2(num_pars), &
-                                   rvel(num_pars), zvel(num_pars), &
-                                   xnew(num_pars), znew(num_pars), del_t
+    real, intent(in)    :: vr(0:nx, 0:nz), vz(0:nx, 0:nz), &
+                           vrold(0:nx, 0:nz), vzold(0:nx, 0:nz)
+    integer :: xmin(num_pars), xplu(num_pars), &
+               zmin(num_pars), zplu(num_pars), i, j
+    real :: cc1(num_pars), cc2(num_pars), &
+            rvel(num_pars), zvel(num_pars), &
+            xnew(num_pars), znew(num_pars), del_t
 
-    del_t = dt / 1.0_r2
+    del_t = dt / 1.0
 
     do j = 1, 1
-      xmin = INT(xold,i1)
-      xplu = INT(xold + 1.0_r2,i1)
-      zmin = INT(zold,i1)
-      zplu = INT(zold + 1.0_r2,i1)
+      xmin = int(xold)
+      xplu = int(xold + 1.0)
+      zmin = int(zold)
+      zplu = int(zold + 1.0)
 
       cc1 = (xold - xmin) / (xplu - xmin)
       cc2 = (zold - zmin) / (zplu - zmin)
 
       do i = 1, num_pars
-        rvel(i) = (1.0_r2 - cc1(i)) * (1.0_r2 - cc2(i)) * &
+        rvel(i) = (1.0 - cc1(i)) * (1.0 - cc2(i)) * &
                   vrold(xmin(i), zmin(i)) + &
-                  cc1(i)* (1.0_r2 - cc2(i)) * vrold(xplu(i), zmin(i)) + &
+                  cc1(i)* (1.0 - cc2(i)) * vrold(xplu(i), zmin(i)) + &
                   cc1(i) * cc2(i) * vrold(xplu(i), zplu(i)) + &
-                  (1.0_r2 - cc1(i)) * cc2(i) * vrold(xmin(i), zplu(i))
+                  (1.0 - cc1(i)) * cc2(i) * vrold(xmin(i), zplu(i))
       end do
 
       do i = 1, num_pars
-        zvel(i) = (1.0_r2 - cc1(i)) * (1.0_r2 - cc2(i)) * &
+        zvel(i) = (1.0 - cc1(i)) * (1.0 - cc2(i)) * &
                   vzold(xmin(i), zmin(i)) + &
-                  cc1(i) * (1.0_r2 - cc2(i)) * vzold(xplu(i), zmin(i)) + &
+                  cc1(i) * (1.0 - cc2(i)) * vzold(xplu(i), zmin(i)) + &
                   cc1(i) * cc2(i) * vzold(xplu(i), zplu(i)) + &
-                  (1.0_r2 - cc1(i)) * cc2(i) * vzold(xmin(i), zplu(i))
+                  (1.0 - cc1(i)) * cc2(i) * vzold(xmin(i), zplu(i))
       end do
 
       xnew = xold + del_t * rvel
@@ -607,17 +654,17 @@ module io
     use ic_bc, only : Re_1, Re_2
     implicit none
 
-    real (r2), intent(in)  :: t
-    real (r2), intent(out) :: Eccf
-    real (r2)              :: a, b, c
+    real, intent(in)  :: t
+    real, intent(out) :: Eccf
+    real :: a, b, c
 
-    a = 0.25_r2 * (Re_2(t) - eta * Re_1(t))**2 * (1.0_r2 - eta**4)
+    a = 0.25 * (Re_2(t) - eta * Re_1(t))**2 * (1.0 - eta**4)
     b = (Re_2(t) - eta * Re_1(t)) * (Re_1(t) - eta * Re_2(t)) * &
-        eta * (1.0_r2 - eta**2)
-    c = eta**2 * (Re_1(t) - eta * Re_2(t))**2 * log(1.0_r2 / eta)
+        eta * (1.0 - eta**2)
+    c = eta**2 * (Re_1(t) - eta * Re_2(t))**2 * log(1.0 / eta)
 
     Eccf = gamma * pi * (a + b + c) / &
-          ((1.0_r2 + eta)**2 * (one_eta)**4)
+          ((1.0 + eta)**2 * (one_eta)**4)
     
     return
   end subroutine energy_CCF
@@ -628,9 +675,9 @@ module io
     use variables, only : integrate_r, integrate_z
     implicit none
 
-    real (r2), intent(in)  :: ur(0:nx,0:nz), ut(0:nx,0:nz), uz(0:nx,0:nz), t
-    real (r2)              :: u2(0:nx,0:nz), int_r(0:nz), int_z, &
-                              Er, Et, Ez, E, Eccf
+    real, intent(in)  :: ur(0:nx,0:nz), ut(0:nx,0:nz), uz(0:nx,0:nz), t
+    real :: u2(0:nx,0:nz), int_r(0:nz), int_z, &
+            Er, Et, Ez, E, Eccf
 
     u2 = ur**2 + ut**2 + uz**2
 
@@ -665,18 +712,18 @@ module io
     use parameters
     implicit none
 
-    real (r2), intent(in) :: growth_rate, t
-    real (r2), save       :: Re_minus, Re_plus, growth_minus, growth_plus
+    real, intent(in) :: growth_rate, t
+    real, save :: Re_minus, Re_plus, growth_minus, growth_plus
 
     select case (dec_RE)
       case (.false.)
         if (init_Re) then
-          if (growth_rate < 0.0_r2) then
+          if (growth_rate < 0.0) then
             growth_minus = growth_rate
             Re_minus = Re1
             Re1 = Re1 + Re_incr
             gm_set = .true.
-          else if (growth_rate > 0.0_r2) then
+          else if (growth_rate > 0.0) then
             growth_plus = growth_rate
             Re_plus = Re1
             Re1 = Re1 - Re_incr
@@ -686,77 +733,77 @@ module io
         else if (.not. init_Re) then
           if ((.not. gm_set) .or. (.not. gp_set)) then
             if (.not. gp_set) then
-              if (growth_rate < 0.0_r2) then
+              if (growth_rate < 0.0) then
                 growth_minus = growth_rate
                 Re_minus = Re1
                 Re1 = Re1 + Re_incr
-              else if (growth_rate > 0.0_r2) then
+              else if (growth_rate > 0.0) then
                 growth_plus = growth_rate
                 Re_plus = Re1
-                Re1 = 0.5_r2 * (Re1 + Re_minus)
+                Re1 = 0.5 * (Re1 + Re_minus)
                 gp_set = .true.
               end if
             else if (.not. gm_set) then
-              if (growth_rate > 0.0_r2) then
+              if (growth_rate > 0.0) then
                 growth_plus = growth_rate
                 Re_plus = Re1
                 Re1 = Re1 - Re_incr
-              else if (growth_rate < 0.0_r2) then
+              else if (growth_rate < 0.0) then
                 growth_minus = growth_rate
                 Re_minus = Re1
-                Re1 = 0.5_r2 * (Re1 + Re_plus)
+                Re1 = 0.5 * (Re1 + Re_plus)
                 gm_set = .true.
               end if
             end if
           else
-            if (growth_rate < 0.0_r2) then
+            if (growth_rate < 0.0) then
               growth_minus = growth_rate
               Re_minus = Re1
-              Re1 = 0.5_r2 * (Re1 + Re_plus)
-            else if (growth_rate > 0.0_r2) then
+              Re1 = 0.5 * (Re1 + Re_plus)
+            else if (growth_rate > 0.0) then
               growth_plus = growth_rate
               Re_plus = Re1
-              Re1 = 0.5_r2 * (Re1 + Re_minus)
+              Re1 = 0.5 * (Re1 + Re_minus)
             end if
           end if
         end if
       case (.true.)
         if (init_Re) then
-          if (growth_rate < 0.0_r2) then
+          if (growth_rate < 0.0) then
             growth_minus = growth_rate
             Re_minus = Re1
             Re1 = Re1 - Re_incr
             gm_set = .true.
-          else if (growth_rate > 0.0_r2) then
+          else if (growth_rate > 0.0) then
             stop 'Decreasing Re boundary only but growth rate > 0'
           end if
           init_Re = .false.
         else if (.not. init_Re) then
           if (.not. gp_set) then
-            if (growth_rate < 0.0_r2) then
+            if (growth_rate < 0.0) then
               growth_minus = growth_rate
               Re_minus = Re1
               Re1 = Re1 - Re_incr
-            else if (growth_rate > 0.0_r2) then
+            else if (growth_rate > 0.0) then
               growth_plus = growth_rate
               Re_plus = Re1
-              Re1 = 0.0_r2
+              Re1 = 0.0
               zero_Re = .true.
               gp_set = .true.
             end if
           else
             if (zero_Re) then
-              Re1 = 0.5_r2 * (Re_minus + Re_plus)
+              Re1 = 0.5 * (Re_minus + Re_plus)
               zero_Re = .false.
             else if (.not. zero_Re) then
-              if (growth_rate < 0.0_r2) then
+              if (growth_rate < 0.0) then
                 growth_minus = growth_rate
                 Re_minus = Re1
-                Re1 = 0.5_r2 * (Re1 + Re_plus)
-              else if (growth_rate > 0.0_r2) then
+                Re1 = 0.5 * (Re1 + Re_plus)
+              else if (growth_rate > 0.0) then
                 growth_plus = growth_rate
                 Re_plus = Re1
-                Re1 = 0.0_r2
+                Re1 = 0.0
                 zero_Re = .true.
               end if
             end if
@@ -768,7 +815,7 @@ module io
     write (37, '(6e17.9)') t, Re1, Re_minus, Re_plus, growth_minus, growth_plus
     close (37)
     
-    if (abs(Re1 - Re_minus) < 1E-6_r2) then
+    if (abs(Re1 - Re_minus) < 1E-6) then
       open (99, file = 'RUNNING')
       close (99, status = 'delete')
     end if
@@ -783,9 +830,9 @@ module io
     use variables
     implicit none
 
-    real     (r2), intent(in) :: t
-    logical,       intent(in) :: test
-    real     (r2), save       :: Re_minus, Re_plus
+    real, intent(in) :: t
+    logical, intent(in) :: test
+    real, save :: Re_minus, Re_plus
 
     if (init_Re) then
       if (test) then
@@ -800,11 +847,11 @@ module io
           Re1 = Re1 - Re_incr
         else if (gm_set) then
           Re_plus = Re1
-          Re1 = 0.5_r2 * (Re_minus + Re_plus)
+          Re1 = 0.5 * (Re_minus + Re_plus)
         end if
       else if (.not. test) then
         Re_minus = Re1
-        Re1 = 0.5_r2 * (Re_minus + Re_plus)
+        Re1 = 0.5 * (Re_minus + Re_plus)
         gm_set = .true.
         open (50, file = 'end_state.dat', form = 'unformatted')
       
@@ -824,7 +871,7 @@ module io
 
     write (37, '(4e17.9)') t, Re1, Re_minus, Re_plus
     
-    if (abs(Re1 - Re_minus) < 1E-6_r2) then
+    if (abs(Re1 - Re_minus) < 1E-6) then
       open (99, file = 'RUNNING')
       close (99, status = 'delete')
     end if
@@ -837,17 +884,17 @@ module io
     use parameters
     implicit none
 
-    real (r2) :: timestep
+    real :: timestep
 
-    if (Re1 * Re2 >= 0.0_r2) then
-      timestep = max(1.0_r2, abs(Re1) + abs(Re1_mod), &
+    if (Re1 * Re2 >= 0.0) then
+      timestep = max(1.0, abs(Re1) + abs(Re1_mod), &
                  abs(Re2) + abs(Re2_mod))
     else
-      timestep = max(1.0_r2, abs(Re1) + abs(Re1_mod) + &
+      timestep = max(1.0, abs(Re1) + abs(Re1_mod) + &
                  abs(Re2) + abs(Re2_mod))
     end if
 
-    timestep = 1e-4_r2 * eta * 2.0_r2 * pi / (one_eta * timestep)
+    timestep = 1e-4 * eta * 2.0 * pi / (one_eta * timestep)
 
     print*, timestep
 

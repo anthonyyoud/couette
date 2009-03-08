@@ -4,11 +4,10 @@
 mkdir $1
 
 #Compile
-make clean; make
+make
 
 #Setup dir
-mv couette_mod.out $1
+mv couette_mod $1
 cp parameters.f90 $1
-cp run_script.sh $1
 
 cd $1

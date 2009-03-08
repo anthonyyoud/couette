@@ -4,9 +4,7 @@ OBJS		= couette_mod.o current.o derivs.o ic_bc.o io.o linear.o \
 		  stream.o variables.o
 FC		= sunf95
 FFLAGS	        = -fast
-LDBLAS          = -lblas
-LDLAPACK	= -llapack
-LDFLAGS		= -L/space/najy2/lib $(LDLAPACK) $(LDBLAS)
+LDFLAGS		= -llapack -lblas
 #-----------------------------------------------------------------------
 %.o : %.f90
 	$(FC) $(FFLAGS) -c $*.f90
