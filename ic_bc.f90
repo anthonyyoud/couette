@@ -7,7 +7,7 @@ module ic_bc
   public :: get_xzs, ICS, u_BCS, z_BCS, p_BCS, b_BCS, j_BCS, Re_1, Re_2, &
             state_restart
 
-  real, public :: x(0:nx), x_(0:nx), th(0:nt), z(0:nz), s(0:nx) 
+  double precision, public :: x(0:nx), x_(0:nx), th(0:nt), z(0:nz), s(0:nx) 
                                                 !finite-difference mesh
                                                 !s=eta+(1-eta)*x
   contains
@@ -20,18 +20,18 @@ module ic_bc
     integer :: j, k, l
 
     do k = 0, nz
-      z(k) = real(k) * delz
+      z(k) = dble(k) * delz
     end do
 
     do l = 0, nt
-      th(l) = real(l) * delt
+      th(l) = dble(l) * delt
     end do
 
     do j = 0, nx
-      x(j) = real(j) * delx
+      x(j) = dble(j) * delx
     end do
 
-    x_ = x + 1.0                 !shift radial coordinate for OpenDX
+    x_ = x + 1d0                 !shift radial coordinate for OpenDX
     s = eta + one_eta * x
 
     return
@@ -43,9 +43,9 @@ module ic_bc
     implicit none
 
     integer, intent(out) :: p
-    real, intent(inout) :: u(0:nx,0:nz), zn(0:nx,0:nz), &
-                           pn(0:nx,0:nz), bn(0:nx,0:nz), &
-                           jn(0:nx,0:nz)
+    double precision, intent(inout) :: u(0:nx,0:nz), zn(0:nx,0:nz), &
+                                       pn(0:nx,0:nz), bn(0:nx,0:nz), &
+                                       jn(0:nx,0:nz)
     integer :: j, k
     logical :: state_exist
 
@@ -57,29 +57,29 @@ module ic_bc
       print*, 'Getting restart conditions'
       call state_restart(u, zn, pn, bn, jn, p)  !get saved data if restart
     else                   !put in estimate of eigen-function shape
-      if (abs(tau - 1.0) < epsilon(tau)) then !which satisfies BCS
+      if (abs(tau - 1d0) < epsilon(tau)) then !which satisfies BCS
                                                  !multiplied by small seed
         do k = 0, nz
-          u(:,k) = seed * sin(2.0*pi*z(k)/gamma) * sin(pi*x(:))
-          pn(:,k) = seed * sin(2.0*pi*z(k)/gamma) * sin(pi*x(:))
-          bn(:,k) = seed * cos(2.0*pi*z(k)/gamma) / s(:)
-          jn(:,k) = seed * sin(pi*x(:)) * sin(2.0*pi*z(k)/gamma)
+          u(:,k) = seed * sin(2d0*pi*z(k)/gamma) * sin(pi*x(:))
+          pn(:,k) = seed * sin(2d0*pi*z(k)/gamma) * sin(pi*x(:))
+          bn(:,k) = seed * cos(2d0*pi*z(k)/gamma) / s(:)
+          jn(:,k) = seed * sin(pi*x(:)) * sin(2d0*pi*z(k)/gamma)
         end do
       else
         do k = 0, nz
-          u(:,k) = seed * sin(pi*x(:)) * cos(2.0*pi*z(k)/gamma)
-          pn(:,k) = seed * sin(pi*x(:)) * sin(2.0*pi*z(k)/gamma)
-          bn(:,k) = seed * sin(2.0*pi*z(k)/gamma) / s(:)
-          jn(:,k) = seed * sin(pi*x(:)) * cos(2.0*pi*z(k)/gamma)
+          u(:,k) = seed * sin(pi*x(:)) * cos(2d0*pi*z(k)/gamma)
+          pn(:,k) = seed * sin(pi*x(:)) * sin(2d0*pi*z(k)/gamma)
+          bn(:,k) = seed * sin(2d0*pi*z(k)/gamma) / s(:)
+          jn(:,k) = seed * sin(pi*x(:)) * cos(2d0*pi*z(k)/gamma)
         end do
 
         do k = 1, nz1
           do j = 1, nx1
-            zn(j,k) = -(pn(j+1,k) - 2.0 * pn(j,k) + pn(j-1,k)) / &
+            zn(j,k) = -(pn(j+1,k) - 2d0 * pn(j,k) + pn(j-1,k)) / &
                        (s(j) * dx2) + &
-                       0.5 * one_eta * (pn(j+1,k) - pn(j-1,k)) / &
+                       0.5d0 * one_eta * (pn(j+1,k) - pn(j-1,k)) / &
                        (s(j)**2 * delx) - &
-                       (pn(j,k+1) - 2.0 * pn(j,k) + pn(j,k-1)) / &
+                       (pn(j,k+1) - 2d0 * pn(j,k) + pn(j,k-1)) / &
                        (s(j) * dz2)  !ICS based on above fields for vorticity
           end do
         end do
@@ -95,12 +95,13 @@ module ic_bc
     implicit none
 
     integer, intent(out) :: p
-    real, intent(out) :: u(0:nx,0:nz), zn(0:nx,0:nz), pn(0:nx,0:nz), &
-                         bn(0:nx,0:nz), jn(0:nx,0:nz)
+    double precision, intent(out) :: u(0:nx,0:nz), zn(0:nx,0:nz), &
+                                     pn(0:nx,0:nz), bn(0:nx,0:nz), &
+                                     jn(0:nx,0:nz)
     integer :: j, k, nx_prev, nz_prev, alloc_err
-    real :: dt_prev
-    real, allocatable :: u_prev(:,:), z_prev(:,:), p_prev(:,:), &
-                         b_prev(:,:), j_prev(:,:)
+    double precision :: dt_prev
+    double precision, allocatable :: u_prev(:,:), z_prev(:,:), p_prev(:,:), &
+                                     b_prev(:,:), j_prev(:,:)
 
     open (50, file = 'end_state.dat', form='unformatted')
 
@@ -156,24 +157,24 @@ module ic_bc
     implicit none
 
     integer, intent(in)  :: nxp, nzp
-    real, intent(in)  :: u_(0:nxp,0:nzp), z_(0:nxp,0:nzp), &
-                         p_(0:nxp,0:nzp), b_(0:nxp,0:nzp), &
-                         j_(0:nxp,0:nzp)
-    real, intent(out) :: u(0:nx,0:nz), zn(0:nx,0:nz), &
-                         pn(0:nx,0:nz), bn(0:nx,0:nz), &
-                         jn(0:nx,0:nz)
+    double precision, intent(in)  :: u_(0:nxp,0:nzp), z_(0:nxp,0:nzp), &
+                                     p_(0:nxp,0:nzp), b_(0:nxp,0:nzp), &
+                                     j_(0:nxp,0:nzp)
+    double precision, intent(out) :: u(0:nx,0:nz), zn(0:nx,0:nz), &
+                                     pn(0:nx,0:nz), bn(0:nx,0:nz), &
+                                     jn(0:nx,0:nz)
     integer :: j, k
-    real :: dx_prev, dz_prev, x_prev(0:nxp), z_prev(0:nzp)
+    double precision :: dx_prev, dz_prev, x_prev(0:nxp), z_prev(0:nzp)
 
-    dx_prev = 1.0 / nxp       !previous space mesh
-    dz_prev = gamma / nzp
+    dx_prev = 1d0 / dble(nxp)       !previous space mesh
+    dz_prev = gamma / dble(nzp)
 
     do j = 0, nxp
-      x_prev(j) = real(j) * dx_prev
+      x_prev(j) = dble(j) * dx_prev
     end do
                                   !previous coordinates
     do k = 0, nzp
-      z_prev(k) = real(k) * dz_prev
+      z_prev(k) = dble(k) * dz_prev
     end do
 
     call inter_var(u_, x_prev, z_prev, nxp, nzp, u)
@@ -192,11 +193,11 @@ module ic_bc
     implicit none
     
     integer, intent(in) :: nxp, nzp
-    real, intent(in) :: in_var(0:nxp,0:nzp), x_prev(0:nxp), &
-                         z_prev(0:nzp)
-    real, intent(out) :: out_var(0:nx,0:nz)
+    double precision, intent(in) :: in_var(0:nxp,0:nzp), x_prev(0:nxp), &
+                                    z_prev(0:nzp)
+    double precision, intent(out) :: out_var(0:nx,0:nz)
     integer :: j, k, j2, k2
-    real :: int1, int2
+    double precision :: int1, int2
 
     do k = 0, nz   !new 'z' index
       k2 = int(nzp*k/nz)   !old 'z' index
@@ -204,10 +205,10 @@ module ic_bc
         j2 = int(nxp*j/nx)   !old 'x' index
         int1 = (x(j) - x_prev(j2)) / (x_prev(j2+1) - x_prev(j2))  !interpolating
         int2 = (z(k) - z_prev(k2)) / (z_prev(k2+1) - z_prev(k2))  !constants
-        out_var(j,k) = (1.0 - int1) * (1.0 - int2) * in_var(j2,k2) + &
-                       int1 * (1.0 - int2) * in_var(j2+1,k2) + &
+        out_var(j,k) = (1d0 - int1) * (1d0 - int2) * in_var(j2,k2) + &
+                       int1 * (1d0 - int2) * in_var(j2+1,k2) + &
                        int1 * int2 * in_var(j2+1,k2+1) + &   !bilinear
-                       (1.0 - int1) * int2 * in_var(j2,k2+1) !interpolation
+                       (1d0 - int1) * int2 * in_var(j2,k2+1) !interpolation
       end do
     end do
 
@@ -219,25 +220,25 @@ module ic_bc
     use parameters
     implicit none
 
-    real, intent(in) :: t
-    real, intent(out) :: u(0:nx,0:nz)
+    double precision, intent(in) :: t
+    double precision, intent(out) :: u(0:nx,0:nz)
     integer :: k
 
     !u(0,:) = Re1 + Re1_mod * cos(om1 * t) + &
-    !         eps1 * Re1 * (1.0 / eta - 1.0) * cos(freq1 * z(:))
+    !         eps1 * Re1 * (1d0 / eta - 1d0) * cos(freq1 * z(:))
     !u(nx,:) = Re2 + Re2_mod * cos(om2 * t) - &
     !         eps2 * cos(freq2 * z(:))
 
     u(0,:) = Re_1(t)
     u(nx,:) = Re_2(t)
     
-    if (abs(tau - 1.0) < epsilon(tau)) then
+    if (abs(tau - 1d0) < epsilon(tau)) then
       if (rot_ends) then
         u(:,0) = Re_1(t) * s(:) / eta
-        u(:,nz) = 0.0 !Re_1(t) * s(:) / eta
+        u(:,nz) = 0d0 !Re_1(t) * s(:) / eta
       else
-        u(:,0) = 0.0
-        u(:,nz) = 0.0
+        u(:,0) = 0d0
+        u(:,nz) = 0d0
       end if
     end if
 
@@ -249,22 +250,22 @@ module ic_bc
     use parameters
     implicit none
 
-    real, intent(in) :: t, pn(0:nx,0:nz)
-    real, intent(out) :: zn(0:nx,0:nz)
+    double precision, intent(in) :: t, pn(0:nx,0:nz)
+    double precision, intent(out) :: zn(0:nx,0:nz)
 
-    zn(0,:) = -(8.0 * pn(1,:) - pn(2,:)) / (2.0 * s(0) * dx2)
-    zn(nx,:) = -(8.0 * pn(nx1,:) - pn(nx-2,:)) / (2.0 * s(nx) * dx2)
+    zn(0,:) = -(8d0 * pn(1,:) - pn(2,:)) / (2d0 * s(0) * dx2)
+    zn(nx,:) = -(8d0 * pn(nx1,:) - pn(nx-2,:)) / (2d0 * s(nx) * dx2)
 
-    if (abs(tau - 1.0) < epsilon(tau)) then
-      zn(:,0) = -(8.0 * pn(:,1) - pn(:,2)) / &
-                 (2.0 * (s(:)) * dz2)
-      zn(:,nz) = -(8.0 * pn(:,nz1) - pn(:,nz-2)) / &
-                  (2.0 * (s(:)) * dz2)
+    if (abs(tau - 1d0) < epsilon(tau)) then
+      zn(:,0) = -(8d0 * pn(:,1) - pn(:,2)) / &
+                 (2d0 * (s(:)) * dz2)
+      zn(:,nz) = -(8d0 * pn(:,nz1) - pn(:,nz-2)) / &
+                  (2d0 * (s(:)) * dz2)
     else
-      zn(:,0) = (-tau / (s(:) * (1.0 - tau))) * &
-                (0.5 * (-pn(:,2) + 4.0 * pn(:,1)) / delz)
-      zn(:,nz) = (tau / (s(:) * (1.0 - tau))) * &
-                (0.5 * (pn(:,nz-2) - 4.0 * pn(:,nz1)) / delz)
+      zn(:,0) = (-tau / (s(:) * (1d0 - tau))) * &
+                (0.5d0 * (-pn(:,2) + 4d0 * pn(:,1)) / delz)
+      zn(:,nz) = (tau / (s(:) * (1d0 - tau))) * &
+                (0.5d0 * (pn(:,nz-2) - 4d0 * pn(:,nz1)) / delz)
     end if
 
     return
@@ -275,13 +276,13 @@ module ic_bc
     use parameters
     implicit none
 
-    real, intent(out) :: p(0:nx,0:nz)
+    double precision, intent(out) :: p(0:nx,0:nz)
 
-    p(0,:) = 0.0
-    p(nx,:) = 0.0
+    p(0,:) = 0d0
+    p(nx,:) = 0d0
 
-    p(:,0) = 0.0
-    p(:,nz) = 0.0
+    p(:,0) = 0d0
+    p(:,nz) = 0d0
 
     return
   end subroutine p_BCS
@@ -291,11 +292,11 @@ module ic_bc
     use parameters
     implicit none
 
-    real, intent(out) :: bn(0:nx,0:nz)
+    double precision, intent(out) :: bn(0:nx,0:nz)
 
-    if (abs(tau - 0.0) < epsilon(tau)) then
-      bn(:,0) = 0.0
-      bn(:,nz) = 0.0
+    if (abs(tau - 0d0) < epsilon(tau)) then
+      bn(:,0) = 0d0
+      bn(:,nz) = 0d0
     end if
 
     return
@@ -306,14 +307,14 @@ module ic_bc
     use parameters
     implicit none
 
-    real, intent(out) :: jn(0:nx,0:nz)
+    double precision, intent(out) :: jn(0:nx,0:nz)
 
-    jn(0,:) = 0.0
-    jn(nx,:) = 0.0
+    jn(0,:) = 0d0
+    jn(nx,:) = 0d0
 
-    if (abs(tau - 1.0) < epsilon(tau)) then
-      jn(:,0) = 0.0
-      jn(:,nz) = 0.0
+    if (abs(tau - 1d0) < epsilon(tau)) then
+      jn(:,0) = 0d0
+      jn(:,nz) = 0d0
     end if
 
     return
@@ -324,8 +325,8 @@ module ic_bc
     use parameters
     implicit none
                       
-    real, intent(in) :: t
-    real :: Re_1 
+    double precision, intent(in) :: t
+    double precision :: Re_1 
 
     Re_1 = Re1 + Re1_mod * cos(om1 * t)
                                                           
@@ -337,8 +338,8 @@ module ic_bc
     use parameters
     implicit none
 
-    real, intent(in) :: t
-    real :: Re_2
+    double precision, intent(in) :: t
+    double precision :: Re_2
 
     Re_2 = Re2 + Re2_mod * cos(om2 * t)
 
@@ -350,7 +351,7 @@ module ic_bc
     implicit none
 
     integer, intent(in) :: index
-    real :: f1
+    double precision :: f1
 
     f1 = eps1 * cos(freq1*z(index))
 
@@ -362,7 +363,7 @@ module ic_bc
     implicit none
 
     integer, intent(in) :: index
-    real :: f2
+    double precision :: f2
 
     f2 = eps2 * cos(freq2*z(index)-pi)
 

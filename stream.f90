@@ -15,12 +15,12 @@ module stream
     use ic_bc, only : p_BCS, s
     implicit none
 
-    real, intent(in) :: Z_mat(0:nx,0:nz), &
-                        p_mat(2*nx1+nx1+1,nx1*nz1)
-    real, intent(out) :: psi(0:nx,0:nz)
+    double precision, intent(in) :: Z_mat(0:nx,0:nz), &
+                                    p_mat(2*nx1+nx1+1,nx1*nz1)
+    double precision, intent(out) :: psi(0:nx,0:nz)
     integer, intent(in) :: IPIV(nx1*nz1)
     integer :: j, k, info
-    real :: zvec(nx1*nz1)
+    double precision :: zvec(nx1*nz1)
 
     do k = 1, nz1
       do j = 1, nx1
@@ -28,10 +28,10 @@ module stream
       end do
     end do
 
-    call SGBTRS('N', nx1*nz1, nx1, nx1, 1, p_mat, 2*nx1+nx1+1, &
+    call DGBTRS('N', nx1*nz1, nx1, nx1, 1, p_mat, 2*nx1+nx1+1, &
                  IPIV, zvec, nx1*nz1, info)
     if (info /= 0) then
-      print*, 'ERROR: SPr solve error psi_SGBTRS, INFO=', info
+      print*, 'ERROR: Solve error psi_DGBTRS, INFO=', info
       stop
     end if
 

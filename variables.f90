@@ -7,57 +7,57 @@ module variables
   public :: copy_var, vr_vz, integrate_r, integrate_z, &
             particle_setup
 
-  real, parameter, private   :: c1=3.0/8.0, & !Constants for
-                                c2=7.0/6.0, & !numerical
-                                c3=23.0/24.0  !integration
+  double precision, parameter, private :: c1=3d0/8d0, & !Constants for
+                                          c2=7d0/6d0, & !numerical
+                                          c3=23d0/24d0  !integration
 
   type, public :: var
     !variables
-    real :: new(0:nx,0:nz)
-    real :: old(0:nx,0:nz)
-    real :: old2(0:nx,0:nz)
-    real :: inter(0:nx,0:nz)
-    real :: nlin_new(0:nx,0:nz)
-    real :: nlin_old(0:nx,0:nz)
+    double precision :: new(0:nx,0:nz)
+    double precision :: old(0:nx,0:nz)
+    double precision :: old2(0:nx,0:nz)
+    double precision :: inter(0:nx,0:nz)
+    double precision :: nlin_new(0:nx,0:nz)
+    double precision :: nlin_old(0:nx,0:nz)
   end type var
 
   type, public :: deriv
     !derivatives
-    real :: x(0:nx,0:nz)
-    real :: xx(0:nx,0:nz)
-    real :: z(0:nx,0:nz)
-    real :: zz(0:nx,0:nz)
-    real :: zx(0:nx,0:nz)
-    real :: zxx(0:nx,0:nz)
-    real :: zzz(0:nx,0:nz)
+    double precision :: x(0:nx,0:nz)
+    double precision :: xx(0:nx,0:nz)
+    double precision :: z(0:nx,0:nz)
+    double precision :: zz(0:nx,0:nz)
+    double precision :: zx(0:nx,0:nz)
+    double precision :: zxx(0:nx,0:nz)
+    double precision :: zzz(0:nx,0:nz)
   end type deriv
 
   type, public :: mat_comp
     !matrix components
-    real :: lo(2:nx1)
-    real :: di(nx1)
-    real :: up(nx-2)
+    double precision :: lo(2:nx1)
+    double precision :: di(nx1)
+    double precision :: up(nx-2)
   end type mat_comp
 
   type, public :: uz_mat_comp
     !matrix components for u in the z-direction
-    real :: lo(nz)
-    real :: di(0:nz)
-    real :: up(0:nz1)
+    double precision :: lo(nz)
+    double precision :: di(0:nz)
+    double precision :: up(0:nz1)
   end type uz_mat_comp
 
   type, public :: zz_mat_comp
     !matrix components for Z in the z-direction
-    real :: lo(2:nz1)
-    real :: di(nz1)
-    real :: up(nz-2)
+    double precision :: lo(2:nz1)
+    double precision :: di(nz1)
+    double precision :: up(nz-2)
   end type zz_mat_comp
 
   type (var), public, save :: ut, zt, psi, bt, jt
-  real, public, save :: vr(0:nx,0:nz), vz(0:nx,0:nz), &
-                        vrold(0:nx,0:nz) = 0.0, &
-                        vzold(0:nx,0:nz) = 0.0, &
-                        xold(num_pars), zold(num_pars)
+  double precision, public, save :: vr(0:nx,0:nz), vz(0:nx,0:nz), &
+                                    vrold(0:nx,0:nz) = 0d0, &
+                                    vzold(0:nx,0:nz) = 0d0, &
+                                    xold(num_pars), zold(num_pars)
 
   contains
 
@@ -66,8 +66,8 @@ module variables
     use parameters
     implicit none
 
-    real, intent(in) :: var_in(0:nx,0:nz)
-    real, intent(out) :: var_out(0:nx,0:nz)
+    double precision, intent(in) :: var_in(0:nx,0:nz)
+    double precision, intent(out) :: var_out(0:nx,0:nz)
 
     var_out = var_in
 
@@ -81,33 +81,33 @@ module variables
     use derivs, only : deriv_x, deriv_z
     implicit none
 
-    real, intent(in) :: p(0:nx,0:nz)
-    real, intent(out) :: vr(0:nx,0:nz), vz(0:nx,0:nz)
+    double precision, intent(in) :: p(0:nx,0:nz)
+    double precision, intent(out) :: vr(0:nx,0:nz), vz(0:nx,0:nz)
     integer :: j, k
-    real :: vrx(0:nx,0:nz), vzz(0:nx,0:nz), div
+    double precision :: vrx(0:nx,0:nz), vzz(0:nx,0:nz), div
 
     do k = 1, nz1
-      vr(:,k) = (-1.0 / (2.0 * s(:) * delz)) * (p(:,k+1) - p(:,k-1))
+      vr(:,k) = (-1d0 / (2d0 * s(:) * delz)) * (p(:,k+1) - p(:,k-1))
     end do
 
-    if (abs(tau - 1.0) > epsilon(tau)) then
-      vr(:,0) = (-1.0 / (2.0 * s(:) * delz)) * &
-                (-3.0 * p(:,0) + 4.0 * p(:,1) - p(:,2))
-      vr(:,nz) = (-1.0 / (2.0 * s(:) * delz)) * &
-                 (3.0 * p(:,nz) - 4.0 * p(:,nz1) + p(:,nz-2))
+    if (abs(tau - 1d0) > epsilon(tau)) then
+      vr(:,0) = (-1d0 / (2d0 * s(:) * delz)) * &
+                (-3d0 * p(:,0) + 4d0 * p(:,1) - p(:,2))
+      vr(:,nz) = (-1d0 / (2d0 * s(:) * delz)) * &
+                 (3d0 * p(:,nz) - 4d0 * p(:,nz1) + p(:,nz-2))
     else
-      vr(:,0) = 0.0
-      vr(:,nz) = 0.0
+      vr(:,0) = 0d0
+      vr(:,nz) = 0d0
     end if
 
     do j = 1, nx1
-      vz(j,:) = (1.0 / (2.0 * s(j) * delx)) * (p(j+1,:) - p(j-1,:))
+      vz(j,:) = (1d0 / (2d0 * s(j) * delx)) * (p(j+1,:) - p(j-1,:))
     end do
 
-    vz(0,:) = 0.0 !(1.0 / (2.0 * s(0) * delx)) * &
-                  !(-3.0 * p(0,k) + 4.0 * p(1,k) - p(2,k))
-    vz(nx,:) = 0.0 !(1.0 / (2.0 * s(nx) * delx)) * &
-                  !(3.0 * p(nx,k) - 4.0 * p(nx1,k) + p(nx-2,k))
+    vz(0,:) = 0d0 !(1d0 / (2d0 * s(0) * delx)) * &
+                  !(-3d0 * p(0,k) + 4d0 * p(1,k) - p(2,k))
+    vz(nx,:) = 0d0 !(1d0 / (2d0 * s(nx) * delx)) * &
+                  !(3d0 * p(nx,k) - 4d0 * p(nx1,k) + p(nx-2,k))
 
 
     if (divergence) then
@@ -121,12 +121,12 @@ module variables
       call deriv_x(vr, vrx)
       call deriv_z(vz, vzz)
       
-      div = 0.0
+      div = 0d0
       
       do k = 0, nz
         do j = 1, nx1
-          div = div + one_eta * vrx(j,k) / s(j) + 0.5 * vrx(j,k) / delx + &
-                       0.5 * vzz(j,k) / delz
+          div = div + one_eta * vrx(j,k) / s(j) + 0.5d0 * vrx(j,k) / delx + &
+                       0.5d0 * vzz(j,k) / delz
         end do
       end do
     
@@ -145,13 +145,13 @@ module variables
     use ic_bc, only : s
     implicit none
                                                                                 
-    real, intent(in) :: in_var(0:nx,0:nz)
-    real, intent(out) :: r_int(0:nz)
+    double precision, intent(in) :: in_var(0:nx,0:nz)
+    double precision, intent(out) :: r_int(0:nz)
     integer :: j, k
-    real :: var(0:nx,0:nz)
+    double precision :: var(0:nx,0:nz)
                                                                                 
     do j = 0, nx
-      var(j,:) = in_var(j,:) * s(j) / (1.0 - eta)
+      var(j,:) = in_var(j,:) * s(j) / (1d0 - eta)
     end do
 
     do k = 0, nz
@@ -172,8 +172,8 @@ module variables
     use parameters
     implicit none
                                                                                 
-    real, intent(in) :: in_var(0:nz)
-    real, intent(out) :: z_int
+    double precision, intent(in) :: in_var(0:nz)
+    double precision, intent(out) :: z_int
                                                                                 
     z_int = (c1 * in_var(0) + &
              c2 * in_var(1) + &
@@ -192,7 +192,7 @@ module variables
     implicit none
 
     integer :: j, k
-    real :: x_par_pos, z_par_pos
+    double precision :: x_par_pos, z_par_pos
     
     call random_seed()
 

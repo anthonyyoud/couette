@@ -20,28 +20,28 @@ module matrices
     type (uz_mat_comp), intent(out) :: uz
     type (zz_mat_comp), intent(out) :: zz
 
-    ux%di(:) = 1.0 + rxx + one_eta**2 * dt * 0.5 / s(1:nx1)**2
-    ux%lo(:) = -0.5 * rxx + one_eta * rx * 0.25 / s(2:nx1)
-    ux%up(:) = -0.5 * rxx - one_eta * rx * 0.25 / s(1:nx-2)
+    ux%di(:) = 1d0 + rxx + one_eta**2 * dt * 0.5d0 / s(1:nx1)**2
+    ux%lo(:) = -0.5d0 * rxx + one_eta * rx * 0.25d0 / s(2:nx1)
+    ux%up(:) = -0.5d0 * rxx - one_eta * rx * 0.25d0 / s(1:nx-2)
 
-    uz%di(:) = 1.0 + rzz
-    uz%lo(:) = -0.5 * rzz
-    uz%up(:) = -0.5 * rzz
+    uz%di(:) = 1d0 + rzz
+    uz%lo(:) = -0.5d0 * rzz
+    uz%up(:) = -0.5d0 * rzz
 
-    if (abs(tau - 1.0) > epsilon(tau)) then
-      uz%di(0) = 1.0 + rzz + (rz * tau / (1.0 - tau))  !extra entries -
-      uz%di(nz) = 1.0 + rzz + (rz * tau / (1.0 - tau)) !Neumann BCS ends
+    if (abs(tau - 1d0) > epsilon(tau)) then
+      uz%di(0) = 1d0 + rzz + (rz * tau / (1d0 - tau))  !extra entries -
+      uz%di(nz) = 1d0 + rzz + (rz * tau / (1d0 - tau)) !Neumann BCS ends
       uz%lo(nz) = -rzz
       uz%up(0) = -rzz
     end if
 
-    zx%di(:) = 1.0 + rxx + one_eta**2 * dt * 0.5 / s(1:nx1)**2
-    zx%lo(:) = -0.5 * rxx + one_eta * rx * 0.25 / s(2:nx1)
-    zx%up(:) = -0.5 * rxx - one_eta * rx * 0.25 / s(1:nx-2)
+    zx%di(:) = 1d0 + rxx + one_eta**2 * dt * 0.5d0 / s(1:nx1)**2
+    zx%lo(:) = -0.5d0 * rxx + one_eta * rx * 0.25d0 / s(2:nx1)
+    zx%up(:) = -0.5d0 * rxx - one_eta * rx * 0.25d0 / s(1:nx-2)
 
-    zz%di(:) = 1.0 + rzz
-    zz%lo(:) = -0.5 * rzz
-    zz%up(:) = -0.5 * rzz
+    zz%di(:) = 1d0 + rzz
+    zz%lo(:) = -0.5d0 * rzz
+    zz%up(:) = -0.5d0 * rzz
 
     return
   end subroutine matrix_setup
@@ -52,14 +52,14 @@ module matrices
     use ic_bc, only : s
     implicit none
 
-    real, intent(out) :: p_mat(2*nx1+nx1+1,nx1*nz1)
+    double precision, intent(out) :: p_mat(2*nx1+nx1+1,nx1*nz1)
     integer, intent(out) :: IPIV(nx1*nz1)
     integer :: j, k, info
-    real :: alp(0:nx), gam(0:nx), beta, delta
+    double precision :: alp(0:nx), gam(0:nx), beta, delta
 
-    alp = dz2 + 0.5 * delx * dz2 * one_eta / s   !coefficients
-    gam = dz2 - 0.5 * delx * dz2 * one_eta / s   !in matrix
-    beta = -2.0 * (dz2 + dx2)
+    alp = dz2 + 0.5d0 * delx * dz2 * one_eta / s   !coefficients
+    gam = dz2 - 0.5d0 * delx * dz2 * one_eta / s   !in matrix
+    beta = -2d0 * (dz2 + dx2)
     delta = dx2
 
     do j = 1, nx1*nz1
@@ -71,7 +71,7 @@ module matrices
     end do
 
     do j = nx1, nx1*nz1-nx1, nx1
-      p_mat(2*nx1,j+1) = 0.0   !upper-diagonal, BCS
+      p_mat(2*nx1,j+1) = 0d0   !upper-diagonal, BCS
     end do
 
     do j = 2, nx1*nz1
@@ -79,7 +79,7 @@ module matrices
     end do
     
     do j = nx, nx1*nz1-nx1+1, nx1
-       p_mat(2*nx1+2,j-1) = 0.0   !lower-diagonal, BCS
+       p_mat(2*nx1+2,j-1) = 0d0   !lower-diagonal, BCS
     end do
     
     do j = 1, nx1*nz1-nx1
@@ -90,10 +90,10 @@ module matrices
        p_mat(2*nx1+1+nx1,j-nx1) = delta  !lower band
     end do
 
-    !LU factorisation of the matrix for use in D/SGBTRS to solve
-    call SGBTRF(nx1*nz1, nx1*nz1, nx1, nx1, p_mat, 2*nx1+nx1+1, IPIV, info)
+    !LU factorisation of the matrix for use in DGBTRS to solve
+    call DGBTRF(nx1*nz1, nx1*nz1, nx1, nx1, p_mat, 2*nx1+nx1+1, IPIV, info)
     if (info /= 0) then
-      print*, 'ERROR: SPr factorisation error psi_SGBTRF, INFO=', info
+      print*, 'ERROR: Factorisation error psi_DGBTRF, INFO=', info
       stop
     end if
 
@@ -107,14 +107,14 @@ module matrices
     use ic_bc, only : s
     implicit none
 
-    real, intent(out) :: b_mat(2*nxp1+nxp1+1,0:nxp1*nz1-1)
+    double precision, intent(out) :: b_mat(2*nxp1+nxp1+1,0:nxp1*nz1-1)
     integer, intent(out) :: IPIV(nxp1*nz1)
     integer :: j, k, info
-    real :: alp(0:nx), beta(0:nx), gam(0:nx), delta
+    double precision :: alp(0:nx), beta(0:nx), gam(0:nx), delta
 
-    alp(:) = dz2 - 0.5 * delx * dz2 * one_eta / s(:)
-    beta(:) = -2.0 * (dz2 + dx2) - dx2 * dz2 * one_eta**2 / s(:)**2
-    gam(:) = dz2 + 0.5 * delx * dz2 * one_eta / s(:)
+    alp(:) = dz2 - 0.5d0 * delx * dz2 * one_eta / s(:)
+    beta(:) = -2d0 * (dz2 + dx2) - dx2 * dz2 * one_eta**2 / s(:)**2
+    gam(:) = dz2 + 0.5d0 * delx * dz2 * one_eta / s(:)
     delta = dx2
 
     do j = 0, nxp1*nz1-1
@@ -138,20 +138,20 @@ module matrices
     end do
     
     do j = nx, nxp1*nz1-nxp1-1, nxp1
-      b_mat(2*nx+2,j+1) = 0.0  
+      b_mat(2*nx+2,j+1) = 0d0  
     end do
     
     do j = nxp1, nxp1*nz1-nxp1, nxp1
-      b_mat(2*nx+4,j-1) = 0.0
+      b_mat(2*nx+4,j-1) = 0d0
     end do
     
     do j = 0, nxp1*nz1-nxp1, nxp1
-      b_mat(2*nx+3,j) = (2.0 * alp(0) * delx * (1.0 - eta) / &
+      b_mat(2*nx+3,j) = (2d0 * alp(0) * delx * (1d0 - eta) / &
                          s(0)) + beta(0)
     end do
     
     do j = nx, nxp1*nz1-1, nxp1
-      b_mat(2*nx+3,j) = (-2.0 * gam(nx) * delx * (1.0 - eta) / &
+      b_mat(2*nx+3,j) = (-2d0 * gam(nx) * delx * (1d0 - eta) / &
                          s(nx)) + beta(nx)
     end do
     
@@ -163,10 +163,10 @@ module matrices
       b_mat(2*nx+4,j-1) = alp(nx) + gam(nx)
     end do
 
-    call SGBTRF(nxp1*nz1, nxp1*nz1, nxp1, nxp1, b_mat, 2*nxp1+nxp1+1, &
+    call DGBTRF(nxp1*nz1, nxp1*nz1, nxp1, nxp1, b_mat, 2*nxp1+nxp1+1, &
                 IPIV, info)
     if (info /= 0) then
-      print*, 'ERROR: SPr factorisation error mag_inf_SGBTRF, INFO=', info
+      print*, 'ERROR: Factorisation error mag_inf_DGBTRF, INFO=', info
       stop
     end if
 
@@ -178,14 +178,14 @@ module matrices
     use ic_bc, only : s
     implicit none
 
-    real, intent(out) :: b_mat(2*nxp1+nxp1+1,0:nxp1*nzp1-1)
+    double precision, intent(out) :: b_mat(2*nxp1+nxp1+1,0:nxp1*nzp1-1)
     integer, intent(out) :: IPIV(nxp1*nzp1)
     integer :: j, k, info
-    real :: alp(0:nx), beta(0:nx), gam(0:nx), delta
+    double precision :: alp(0:nx), beta(0:nx), gam(0:nx), delta
 
-    alp(:) = dz2 - 0.5 * delx * dz2 * one_eta / s(:)
-    beta(:) = -2.0 * (dz2 + dx2) - dx2 * dz2 * one_eta**2 / s(:)**2
-    gam(:) = dz2 + 0.5 * delx * dz2 * one_eta / s(:)
+    alp(:) = dz2 - 0.5d0 * delx * dz2 * one_eta / s(:)
+    beta(:) = -2d0 * (dz2 + dx2) - dx2 * dz2 * one_eta**2 / s(:)**2
+    gam(:) = dz2 + 0.5d0 * delx * dz2 * one_eta / s(:)
     delta = dx2
 
     !diagonal
@@ -215,60 +215,60 @@ module matrices
     
     !upper diagonal, j=nx, so j=0 not present
     do j = nx, nxp1*nzp1-nxp1-1, nxp1
-      b_mat(2*nx+2,j+1) = 0.0
+      b_mat(2*nx+2,j+1) = 0d0
     end do
     
     !lower diagonal, j=0, so j=nx not present
     do j = nxp1, nxp1*nzp1-nxp1, nxp1
-      b_mat(2*nx+4,j-1) = 0.0
+      b_mat(2*nx+4,j-1) = 0d0
     end do
     
     !diagonal, j=0
     do j = 0, nxp1*nzp1-nxp1, nxp1
-      b_mat(2*nx+3,j) = (2.0 * alp(0) * delx * (1.0 - eta) / &
+      b_mat(2*nx+3,j) = (2d0 * alp(0) * delx * (1d0 - eta) / &
                          s(0)) + beta(0)
     end do
     
     !diagonal, k=0
     do j = 0, nx
       b_mat(2*nx+3,j) = beta(mod(j, nxp1)) - &
-                        2.0 * delta * delz * (1.0 - tau) / tau
+                        2d0 * delta * delz * (1d0 - tau) / tau
     end do
     
     !diagonal, j=nx
     do j = nx, nxp1*nzp1-1, nxp1
-      b_mat(2*nx+3,j) = (-2.0 * gam(nx) * delx * (1.0 - eta) / s(nx)) + &
+      b_mat(2*nx+3,j) = (-2d0 * gam(nx) * delx * (1d0 - eta) / s(nx)) + &
                          beta(nx)
     end do
     
     !diagonal, k=nz
     do j = nxp1*nzp1-nxp1, nxp1*nzp1-1
       b_mat(2*nx+3,j) = beta(mod(j, nxp1)) - &
-                        2.0 * delta * delz * (1.0 - tau) / tau
+                        2d0 * delta * delz * (1d0 - tau) / tau
     end do
     
     !diagonal, j=0, k=0
     b_mat(2*nx+3,0) = beta(0) - &
-                      2.0 * delta * delz * (1.0 - tau) / tau + &
-                     (2.0 * alp(0) * delx * (1.0 - eta) / s(0))
+                      2d0 * delta * delz * (1d0 - tau) / tau + &
+                     (2d0 * alp(0) * delx * (1d0 - eta) / s(0))
     
     !diagonal, j=0, k=nz
     b_mat(2*nx+3,nxp1*nzp1-nxp1) = beta(0) - &
-                                   2.0 * delta * delz * (1.0 - tau) / &
+                                   2d0 * delta * delz * (1d0 - tau) / &
                                    tau + &
-                                  (2.0 * alp(0) * delx * (1.0 - eta) / &
+                                  (2d0 * alp(0) * delx * (1d0 - eta) / &
                                   s(0))
     
     !diagonal, j=nx, k=0
     b_mat(2*nx+3,nx) = beta(nx) - &
-                      2.0 * delta * delz * (1.0 - tau) / tau - &
-                     (2.0 * gam(nx) * delx * (1.0 - eta) / s(nx))
+                      2d0 * delta * delz * (1d0 - tau) / tau - &
+                     (2d0 * gam(nx) * delx * (1d0 - eta) / s(nx))
     
     !diagonal, j=nx, k=nz
     b_mat(2*nx+3,nxp1*nzp1-1) = beta(nx) - &
-                                2.0 * delta * delz * (1.0 - tau) / &
+                                2d0 * delta * delz * (1d0 - tau) / &
                                 tau - &
-                               (2.0 * gam(nx) * delx * (1.0 - eta) / &
+                               (2d0 * gam(nx) * delx * (1d0 - eta) / &
                                 s(nx))
     
     !upper diagonal, j=0
@@ -283,18 +283,18 @@ module matrices
     
     !upper diagonal branch, k=0
     do j = 0, nx
-      b_mat(nx+2,j+nxp1) = 2.0 * delta
+      b_mat(nx+2,j+nxp1) = 2d0 * delta
     end do
     
     !lower diagonal branch, k=nz
     do j = nxp1*nzp1-nxp1, nxp1*nzp1-1
-      b_mat(3*nx+4,j-nxp1) = 2.0 * delta
+      b_mat(3*nx+4,j-nxp1) = 2d0 * delta
     end do
 
-    call SGBTRF(nxp1*nzp1, nxp1*nzp1, nxp1, nxp1, b_mat, 2*nxp1+nxp1+1, &
+    call DGBTRF(nxp1*nzp1, nxp1*nzp1, nxp1, nxp1, b_mat, 2*nxp1+nxp1+1, &
                 IPIV, info)
     if (info /= 0) then
-      print*, 'ERROR: SPr factorisation error mag_fin_SGBTRF, INFO=', info
+      print*, 'ERROR: Factorisation error mag_fin_DGBTRF, INFO=', info
       stop
     end if
 
@@ -306,14 +306,14 @@ module matrices
     use ic_bc, only : s
     implicit none
 
-    real, intent(out) :: j_mat(2*nx1+nx1+1,nx1*nzp1)
+    double precision, intent(out) :: j_mat(2*nx1+nx1+1,nx1*nzp1)
     integer, intent(out) :: IPIV(nx1*nzp1)
     integer :: j, k, info
-    real :: alp(0:nx), beta(0:nx), gam(0:nx), delta
+    double precision :: alp(0:nx), beta(0:nx), gam(0:nx), delta
 
-    alp(:) = dz2 - 0.5 * delx * dz2 * one_eta / s(:)
-    beta(:) = -2.0 * (dz2 + dx2) - dx2 * dz2 * one_eta**2 / s(:)**2
-    gam(:) = dz2 + 0.5 * delx * dz2 * one_eta / s(:)
+    alp(:) = dz2 - 0.5d0 * delx * dz2 * one_eta / s(:)
+    beta(:) = -2d0 * (dz2 + dx2) - dx2 * dz2 * one_eta**2 / s(:)**2
+    gam(:) = dz2 + 0.5d0 * delx * dz2 * one_eta / s(:)
     delta = dx2
 
     do j = 1, nx1*nzp1
@@ -322,12 +322,12 @@ module matrices
     
     do j = 1, nx1
       j_mat(2*nx-1,j) = beta(mod(j-1, nx1)+1) - &
-                        2.0 * delta * delz * tau / (1.0 - tau)
+                        2d0 * delta * delz * tau / (1d0 - tau)
     end do
     
     do j = nx1*nzp1-nx1+1, nx1*nzp1
       j_mat(2*nx-1,j) = beta(mod(j-1, nx1)+1) - &
-                        2.0 * delta * delz * tau / (1.0 - tau)
+                        2d0 * delta * delz * tau / (1d0 - tau)
     end do
     
     do j = 1, nx1*nzp1-1
@@ -335,7 +335,7 @@ module matrices
     end do
     
     do j = nx1, nx1*nzp1-nx1, nx1
-      j_mat(2*nx-2,j+1) = 0.0
+      j_mat(2*nx-2,j+1) = 0d0
     end do
     
     do j = 2, nx1*nzp1
@@ -343,7 +343,7 @@ module matrices
     end do
     
     do j = nx, nx1*nzp1-nx1+1, nx1
-      j_mat(2*nx,j-1) = 0.0
+      j_mat(2*nx,j-1) = 0d0
     end do
     
     do j = 1, nx1*nzp1-nx1
@@ -355,17 +355,17 @@ module matrices
     end do
     
     do j = 1, nx1
-      j_mat(nx,j+nx1) = 2.0 * delta
+      j_mat(nx,j+nx1) = 2d0 * delta
     end do
     
     do j = nx1*nzp1-nx1+1, nx1*nzp1
-      j_mat(3*nx-2,j-nx1) = 2.0 * delta
+      j_mat(3*nx-2,j-nx1) = 2d0 * delta
     end do
 
-    call SGBTRF(nx1*nzp1, nx1*nzp1, nx1, nx1, j_mat, 2*nx1+nx1+1, IPIV, &
+    call DGBTRF(nx1*nzp1, nx1*nzp1, nx1, nx1, j_mat, 2*nx1+nx1+1, IPIV, &
                 info)
     if (info /= 0) then
-      print*, 'ERROR: SPr factorisation error cur_inf_SGBTRF, INFO=', info
+      print*, 'ERROR: Factorisation error cur_inf_DGBTRF, INFO=', info
       stop
     end if
 
@@ -377,14 +377,14 @@ module matrices
     use ic_bc, only : s
     implicit none
 
-    real, intent(out) :: j_mat(2*nx1+nx1+1,nx1*nz1)
+    double precision, intent(out) :: j_mat(2*nx1+nx1+1,nx1*nz1)
     integer, intent(out) :: IPIV(nx1*nz1)
     integer :: j, k, info
-    real :: alp(0:nx), beta(0:nx), gam(0:nx), delta
+    double precision :: alp(0:nx), beta(0:nx), gam(0:nx), delta
 
-    alp(:) = dz2 - 0.5 * delx * dz2 * one_eta / s(:)
-    beta(:) = -2.0 * (dz2 + dx2) - dx2 * dz2 * one_eta**2 / s(:)**2
-    gam(:) = dz2 + 0.5 * delx * dz2 * one_eta / s(:)
+    alp(:) = dz2 - 0.5d0 * delx * dz2 * one_eta / s(:)
+    beta(:) = -2d0 * (dz2 + dx2) - dx2 * dz2 * one_eta**2 / s(:)**2
+    gam(:) = dz2 + 0.5d0 * delx * dz2 * one_eta / s(:)
     delta = dx2
 
     do j = 1, nx1*nz1
@@ -396,7 +396,7 @@ module matrices
     end do
     
     do j = nx1, nx1*nz1-nx1, nx1
-      j_mat(2*nx-2,j+1) = 0.0
+      j_mat(2*nx-2,j+1) = 0d0
     end do
     
     do j = 2, nx1*nz1
@@ -404,7 +404,7 @@ module matrices
     end do
     
     do j = nx, nx1*nz1-nx1+1, nx1
-      j_mat(2*nx,j-1) = 0.0
+      j_mat(2*nx,j-1) = 0d0
     end do
     
     do j = 1, nx1*nz1-nx1
@@ -415,9 +415,9 @@ module matrices
       j_mat(3*nx-2,j-nx1) = delta
     end do
 
-    call SGBTRF(nx1*nz1, nx1*nz1, nx1, nx1, j_mat, 2*nx1+nx1+1, IPIV, info)
+    call DGBTRF(nx1*nz1, nx1*nz1, nx1, nx1, j_mat, 2*nx1+nx1+1, IPIV, info)
     if (info /= 0) then
-      print*, 'ERROR: SPr factorisation error cur_fin_SGBTRF, INFO=', info
+      print*, 'ERROR: Factorisation error cur_fin_DGBTRF, INFO=', info
       stop
     end if
 

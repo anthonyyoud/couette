@@ -16,10 +16,10 @@ module nonlinear
     use ic_bc, only : s 
     implicit none
 
-    real, intent(in)  :: uo(0:nx,0:nz), uo2(0:nx,0:nz), &
-                         po(0:nx,0:nz), po2(0:nx,0:nz), &
-                         bo(0:nx,0:nz), bo2(0:nx,0:nz)
-    real, intent(out) :: u_nl_n(0:nx,0:nz) 
+    double precision, intent(in)  :: uo(0:nx,0:nz), uo2(0:nx,0:nz), &
+                                     po(0:nx,0:nz), po2(0:nx,0:nz), &
+                                     bo(0:nx,0:nz), bo2(0:nx,0:nz)
+    double precision, intent(out) :: u_nl_n(0:nx,0:nz) 
     integer :: j, k  
     type (deriv) :: du, du2, dp, dp2, db, db2
 
@@ -35,35 +35,35 @@ module nonlinear
     call deriv_z(bo2, db2%z)
 
     do k = 1, nz1
-      u_nl_n(1:nx1,k) = (-0.125 * rx / (s(1:nx1) * delz)) * &
-                        (3.0 * (dp%x(1:nx1,k) * du%z(1:nx1,k) - &
+      u_nl_n(1:nx1,k) = (-0.125d0 * rx / (s(1:nx1) * delz)) * &
+                        (3d0 * (dp%x(1:nx1,k) * du%z(1:nx1,k) - &
                         dp%z(1:nx1,k) * du%x(1:nx1,k)) - &
                         (dp2%x(1:nx1,k) * du2%z(1:nx1,k) - &
                         dp2%z(1:nx1,k) * du2%x(1:nx1,k))) + &
-                        (one_eta * rz * 0.25 / s(1:nx1)**2) * &
-                        (3.0 * uo(1:nx1,k) * dp%z(1:nx1,k) - &
+                        (one_eta * rz * 0.25d0 / s(1:nx1)**2) * &
+                        (3d0 * uo(1:nx1,k) * dp%z(1:nx1,k) - &
                         uo2(1:nx1,k) * dp2%z(1:nx1,k)) + &
-                        0.25 * rz * Q * (3.0 * db%z(1:nx1,k) - &
+                        0.25d0 * rz * Q * (3d0 * db%z(1:nx1,k) - &
                         db2%z(1:nx1,k))
     end do
 
-    if (abs(tau - 1.0) > epsilon(tau)) then
-      u_nl_n(1:nx1,0) = (-0.125 * rx / (s(1:nx1) * delz)) * &
-                        (-3.0 * dp%z(1:nx1,0) * du%x(1:nx1,0) + &
+    if (abs(tau - 1d0) > epsilon(tau)) then
+      u_nl_n(1:nx1,0) = (-0.125d0 * rx / (s(1:nx1) * delz)) * &
+                        (-3d0 * dp%z(1:nx1,0) * du%x(1:nx1,0) + &
                         dp2%z(1:nx1,0) * du2%x(1:nx1,0)) + &
-                        (one_eta * rz * 0.25 / s(1:nx1)**2) * &
-                        (3.0 * uo(1:nx1,0) * dp%z(1:nx1,0) - &
+                        (one_eta * rz * 0.25d0 / s(1:nx1)**2) * &
+                        (3d0 * uo(1:nx1,0) * dp%z(1:nx1,0) - &
                         uo2(1:nx1,0) * dp2%z(1:nx1,0)) + &
-                        0.25 * rz * Q * (3.0 * db%z(1:nx1,0) - &
+                        0.25d0 * rz * Q * (3d0 * db%z(1:nx1,0) - &
                         db2%z(1:nx1,0))
 
-      u_nl_n(1:nx1,nz) = (-0.125 * rx / (s(1:nx1) * delz)) * &
-                         (-3.0 * dp%z(1:nx1,nz) * du%x(1:nx1,nz) + &
+      u_nl_n(1:nx1,nz) = (-0.125d0 * rx / (s(1:nx1) * delz)) * &
+                         (-3d0 * dp%z(1:nx1,nz) * du%x(1:nx1,nz) + &
                          dp2%z(1:nx1,nz) * du2%x(1:nx1,nz)) + &
-                         (one_eta * rz * 0.25 / s(1:nx1)**2) * &
-                        (3.0 * uo(1:nx1,nz) * dp%z(1:nx1,nz) - &
+                         (one_eta * rz * 0.25d0 / s(1:nx1)**2) * &
+                        (3d0 * uo(1:nx1,nz) * dp%z(1:nx1,nz) - &
                          uo2(1:nx1,nz) * dp2%z(1:nx1,nz)) + &
-                         0.25 * rz * Q * (3.0 * db%z(1:nx1,nz) - &
+                         0.25d0 * rz * Q * (3d0 * db%z(1:nx1,nz) - &
                          db2%z(1:nx1,nz))
     end if
 
@@ -78,11 +78,11 @@ module nonlinear
     use ic_bc, only : s
     implicit none
 
-    real, intent(in)  :: t, uo(0:nx,0:nz), uo2(0:nx,0:nz), &
-                         po(0:nx,0:nz), po2(0:nx,0:nz), &
-                         zo(0:nx,0:nz), zo2(0:nx,0:nz), &
-                         jo(0:nx,0:nz), jo2(0:nx,0:nz)
-    real, intent(out) :: z_nl_n(0:nx,0:nz)
+    double precision, intent(in)  :: t, uo(0:nx,0:nz), uo2(0:nx,0:nz), &
+                                     po(0:nx,0:nz), po2(0:nx,0:nz), &
+                                     zo(0:nx,0:nz), zo2(0:nx,0:nz), &
+                                     jo(0:nx,0:nz), jo2(0:nx,0:nz)
+    double precision, intent(out) :: z_nl_n(0:nx,0:nz)
     integer :: j, k
     type (deriv) :: du, du2, dp, dp2, dz, dz_2, dj, dj2
 
@@ -100,18 +100,18 @@ module nonlinear
     call deriv_z(jo2, dj2%z)
 
     do k = 1, nz1
-      z_nl_n(1:nx1,k) = (one_eta * rz * 0.5 / s(1:nx1)) * &
-                        (3.0 * uo(1:nx1,k) * du%z(1:nx1,k) - &
+      z_nl_n(1:nx1,k) = (one_eta * rz * 0.5d0 / s(1:nx1)) * &
+                        (3d0 * uo(1:nx1,k) * du%z(1:nx1,k) - &
                         uo2(1:nx1,k) * du2%z(1:nx1,k)) - &
-                        (one_eta * rz * 0.25 / s(1:nx1)**2) * &
-                        (3.0 * zo(1:nx1,k) * dp%z(1:nx1,k) - &
+                        (one_eta * rz * 0.25d0 / s(1:nx1)**2) * &
+                        (3d0 * zo(1:nx1,k) * dp%z(1:nx1,k) - &
                         zo2(1:nx1,k) * dp2%z(1:nx1,k)) - &
-                        (0.125 * rx / (s(1:nx1) * delz)) * &
-                        ((3.0 * (dp%x(1:nx1,k) * dz%z(1:nx1,k) - &
+                        (0.125d0 * rx / (s(1:nx1) * delz)) * &
+                        ((3d0 * (dp%x(1:nx1,k) * dz%z(1:nx1,k) - &
                         dp%z(1:nx1,k) * dz%x(1:nx1,k))) - &
                         (dp2%x(1:nx1,k) * dz_2%z(1:nx1,k) - &
                         dp2%z(1:nx1,k) * dz_2%x(1:nx1,k))) + &
-                        0.25 * rz * Q * (3.0 * dj%z(1:nx1,k) - &
+                        0.25d0 * rz * Q * (3d0 * dj%z(1:nx1,k) - &
                         dj2%z(1:nx1,k))
     end do
 

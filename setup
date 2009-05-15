@@ -1,7 +1,7 @@
 # Compile and setup ready to run in a separate directory
 # usage:  source setup <directory name> [compile params]
 
-mkdir $1
+mkdir $1 >& /dev/null
 
 #Compile
 make

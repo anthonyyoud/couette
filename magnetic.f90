@@ -16,24 +16,24 @@ module magnetic
     use ic_bc, only : b_BCS
     implicit none
 
-    real, intent(in) :: u_mat(0:nx,0:nz), &
-                        b_mat(2*nxp1+nxp1+1,0:nxp1*nz1-1)
-    real, intent(out) :: bn(0:nx,0:nz)
+    double precision, intent(in) :: u_mat(0:nx,0:nz), &
+                                    b_mat(2*nxp1+nxp1+1,0:nxp1*nz1-1)
+    double precision, intent(out) :: bn(0:nx,0:nz)
     integer, intent(in) :: IPIV(nxp1*nz1)
     integer :: j, k, info
-    real :: u_vec(0:nxp1*nz1-1)
+    double precision :: u_vec(0:nxp1*nz1-1)
 
     do k = 1, nz1
       do j = 0, nx
-        u_vec(nxp1*(k-1)+j) = 0.5 * dx2 * delz * &
+        u_vec(nxp1*(k-1)+j) = 0.5d0 * dx2 * delz * &
                               (u_mat(j,k-1) - u_mat(j,k+1))
       end do
     end do
 
-    call SGBTRS('N', nxp1*nz1, nxp1, nxp1, 1, b_mat, 2*nxp1+nxp1+1, &
+    call DGBTRS('N', nxp1*nz1, nxp1, nxp1, 1, b_mat, 2*nxp1+nxp1+1, &
                  IPIV, u_vec, nxp1*nz1, info)
     if (info /= 0) then
-      print*, 'ERROR: SPr solve error mag_inf_SGBTRS, INFO=', info
+      print*, 'ERROR: Solve error mag_inf_DGBTRS, INFO=', info
       stop
     end if
 
@@ -54,25 +54,25 @@ module magnetic
     use derivs, only : deriv_z
     implicit none
 
-    real, intent(in) :: u_mat(0:nx,0:nz), &
-                        b_mat(2*nxp1+nxp1+1,0:nxp1*nzp1-1)
-    real, intent(out) :: bn(0:nx,0:nz)
+    double precision, intent(in) :: u_mat(0:nx,0:nz), &
+                                    b_mat(2*nxp1+nxp1+1,0:nxp1*nzp1-1)
+    double precision, intent(out) :: bn(0:nx,0:nz)
     integer, intent(in)  :: IPIV(nxp1*nzp1)
     integer :: j, k, info
-    real :: u_vec(0:nxp1*nzp1-1), u_mat_z(0:nx,0:nz)
+    double precision :: u_vec(0:nxp1*nzp1-1), u_mat_z(0:nx,0:nz)
 
     call deriv_z(u_mat, u_mat_z)
 
     do k = 0, nz
       do j = 0, nx
-        u_vec(nxp1*k+j) = -0.5 * dx2 * delz * u_mat_z(j,k)
+        u_vec(nxp1*k+j) = -0.5d0 * dx2 * delz * u_mat_z(j,k)
       end do
     end do
 
-    call SGBTRS('N', nxp1*nzp1, nxp1, nxp1, 1, b_mat, 2*nxp1+nxp1+1, &
+    call DGBTRS('N', nxp1*nzp1, nxp1, nxp1, 1, b_mat, 2*nxp1+nxp1+1, &
                  IPIV, u_vec, nxp1*nzp1, info)
     if (info /= 0) then
-      print*, 'ERROR: SPr solve error mag_fin_SGBTRS, INFO=', info
+      print*, 'ERROR: Solve error mag_fin_DGBTRS, INFO=', info
       stop
     end if
 
