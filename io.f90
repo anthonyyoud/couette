@@ -506,6 +506,7 @@ module io
                       bt%old, jt%old, t, p)
       call save_surface(psi%old, ut%old, zt%old, &
                         vr, vz, bt%old, jt%old, p, t)
+      call save_vapor_3d(vr, ut%new, vz, psi%old, p, t)
       end_proc = 1  !flag to send to all processes
     end if
 
@@ -528,6 +529,7 @@ module io
                       bt%old, jt%old, t, p)
       call save_surface(psi%old, ut%old, zt%old, &
                         vr, vz, bt%old, jt%old, p, t)
+      call save_vapor_3d(vr, ut%new, vz, psi%old, p, t)
       open (98, file = 'save')
       close (98, status = 'delete')
     end if

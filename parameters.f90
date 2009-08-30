@@ -10,8 +10,8 @@ module parameters
   double precision, parameter :: alpha       = 0d0 !2.94d0 !3.16d0 !3.73d0
   double precision, parameter :: gamma       = 3d0 !(2d0 * pi) / alpha
   double precision, parameter :: eta         = 0.615d0
-  double precision, parameter :: Q           = 50d0
-  double precision            :: Re1         = 400d0
+  double precision, parameter :: Q           = 4000d0
+  double precision            :: Re1         = 380d0
   double precision, parameter :: Re_incr     = 1d0
   double precision, parameter :: growth_tol  = 1d-8
   double precision, parameter :: Re2         = 0d0 !-1d0*(1d0/eta)*Re1
@@ -21,7 +21,7 @@ module parameters
   double precision, parameter :: om2         = 0d0
   double precision, parameter :: dt          = 1d-4
   double precision, parameter :: seed        = 1d-1
-  double precision, parameter :: end_time    = 10.18d0
+  double precision, parameter :: end_time    = 50d0
   double precision, parameter :: tau_init    = 1d0
   double precision, parameter :: tau_step    = 1d0
   double precision, parameter :: tau_end     = 1d0
@@ -32,9 +32,9 @@ module parameters
   integer, parameter :: save_rate_2 = 18
   integer, parameter :: periodic_save = 10
   logical, parameter :: rot_ends    = .false.
-  logical, parameter :: xsect_save  = .true.
+  logical, parameter :: xsect_save  = .false.
   logical, parameter :: save3d      = .false.
-  logical, parameter :: savevapor3d = .true.
+  logical, parameter :: savevapor3d = .false.
   logical, parameter :: iso_hel     = .false.
   logical, parameter :: restart     = .true.
   logical, parameter :: auto_tau    = .false.

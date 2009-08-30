@@ -236,6 +236,7 @@ program couette_mod
                       bt%old, jt%old, t, p)
       call save_surface(psi%old, ut%new, zt%new, &
                         vr, vz, bt%old, jt%old, p, t)
+      call save_vapor_3d(vr, ut%new, vz, psi%old, p, t)
     end if
   end do   !end time loop
 
