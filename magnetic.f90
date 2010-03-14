@@ -1,3 +1,6 @@
+! $Id: magnetic.f90 1 2010/01/30 13:54:36 youd $
+!----------------------------------------------------------------------------
+
 module magnetic 
   !Routines to do with solving the Poisson equation for the azimuthal magnetic
   !field.

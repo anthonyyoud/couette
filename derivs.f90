@@ -1,3 +1,6 @@
+! $Id: derivs.f90 1 2010/01/30 13:54:36 youd $
+!----------------------------------------------------------------------------
+
 module derivs
   !Routines which calculate finite-difference derivatives.  These only
   !calculate the numerator of the derivatives; the denominator dx, dz etc. is

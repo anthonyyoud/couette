@@ -1,3 +1,6 @@
+! $Id: current.f90 1 2010/01/30 13:54:36 youd $
+!----------------------------------------------------------------------------
+
 module current 
   !Routines to do with solving the Poisson equation for the azimuthal current.
   implicit none

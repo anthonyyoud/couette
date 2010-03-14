@@ -1,3 +1,6 @@
+! $Id: ic_bc.f90 1 2010/01/30 13:54:36 youd $
+!----------------------------------------------------------------------------
+
 module ic_bc
   !Routines to do with grid setup, initial and boundary conditions.
   use parameters

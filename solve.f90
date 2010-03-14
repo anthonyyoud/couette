@@ -1,3 +1,6 @@
+! $Id: solve.f90 1 2010/01/30 13:54:36 youd $
+!----------------------------------------------------------------------------
+
 module solve
   !Routines to solve the equations for the azimuthal velocity/vorticity.
   implicit none

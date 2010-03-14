@@ -1,3 +1,6 @@
+! $Id: io.f90 1 2010/01/30 13:54:36 youd $
+!----------------------------------------------------------------------------
+
 program couette_mod
   !Main program file.  See README for a description of the code and how to run
   !it.

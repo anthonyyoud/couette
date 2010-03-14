@@ -1,3 +1,6 @@
+! $Id: stream.f90 1 2010/01/30 13:54:36 youd $
+!----------------------------------------------------------------------------
+
 module stream
   !Routines to do with solving the Poisson equation for the stream function.
   !Algorithms for the solution of the stream function Poisson equation are as

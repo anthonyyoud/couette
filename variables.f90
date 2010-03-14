@@ -1,3 +1,6 @@
+! $Id: variables.f90 1 2010/01/30 13:54:36 youd $
+!----------------------------------------------------------------------------
+
 module variables
   !Set up types and other routines to manipulate variables.
   use parameters

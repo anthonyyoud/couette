@@ -1,10 +1,12 @@
-OBJECT		= couette_mod
-OBJS		= couette_mod.o current.o derivs.o ic_bc.o io.o linear.o \
-		  magnetic.o matrices.o nonlinear.o parameters.o solve.o \
-		  stream.o variables.o
-FC		= sunf95
-FFLAGS	        = -fast
-LDFLAGS		= -llapack -lblas
+# $Id: Makefile 1 2010/01/30 13:54:36 youd $
+#----------------------------------------------------------------------------
+
+OBJECT = couette_mod
+OBJS = couette_mod.o current.o derivs.o ic_bc.o io.o linear.o magnetic.o \
+       matrices.o nonlinear.o parameters.o solve.o stream.o variables.o
+FC = sunf95
+FFLAGS = -fast
+LDFLAGS = -llapack -lblas
 #-----------------------------------------------------------------------
 %.o : %.f90
 	$(FC) $(FFLAGS) -c $*.f90

@@ -1,3 +1,6 @@
+! $Id: linear.f90 1 2010/01/30 13:54:36 youd $
+!----------------------------------------------------------------------------
+
 module linear
   !Routines to get the linear parts of the right-hand side of the azimuthal
   !velocity/vorticity equations.
