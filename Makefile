@@ -30,6 +30,5 @@ matrices.o: parameters.o variables.o ic_bc.o
 linear.o: parameters.o variables.o derivs.o ic_bc.o
 nonlinear.o: parameters.o variables.o derivs.o ic_bc.o
 solve.o: parameters.o variables.o ic_bc.o
-couette_mod.o: parameters.o stream.o matrices.o io.o ic_bc.o \
-               variables.o linear.o nonlinear.o solve.o \
-	       magnetic.o current.o
+couette_mod.o: parameters.o stream.o matrices.o io.o ic_bc.o variables.o \
+  linear.o nonlinear.o solve.o magnetic.o current.o
