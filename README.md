@@ -8,17 +8,17 @@ the code uses operator to allow a tridiagonal system to be solved; the linear
 algebra package LAPACK is used to solve the Poisson equations associated with
 the stream function, current and magnetic field.  The spatial discretisation is
 via 2nd order accurate centred finite differences.  It includes a 'homotopy'
-parameter, tau, to continuously deform the boundaries from the infinite
-cylinder case (tau=0) to the finite cylinder case (tau=1).  A basic particle
-path subroutine to track the trajectory of a particle is also included.
-Spatial modulation of the inner and/or outer Reynolds numbers in the axial
-direction is possible to mimic a wavy cylinder boundary.
+parameter, `tau`, to continuously deform the boundaries from the infinite
+cylinder case (`tau = 0`) to the finite cylinder case (`tau = 1`).  A basic
+particle path subroutine to track the trajectory of a particle is also
+included.  Spatial modulation of the inner and/or outer Reynolds numbers in the
+axial direction is possible to mimic a wavy cylinder boundary.
 
 Requirements
 ============
-* LAPACK - the linear algebra package
-* BLAS - the basic linear algebra subprograms
-* A Fortran 90/95 compiler
+* LAPACK - the linear algebra package.
+* BLAS - the basic linear algebra subprograms.
+* A Fortran 90/95 compiler.
 
 Files
 =====
@@ -53,7 +53,7 @@ Main parameters
 * __dt__ - Time step.  In general `10^-4` is a good choice.  Once the Reynolds numbers are large (>700, say) and/or the spatial resolution is increased significantly (>80 points in z) then `dt = 10^-5` is a better choice for stability.
 * __seed__ - Initial seed for initial conditions.  Set small `O(10^-10)` for calculating linear growth rates.  Set `O(10^-3)` for non-linear saturation.  In practice this can be set to zero, since the boundary conditions of the azimuthal velocity at the cylinder wall(s) can start the flow.
 * __end_time__ - Final viscous diffusion time.
-* __tau_init__ - Initial value of homotopy parameter, tau.  0<=tau<=1.  tau=0 => infinite cylinders, tau=1 => finite cylinders.
+* __tau_init__ - Initial value of homotopy parameter, tau.  `0<=tau<=1`.  `tau = 0` => infinite cylinders, `tau = 1` => finite cylinders.
 * __tau_step__ - For steady case, how much tau should be increased after saturation at each tau.
 * __tau_end__ - For steady case, the final value of tau desired.
 * __nx_init__ - Number of radial grid points.
@@ -74,8 +74,8 @@ Rarely used parameters
 ======================
 * __eps1,2__ - Amplitude of oscillation of `Re_1,2(t,z)` in axial direction.
 * __freq1,2__ - Frequency of oscillation of `Re_1,2(t,z)` in axial direction.
-* __x_par_pos__ - Initial radial position of a particle in the fluid as a fraction of gap width.
-* __z_par_pos__ - Initial axial position of a particle in the fluid as a fraction of `gamma` (finite) or `alpha` (infinite).
+* __x\_par\_pos__ - Initial radial position of a particle in the fluid as a fraction of gap width.
+* __z\_par\_pos__ - Initial axial position of a particle in the fluid as a fraction of `gamma` (finite) or `alpha` (infinite).
 * __save_part__ - Should a particle path be saved?
 
 Makefile
@@ -91,7 +91,9 @@ Use the makefile to compile the code and handle module dependencies.
 To run
 ======
 Set `parameters.f90` then run
+
     source setup <directory>
+
 which compiles code and copies `parameters.f90` and moves `OBJECT` to
 `<directory>`.  `./couette_mod` runs code.
 
@@ -100,6 +102,7 @@ If restarting from a previous run then be sure to set `restart = .true.` in
 the run/submit directory.
 
 Errors are output if either:
+
 1. `end_state.dat` exists but `restart = .false.` or
 2. `restart = .true.` but `end_state.dat` does not exist.
 
@@ -123,11 +126,11 @@ Output files
 * __time_tau.dat__ - If `auto_tau = .true.` saves time at which each step in tau occured.
 * __torque.dat__ - Saves the torques on the inner (G1) and outer cylinders (G2), the torque due to CCF (Gc), and the ratio G1/Gc.  For steady states G1=G2.
 * __u_growth.dat__ - Saves time, radial velocity (outflow, inflow), growth rate, axial velocity, stream function, azimuthal velocity, vorticity, azimuthal current and magnetic field, and Reynolds number.  Velocities are saved at the points defined in `io.f90` - subroutine `save_growth`.
-* __p*******.dat__ - Stream function field saved at the time defined by `(time-step)*(number following 'p')` in filename.  (Only if `xsect_save == .true.`).
-* __u*******.dat__ - As above but for azimuthal velocity field.
-* __z*******.dat__ - As above but for vorticity field.
-* __vr*******.dat__ - As above but for radial velocity field.
-* __vz*******.dat__ - As above but for axial velocity field.
-* __j*******.dat__ - As above but for azimuthal current field.
-* __b*******.dat__ - As above but for azimuthal magnetic field.
-* __xsect*******.dat__ - Cross-sections of all fields except vorticity saved at the time defined as above.  (Only if `xsect_save == .true.`).
+* __p1234567.dat__ - Stream function field saved at the time defined by `(time-step)*(number following 'p')` in filename.  (Only if `xsect_save == .true.`).
+* __u1234567.dat__ - As above but for azimuthal velocity field.
+* __z1234567.dat__ - As above but for vorticity field.
+* __vr1234567.dat__ - As above but for radial velocity field.
+* __vz1234567.dat__ - As above but for axial velocity field.
+* __j1234567.dat__ - As above but for azimuthal current field.
+* __b1234567.dat__ - As above but for azimuthal magnetic field.
+* __xsect1234567.dat__ - Cross-sections of all fields except vorticity saved at the time defined as above.  (Only if `xsect_save == .true.`).
