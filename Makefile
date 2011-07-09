@@ -15,8 +15,8 @@
 OBJECT = couette_mod
 OBJS = couette_mod.o current.o derivs.o ic_bc.o io.o linear.o magnetic.o \
        matrices.o nonlinear.o parameters.o solve.o stream.o variables.o
-FC = sunf95
-FFLAGS = -fast
+FC = gfortran
+FFLAGS = -O4
 LDFLAGS = -llapack -lblas
 #-----------------------------------------------------------------------
 %.o : %.f90
