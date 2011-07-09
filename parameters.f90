@@ -1,6 +1,3 @@
-! $Id$
-!----------------------------------------------------------------------------
-
 module parameters
   !Parameters to set.
   implicit none

@@ -1,6 +1,3 @@
-! $Id$
-!----------------------------------------------------------------------------
-
 module current 
   !Routines to do with solving the Poisson equation for the azimuthal current.
   implicit none

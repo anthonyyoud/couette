@@ -1,6 +1,3 @@
-! $Id$
-!----------------------------------------------------------------------------
-
 module variables
   !Set up types and other routines to manipulate variables.
   use parameters

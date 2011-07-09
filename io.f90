@@ -1,6 +1,3 @@
-! $Id$
-!----------------------------------------------------------------------------
-
 module io
   !Routines to do with input/output to/from files.
   use parameters

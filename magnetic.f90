@@ -1,6 +1,3 @@
-! $Id$
-!----------------------------------------------------------------------------
-
 module magnetic 
   !Routines to do with solving the Poisson equation for the azimuthal magnetic
   !field.

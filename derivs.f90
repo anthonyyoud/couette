@@ -1,6 +1,3 @@
-! $Id$
-!----------------------------------------------------------------------------
-
 module derivs
   !Routines which calculate finite-difference derivatives.  These only
   !calculate the numerator of the derivatives; the denominator dx, dz etc. is

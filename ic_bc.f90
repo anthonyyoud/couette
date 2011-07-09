@@ -1,6 +1,3 @@
-! $Id$
-!----------------------------------------------------------------------------
-
 module ic_bc
   !Routines to do with grid setup, initial and boundary conditions.
   use parameters

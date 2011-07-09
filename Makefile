@@ -1,6 +1,3 @@
-# $Id$
-#----------------------------------------------------------------------------
-
 OBJECT = couette_mod
 OBJS = couette_mod.o current.o derivs.o ic_bc.o io.o linear.o magnetic.o \
        matrices.o nonlinear.o parameters.o solve.o stream.o variables.o

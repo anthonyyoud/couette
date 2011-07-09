@@ -1,6 +1,3 @@
-! $Id$
-!----------------------------------------------------------------------------
-
 module stream
   !Routines to do with solving the Poisson equation for the stream function.
   !Algorithms for the solution of the stream function Poisson equation are as
