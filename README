@@ -1,3 +1,10 @@
+NOTE
+----
+Some of this file refers to running the code in parallel.  This used to be the
+case, when ScaLAPACK was used instead of LAPACK, but the overhead of the
+parallelism was too great, so it is now purely a serial code.  Ignore any
+references to running in parallel.
+
 DESCRIPTION
 -----------
 Axisymmetric, hydromagnetic, modulated Couette flow between infinite or finite
@@ -13,42 +20,25 @@ trajectory of a particle is also included.  Spatial modulation of the inner
 and/or outer Reynolds numbers in the axial direction is possible to mimic a
 wavy cylinder boundary.
 
-The code uses the linear algebra package ScaLAPACK to enable parallelism in
-solving the Poisson equations associated with the stream function, current and
-magnetic field.
+The code uses the linear algebra package LAPACK to solve the Poisson equations
+associated with the stream function, current and magnetic field.
 
 IMPORTANT INFORMATION
 ---------------------
-Since the code uses ScaLAPACK for the parallelism, this package must be
-available.  ScaLAPACK in turn depends on other packages.  These are (in order):
-
-MPI	- A version of the message-passing interface.  This code has been
-          tested using LAM-MPI, therefore this would be the recommended version
-          to use.  It has been tentatively tested using MPICH, although I did
-          not build the required libraries myself.  All I can say is that the
-          code does work using MPICH if all the libraries are built correctly. 
-
-BLACS	- The Basic Linear Algebra Communication System.  ScaLAPACK uses this
-	  to call the MPI commands, hence no knowledge of MPI is required.
-
-BLAS	- The Basic Linear Algebra Subprograms.  Contrary to other
-	  recommendations, the reference version of the BLAS should be used and
-	  not a machine optimised version (such as ATLAS or Intel MKL).  Since
-	  the matrices in this code are banded, the code does not benefit from
-	  the faster Level 3 BLAS routines that an optimised library provides.
-          Most of the calls are to Level 2 BLAS.
-
-It is not necessary for LAPACK to be installed.
+Since the code uses LAPACK, this library must be available.  LAPACK in turn
+depends on BLAS (Basic Linear Algebra Subprograms).  Contrary to other
+recommendations, the reference version of the BLAS should be used and not a
+machine optimised version (such as ATLAS or Intel MKL).  Since the matrices in
+this code are banded, the code does not benefit from the faster Level 3 BLAS
+routines that an optimised library provides.  Most of the calls are to Level 2
+BLAS.
 
 To ensure that this code compiles, links and runs correctly, it is *highly*
-recommended that MPI, BLACS, BLAS and ScaLAPACK are all compiled with the same
-Fortran compiler.  The code has been tested and is known to work with the Intel
-Fortran Compiler versions 7.0, 7.1, 8.0, and 8.1.  A later version of 7.1
-should be used to avoid a compiler bug.  For consistency the Intel C++ Compiler
-should also be used when necessary (although gcc will work as well).  This code
-should then be compiled using the MPI compiler 'mpif77' which will be a wrapper
-for the Intel compiler, ensuring that all the necessary libraries are linked
-and the correct flags are set.
+recommended that BLAS and LAPACK are all compiled with the same Fortran
+compiler.  The code has been tested and is known to work with gfortran, sunf95,
+and the Intel Fortran Compiler versions 7.0, 7.1, 8.0, and 8.1.  There is a
+compiler bug in earlier 7.1 revisions.  For consistency, use a C/C++ compiler
+from the same compiler collection, when compiling LAPACK and BLAS.
 
 Failure to be consistent in the use of a Fortran compiler will almost certainly
 result in undefined references to libraries and other routines and missing
@@ -91,9 +81,7 @@ parameters.f90			- Parameters to set (see below).
 
 README				- This file.
 
-run_script.sh			- For use on giga cluster.  Parameters to 
-                                  determine parallelism should be set in 
-                                  this file. (see below)
+run_script.sh			- For use on giga cluster.
 
 setup				- Setup script to compile and set up 
 				  ready to run in separate directory.
@@ -110,43 +98,6 @@ variables.f90			- Types for variables declared, and other
 
 MAIN PARAMETERS
 ---------------
-i1		- The intrinsic data types in the code are parametrised, so
-		  the precision does not depend on the architecture on which it
-		  is run.  The Fortran intrinsic selected_int_kind() is used to
-		  select the required integer precision.  The default value of
-		  9 corresponds to a standard 4-byte (32-bit) integer on x86
-		  machines, where 9 corresponds to the range of integers
-                  (-10^9,10^9).
-
-r2		- As for i1 above, the real precision is parametrised using
-		  the Fortran intrinsic selected_real_kind(), the default value
-		  of which is 15,307 corresponding to a floating point number
-		  with a precision of 15 digits and an exponent range of
-		  (-307,307).  This corresponds to 8-byte (64-bit) double
-                  precision on x86 machines.
-
-nprow		- The number of process rows to use for distribution of the
-                  matrices.  As of release 1.7 of ScaLAPACK, this must be set
-                  to 1.
-
-npcol		- As above but for the number of process columns.  This can
-                  be any integer.  In practice this should not exceed the
-                  number of CPU's available.  It can be set to 1 in which
-                  case the job will be run on one CPU.  Doing this will
-                  guarantee a faster version of the code than the standard
-                  serial version.  The matrix orders must be large before
-                  any speedup (over a parallel 1-CPU run) is observed in a 
-                  multi-CPU run.
-
-nb		- The 'blocking factor' to use when distributing the matrices
-                  over the process grid.  See the ScaLAPACK documentation for
-                  a full explanation of what this does; basically it
-                  determines the size of the matrices on each process.  For
-                  banded codes like this there can only be one block per CPU,
-                  meaning that this should be set to at least
-                  ceiling( (nx+1)*(nz+1) ) / npcol.  This guarantees that each
-                  CPU receives only one block of the matrix.
-
 alpha		- Wavenumber (2pi/wavelength) in the infinite case.  Set equal
                   zero if using finite cylinders.
 
@@ -241,8 +192,8 @@ z_par_pos	- Initial axial position of a particle in the fluid as a
 
 save_part	- Should a particle path be saved?
 
-RUN_SCRIPT.sh
--------------
+RUN_SCRIPT.sh (old - from when the code used to be parallel)
+----------------------------------------------------------
 This is a bash script that is read whenever a job is submitted to the giga
 queue.
 
@@ -287,42 +238,15 @@ MAKEFILE
 Settings here will need to be changed, depending on the architecture on which
 the code is run.
 
-OUTDIR		- The output directory of the object files and executable.
+OBJECT    - The compiled executable name.
 
-OBJECTS		- The object files that should be linked.
+OBJS  		- The object files that should be linked.
 
-FFLAGS		- Compiler flags for the Intel Fortran Compiler.  By default
-		  these are set to very aggressive optimisations.
-		  Specifically, the -tpp7 and -xW flags optimise for P4 CPU's
-		  only.  If the code is run on any other CPU, it **will not
-		  work**.  If the CPU is not a P4 (including Xeon's) then these
-		  two flags should be changed before compilation.  The
-		  commented out FFLAGS enables debugging and will give more
-		  output in case of an error.  In this case, no optimisation is
-                  performed.
+FC        - The Fortran compiler.
 
-LINKFLAGS	- Any extra flags required by the linker (which in most cases
-		  will be the Intel compiler) should go here.  Specifically, on
-		  some Red Hat systems and systems with certain versions of
-		  glibc (I have not checked them all) and using versions 7.0 or
-		  7.1 of IFC the -i_dynamic flag is required.  Similarly, for
-		  the same systems using versions 8.0 or 8.1 of IFC the -static
-                  flag is required.
+FFLAGS		- Compiler flags.
 
-COMPILER	- This should be set to mpif77.  The actual compiler name can
-		  be used here (ifc or ifort) but then all the required MPI
-                  libraries will have to be manually specified.
-
-LDBLAS		- The location and name of the BLAS library.
-
-LDSCALA		- The location and name of the ScaLAPACK library.
-
-LDBLACS		- The location and names of the BLACS F77, MPI, and C
-                  libraries.
-
-LIBS		- No changes needed.
-
-COMPFLAGS	- No changes needed.
+LDLAGS    - Any extra flags required by the linker.
 
 TO RUN
 ------
