@@ -4,15 +4,16 @@ Axisymmetric, hydromagnetic, modulated Couette flow between infinite or finite
 cylinders in the small Prandtl number limit.  Time-stepping is via 2nd order
 accurate implicit Crank-Nicolson for the linear terms and 2nd order accurate
 explicit Adams-Bashforth for the non-linear terms.  For the diffusive equations
-the code uses operator to allow a tridiagonal system to be solved; the linear
-algebra package LAPACK is used to solve the Poisson equations associated with
-the stream function, current and magnetic field.  The spatial discretisation is
-via 2nd order accurate centred finite differences.  It includes a 'homotopy'
-parameter, `tau`, to continuously deform the boundaries from the infinite
-cylinder case (`tau = 0`) to the finite cylinder case (`tau = 1`).  A basic
-particle path subroutine to track the trajectory of a particle is also
-included.  Spatial modulation of the inner and/or outer Reynolds numbers in the
-axial direction is possible to mimic a wavy cylinder boundary.
+the code uses operator factorisation to allow a tridiagonal system to be
+solved; the linear algebra package LAPACK is used to solve the Poisson
+equations associated with the stream function, current and magnetic field.  The
+spatial discretisation is via 2nd order accurate centred finite differences.
+It includes a 'homotopy' parameter, `tau`, to continuously deform the
+boundaries from the infinite cylinder case (`tau = 0`) to the finite cylinder
+case (`tau = 1`).  A basic particle path subroutine to track the trajectory of
+a particle is also included.  Spatial modulation of the inner and/or outer
+Reynolds numbers in the axial direction is possible to mimic a wavy cylinder
+boundary.
 
 Requirements
 ============
